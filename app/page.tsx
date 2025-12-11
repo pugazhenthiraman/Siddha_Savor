@@ -1,65 +1,187 @@
-import Image from "next/image";
+'use client';
+
+import { useState, useEffect } from 'react';
 
 export default function Home() {
+  const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    setIsVisible(true);
+  }, []);
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+    <div className="min-h-screen bg-gradient-to-br from-green-50 to-white">
+      {/* Header */}
+      <header className="bg-white/95 backdrop-blur-md shadow-lg sticky top-0 z-50 border-b border-green-100">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center py-5">
+            <div className="flex items-center space-x-3">
+              <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-green-600 rounded-full flex items-center justify-center shadow-lg">
+                <span className="text-white font-bold text-xl">S</span>
+              </div>
+              <span className="text-2xl font-bold text-green-800">Siddha Savor</span>
+            </div>
+            <button className="bg-green-600 text-white px-8 py-3 rounded-full hover:bg-green-700 transition-all transform hover:scale-105 shadow-lg font-semibold">
+              Get Started
+            </button>
+          </div>
+        </div>
+      </header>
+
+      {/* Hero Section */}
+      <section className="relative overflow-hidden">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            <div className={`transform transition-all duration-1000 ${isVisible ? 'translate-x-0 opacity-100' : '-translate-x-10 opacity-0'}`}>
+              <h1 className="text-5xl lg:text-6xl font-bold text-green-900 leading-tight mb-6">
+                Your Health,
+                <span className="text-green-600 block">Our Priority</span>
+              </h1>
+              <p className="text-xl text-gray-600 mb-8 leading-relaxed">
+                Experience personalized healthcare with our expert doctors. Book appointments, 
+                manage your health records, and get the care you deserve.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4">
+                <button className="bg-green-600 text-white px-8 py-4 rounded-full text-lg font-semibold hover:bg-green-700 transition-all transform hover:scale-105 shadow-lg">
+                  Book Appointment
+                </button>
+                <button className="border-2 border-green-600 text-green-600 px-8 py-4 rounded-full text-lg font-semibold hover:bg-green-50 transition-all">
+                  Learn More
+                </button>
+              </div>
+            </div>
+            <div className={`transform transition-all duration-1000 delay-300 ${isVisible ? 'translate-x-0 opacity-100' : 'translate-x-10 opacity-0'}`}>
+              <div className="relative">
+                <div className="w-full h-96 bg-gradient-to-r from-green-400 to-green-600 rounded-3xl shadow-2xl transform rotate-3 hover:rotate-0 transition-transform duration-500"></div>
+                <div className="absolute inset-0 w-full h-96 bg-white rounded-3xl shadow-xl flex items-center justify-center">
+                  <div className="text-center px-8">
+                    <div className="w-20 h-20 bg-gradient-to-r from-green-500 to-green-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg">
+                      <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </div>
+                    <h3 className="text-3xl font-bold text-green-800 mb-3">Expert Care</h3>
+                    <p className="text-gray-600 text-lg font-medium">Trusted by thousands of patients</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Services Section */}
+      <section id="services" className="py-20 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold text-green-900 mb-4">Our Services</h2>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+              Comprehensive healthcare solutions tailored to your needs
+            </p>
+          </div>
+          
+          <div className="grid md:grid-cols-3 gap-8">
+            {[
+              {
+                icon: "🩺",
+                title: "General Consultation",
+                description: "Expert medical advice from certified doctors"
+              },
+              {
+                icon: "💊",
+                title: "Prescription Management",
+                description: "Digital prescriptions and medication tracking"
+              },
+              {
+                icon: "📱",
+                title: "Telemedicine",
+                description: "Virtual consultations from the comfort of your home"
+              }
+            ].map((service, index) => (
+              <div key={index} className={`bg-green-50 p-8 rounded-2xl hover:shadow-lg transition-all duration-300 transform hover:-translate-y-2 ${isVisible ? 'animate-fade-in' : ''}`} style={{animationDelay: `${index * 200}ms`}}>
+                <div className="text-4xl mb-4">{service.icon}</div>
+                <h3 className="text-2xl font-bold text-green-800 mb-4">{service.title}</h3>
+                <p className="text-gray-600">{service.description}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Stats Section */}
+      <section className="py-20 bg-gradient-to-r from-green-600 to-green-700">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid md:grid-cols-4 gap-8 text-center text-white">
+            {[
+              { number: "10K+", label: "Happy Patients" },
+              { number: "50+", label: "Expert Doctors" },
+              { number: "24/7", label: "Support" },
+              { number: "99%", label: "Satisfaction" }
+            ].map((stat, index) => (
+              <div key={index} className="transform hover:scale-110 transition-transform duration-300">
+                <div className="text-4xl font-bold mb-2">{stat.number}</div>
+                <div className="text-green-100">{stat.label}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="py-20 bg-green-50">
+        <div className="max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8">
+          <h2 className="text-4xl font-bold text-green-900 mb-6">
+            Ready to Start Your Health Journey?
+          </h2>
+          <p className="text-xl text-gray-600 mb-8">
+            Join thousands of patients who trust Siddha Savor for their healthcare needs
           </p>
+          <button className="bg-green-600 text-white px-12 py-4 rounded-full text-xl font-semibold hover:bg-green-700 transition-all transform hover:scale-105 shadow-lg">
+            Register Now
+          </button>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+      </section>
+
+      {/* Footer */}
+      <footer className="bg-green-900 text-white py-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid md:grid-cols-4 gap-8">
+            <div>
+              <div className="flex items-center space-x-2 mb-4">
+                <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
+                  <span className="text-white font-bold">S</span>
+                </div>
+                <span className="text-xl font-bold">Siddha Savor</span>
+              </div>
+              <p className="text-green-200">Your trusted healthcare partner</p>
+            </div>
+            <div>
+              <h4 className="font-semibold mb-4">Services</h4>
+              <ul className="space-y-2 text-green-200">
+                <li>General Consultation</li>
+                <li>Telemedicine</li>
+                <li>Prescription</li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-semibold mb-4">Company</h4>
+              <ul className="space-y-2 text-green-200">
+                <li>About Us</li>
+                <li>Careers</li>
+                <li>Contact</li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-semibold mb-4">Contact</h4>
+              <p className="text-green-200">support@siddhasavor.com</p>
+              <p className="text-green-200">+1 (555) 123-4567</p>
+            </div>
+          </div>
+          <div className="border-t border-green-800 mt-8 pt-8 text-center text-green-200">
+            <p>&copy; 2024 Siddha Savor. All rights reserved.</p>
+          </div>
         </div>
-      </main>
+      </footer>
     </div>
   );
 }

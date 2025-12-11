@@ -1,36 +1,112 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Siddha Savor
+
+A Next.js application for managing doctors and patients with authentication and invite system.
+
+## Tech Stack
+
+- **Framework**: Next.js 16 (App Router)
+- **Language**: TypeScript (strict mode)
+- **Database**: PostgreSQL with Prisma ORM
+- **Styling**: Tailwind CSS v4
+- **Authentication**: bcrypt for password hashing
+- **Linting**: ESLint with Next.js config
+
+## Prerequisites
+
+- Node.js 18+
+- PostgreSQL database
+- npm, yarn, pnpm, or bun
 
 ## Getting Started
 
-First, run the development server:
+### 1. Install Dependencies
+
+```bash
+npm install
+```
+
+### 2. Environment Setup
+
+Create a `.env` file in the root directory:
+
+```env
+DATABASE_URL="postgresql://user:password@localhost:5432/siddha_savor?schema=public"
+NODE_ENV="development"
+ADMIN_EMAIL="admin@siddhasavor.com"
+ADMIN_PASSWORD="YourSecurePassword123"
+```
+
+**Important**: Change `ADMIN_PASSWORD` to a strong password in production!
+
+### 3. Database Setup
+
+Generate Prisma client and run migrations:
+
+```bash
+npx prisma generate
+npx prisma migrate dev
+```
+
+### 4. Seed Database
+
+Seed the database with initial admin user:
+
+```bash
+npm run prisma:seed
+# or
+npx prisma db seed
+```
+
+### 5. Run Development Server
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) with your browser.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Project Structure
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```
+siddha_savor/
+├── app/              # Next.js App Router pages
+├── lib/              # Utility functions
+│   ├── db.ts        # Prisma client singleton
+│   └── env.ts       # Environment variable validation
+├── prisma/          # Prisma schema and migrations
+│   ├── schema.prisma
+│   └── seed.ts
+└── public/          # Static assets
+```
+
+## Database Models
+
+- **Admin**: System administrators
+- **Doctor**: Medical practitioners with approval workflow
+- **Patient**: Patient records linked to doctors
+- **InviteLink**: Invitation system for doctors and patients
+
+## Scripts
+
+- `npm run dev` - Start development server
+- `npm run build` - Build for production
+- `npm run start` - Start production server
+- `npm run lint` - Run ESLint
+- `npx prisma studio` - Open Prisma Studio (database GUI)
+
+## Environment Variables
+
+All environment variables are validated at startup. See `.env.example` for required variables.
+
+## Security Notes
+
+- Passwords are hashed using bcrypt
+- Environment variables are validated before use
+- Admin credentials should be changed in production
+- Never commit `.env` files to version control
 
 ## Learn More
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- [Next.js Documentation](https://nextjs.org/docs)
+- [Prisma Documentation](https://www.prisma.io/docs)
+- [Tailwind CSS Documentation](https://tailwindcss.com/docs)

@@ -1,0 +1,63 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// =======================
+//       MODELS
+// =======================
+
+model Admin {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  password  String
+  createdAt DateTime @default(now())
+}
+
+model Doctor {
+  id          Int          @id @default(autoincrement())
+  doctorUID   String?      @unique @db.VarChar(8)
+  email       String       @unique
+  password    String?
+  status      DoctorStatus @default(PENDING)
+  formData    Json
+  inviteToken String?      @unique
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  patients    Patient[]
+}
+
+model Patient {
+  id          Int      @id @default(autoincrement())
+  email       String   @unique
+  password    String?
+  formData    Json
+  inviteToken String?  @unique
+  doctorUID   String?
+  doctor      Doctor?  @relation(fields: [doctorUID], references: [doctorUID])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model InviteLink {
+  id        Int        @id @default(autoincrement())
+  token     String     @unique
+  role      InviteRole
+  doctorUID String?
+  expiresAt DateTime
+  createdAt DateTime   @default(now())
+}
+
+enum DoctorStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum InviteRole {
+  DOCTOR
+  PATIENT
+}

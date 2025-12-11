@@ -2,52 +2,59 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { z } from 'zod';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Alert } from '@/components/ui/Alert';
-
-const loginSchema = z.object({
-  email: z.string().email('Please enter a valid email address'),
-  password: z.string().min(6, 'Password must be at least 6 characters'),
-});
-
-type LoginFormData = z.infer<typeof loginSchema>;
+import { authService } from '@/lib/services/auth';
+import { loginSchema, type LoginFormData } from '@/lib/validations/auth';
+import { useErrorHandler } from '@/lib/hooks/useErrorHandler';
+import { SUCCESS_MESSAGES, INFO_MESSAGES } from '@/lib/constants/messages';
 
 export function LoginForm() {
   const router = useRouter();
+  const { error, hasError, handleError, clearError } = useErrorHandler();
+  
   const [formData, setFormData] = useState<LoginFormData>({
     email: '',
     password: '',
   });
-  const [errors, setErrors] = useState<Partial<LoginFormData>>({});
+  const [fieldErrors, setFieldErrors] = useState<Partial<LoginFormData>>({});
   const [isLoading, setIsLoading] = useState(false);
-  const [apiError, setApiError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
 
   const handleInputChange = (field: keyof LoginFormData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+    
     // Clear field error when user starts typing
-    if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: undefined }));
+    if (fieldErrors[field]) {
+      setFieldErrors(prev => ({ ...prev, [field]: undefined }));
     }
-    // Clear API error when user modifies form
-    if (apiError) setApiError('');
+    
+    // Clear global error when user modifies form
+    if (hasError) {
+      clearError();
+    }
+    
+    // Clear success message
+    if (successMessage) {
+      setSuccessMessage('');
+    }
   };
 
   const validateForm = (): boolean => {
     try {
       loginSchema.parse(formData);
-      setErrors({});
+      setFieldErrors({});
       return true;
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        const fieldErrors: Partial<LoginFormData> = {};
-        error.errors.forEach((err) => {
+    } catch (error: any) {
+      if (error.errors) {
+        const errors: Partial<LoginFormData> = {};
+        error.errors.forEach((err: any) => {
           if (err.path[0]) {
-            fieldErrors[err.path[0] as keyof LoginFormData] = err.message;
+            errors[err.path[0] as keyof LoginFormData] = err.message;
           }
         });
-        setErrors(fieldErrors);
+        setFieldErrors(errors);
       }
       return false;
     }
@@ -56,33 +63,30 @@ export function LoginForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!validateForm()) return;
+    if (!validateForm()) {
+      return;
+    }
 
     setIsLoading(true);
-    setApiError('');
+    clearError();
+    setSuccessMessage('');
 
     try {
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
-      });
+      const response = await authService.login(formData);
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Login failed');
+      if (response.success && response.data) {
+        setSuccessMessage(SUCCESS_MESSAGES.LOGIN_SUCCESS);
+        
+        // Get dashboard route based on user role
+        const dashboardRoute = authService.getDashboardRoute(response.data.user.role);
+        
+        // Small delay to show success message
+        setTimeout(() => {
+          router.push(dashboardRoute);
+        }, 1000);
       }
-
-      // Store user session (you might want to use a proper session management)
-      localStorage.setItem('user', JSON.stringify(data.user));
-      
-      // Redirect to dashboard
-      router.push('/dashboard');
     } catch (error) {
-      setApiError(error instanceof Error ? error.message : 'An unexpected error occurred');
+      handleError(error);
     } finally {
       setIsLoading(false);
     }
@@ -90,8 +94,12 @@ export function LoginForm() {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      {apiError && (
-        <Alert variant="error" message={apiError} />
+      {hasError && (
+        <Alert variant="error" message={error.message} />
+      )}
+
+      {successMessage && (
+        <Alert variant="success" message={successMessage} />
       )}
 
       <div>
@@ -103,9 +111,10 @@ export function LoginForm() {
           type="email"
           value={formData.email}
           onChange={(e) => handleInputChange('email', e.target.value)}
-          error={errors.email}
+          error={fieldErrors.email}
           placeholder="admin@siddhasavor.com"
           disabled={isLoading}
+          autoComplete="email"
         />
       </div>
 
@@ -118,9 +127,10 @@ export function LoginForm() {
           type="password"
           value={formData.password}
           onChange={(e) => handleInputChange('password', e.target.value)}
-          error={errors.password}
+          error={fieldErrors.password}
           placeholder="Enter your password"
           disabled={isLoading}
+          autoComplete="current-password"
         />
       </div>
 
@@ -132,7 +142,7 @@ export function LoginForm() {
         disabled={isLoading}
         className="w-full"
       >
-        {isLoading ? 'Signing In...' : 'Sign In'}
+        {isLoading ? INFO_MESSAGES.PROCESSING : 'Sign In'}
       </Button>
     </form>
   );

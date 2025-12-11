@@ -1,0 +1,200 @@
+import { ERROR_MESSAGES } from '@/lib/constants/messages';
+import { logger } from '@/lib/utils/logger';
+
+// API Response Types
+export interface ApiResponse<T = any> {
+  success: boolean;
+  data?: T;
+  error?: string;
+  message?: string;
+}
+
+export interface ApiError {
+  message: string;
+  status: number;
+  code?: string;
+}
+
+// Custom API Error Class
+export class ApiException extends Error {
+  status: number;
+  code?: string;
+
+  constructor(message: string, status: number, code?: string) {
+    super(message);
+    this.name = 'ApiException';
+    this.status = status;
+    this.code = code;
+  }
+}
+
+// Base API Configuration
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '';
+const DEFAULT_TIMEOUT = 10000; // 10 seconds
+
+// HTTP Client with error handling
+class ApiClient {
+  private baseURL: string;
+  private timeout: number;
+
+  constructor(baseURL: string = API_BASE_URL, timeout: number = DEFAULT_TIMEOUT) {
+    this.baseURL = baseURL;
+    this.timeout = timeout;
+  }
+
+  private async request<T>(
+    endpoint: string,
+    options: RequestInit = {}
+  ): Promise<ApiResponse<T>> {
+    const url = `${this.baseURL}${endpoint}`;
+    const method = options.method || 'GET';
+    
+    logger.apiRequest(method, endpoint, { options });
+    
+    const config: RequestInit = {
+      headers: {
+        'Content-Type': 'application/json',
+        ...options.headers,
+      },
+      ...options,
+    };
+
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), this.timeout);
+
+      const response = await fetch(url, {
+        ...config,
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      let data;
+      try {
+        data = await response.json();
+      } catch (parseError) {
+        logger.error('Failed to parse response JSON', parseError, { url, status: response.status });
+        throw new ApiException('Invalid response format', response.status);
+      }
+
+      if (!response.ok) {
+        const errorMessage = data.error || this.getErrorMessage(response.status);
+        logger.apiError(method, endpoint, new Error(errorMessage), { 
+          status: response.status, 
+          responseData: data 
+        });
+        
+        throw new ApiException(errorMessage, response.status, data.code);
+      }
+
+      logger.info(`API ${method} ${endpoint} success`, { status: response.status });
+
+      return {
+        success: true,
+        data: data.data || data,
+        message: data.message,
+      };
+
+    } catch (error) {
+      if (error instanceof ApiException) {
+        // For server errors, redirect to error page
+        if (error.status >= 500) {
+          this.handleServerError();
+        }
+        throw error;
+      }
+
+      if (error instanceof Error) {
+        if (error.name === 'AbortError') {
+          logger.error('API request timeout', error, { url, timeout: this.timeout });
+          throw new ApiException(ERROR_MESSAGES.TIMEOUT_ERROR, 408);
+        }
+        
+        logger.error('Network error', error, { url });
+        // Network error - redirect to error page
+        this.handleNetworkError();
+        throw new ApiException(ERROR_MESSAGES.NETWORK_ERROR, 0);
+      }
+
+      logger.error('Unknown API error', error, { url });
+      throw new ApiException(ERROR_MESSAGES.SOMETHING_WENT_WRONG, 500);
+    }
+  }
+
+  private handleNetworkError() {
+    logger.warn('Redirecting to error page due to network error');
+    // Only redirect if we're in the browser
+    if (typeof window !== 'undefined') {
+      setTimeout(() => {
+        window.location.href = '/error';
+      }, 1000);
+    }
+  }
+
+  private handleServerError() {
+    logger.warn('Redirecting to error page due to server error');
+    // Only redirect if we're in the browser
+    if (typeof window !== 'undefined') {
+      setTimeout(() => {
+        window.location.href = '/error';
+      }, 1000);
+    }
+  }
+
+  private getErrorMessage(status: number): string {
+    switch (status) {
+      case 400:
+        return 'Bad request. Please check your input';
+      case 401:
+        return ERROR_MESSAGES.INVALID_CREDENTIALS;
+      case 403:
+        return ERROR_MESSAGES.UNAUTHORIZED;
+      case 404:
+        return 'Resource not found';
+      case 429:
+        return 'Too many requests. Please try again later';
+      case 500:
+        return ERROR_MESSAGES.SERVER_ERROR;
+      case 503:
+        return ERROR_MESSAGES.MAINTENANCE_MODE;
+      default:
+        return ERROR_MESSAGES.SOMETHING_WENT_WRONG;
+    }
+  }
+
+  async get<T>(endpoint: string, headers?: Record<string, string>): Promise<ApiResponse<T>> {
+    return this.request<T>(endpoint, { method: 'GET', headers });
+  }
+
+  async post<T>(
+    endpoint: string,
+    data?: any,
+    headers?: Record<string, string>
+  ): Promise<ApiResponse<T>> {
+    return this.request<T>(endpoint, {
+      method: 'POST',
+      body: data ? JSON.stringify(data) : undefined,
+      headers,
+    });
+  }
+
+  async put<T>(
+    endpoint: string,
+    data?: any,
+    headers?: Record<string, string>
+  ): Promise<ApiResponse<T>> {
+    return this.request<T>(endpoint, {
+      method: 'PUT',
+      body: data ? JSON.stringify(data) : undefined,
+      headers,
+    });
+  }
+
+  async delete<T>(endpoint: string, headers?: Record<string, string>): Promise<ApiResponse<T>> {
+    return this.request<T>(endpoint, { method: 'DELETE', headers });
+  }
+}
+
+// Export singleton instance
+export const apiClient = new ApiClient();

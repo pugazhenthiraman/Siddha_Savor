@@ -6,7 +6,10 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate dev",
+    "db:seed": "prisma db seed"
   },
   "prisma": {
     "seed": "dotenv -e .env -- tsx prisma/seed.ts"
@@ -22,8 +25,8 @@
     "prisma": "^7.1.0",
     "react": "19.2.1",
     "react-dom": "19.2.1",
-    "tailwind-merge": "^3.4.0",
-    "zod": "^4.1.13"
+    "tailwind-merge": "^2.5.4",
+    "zod": "^3.24.1"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

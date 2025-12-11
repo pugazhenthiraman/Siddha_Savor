@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { Navbar } from '@/components/ui/Navbar';
 
 export default function Home() {
   const [isVisible, setIsVisible] = useState(false);
@@ -12,21 +13,7 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-white">
       {/* Header */}
-      <header className="bg-white/95 backdrop-blur-md shadow-lg sticky top-0 z-50 border-b border-green-100">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-5">
-            <div className="flex items-center space-x-3">
-              <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-green-600 rounded-full flex items-center justify-center shadow-lg">
-                <span className="text-white font-bold text-xl">S</span>
-              </div>
-              <span className="text-2xl font-bold text-green-800">Siddha Savor</span>
-            </div>
-            <button className="bg-green-600 text-white px-8 py-3 rounded-full hover:bg-green-700 transition-all transform hover:scale-105 shadow-lg font-semibold">
-              Get Started
-            </button>
-          </div>
-        </div>
-      </header>
+      <Navbar showBackButton={false} />
 
       {/* Hero Section */}
       <section className="relative overflow-hidden">
@@ -42,10 +29,16 @@ export default function Home() {
                 manage your health records, and get the care you deserve.
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
-                <button className="bg-green-600 text-white px-8 py-4 rounded-full text-lg font-semibold hover:bg-green-700 transition-all transform hover:scale-105 shadow-lg">
+                <button 
+                  onClick={() => window.location.href = '/login'}
+                  className="bg-green-600 text-white px-8 py-4 rounded-full text-lg font-semibold hover:bg-green-700 transition-all transform hover:scale-105 shadow-lg"
+                >
                   Book Appointment
                 </button>
-                <button className="border-2 border-green-600 text-green-600 px-8 py-4 rounded-full text-lg font-semibold hover:bg-green-50 transition-all">
+                <button 
+                  onClick={() => window.location.href = '/login'}
+                  className="border-2 border-green-600 text-green-600 px-8 py-4 rounded-full text-lg font-semibold hover:bg-green-50 transition-all"
+                >
                   Learn More
                 </button>
               </div>
@@ -136,7 +129,10 @@ export default function Home() {
           <p className="text-xl text-gray-600 mb-8">
             Join thousands of patients who trust Siddha Savor for their healthcare needs
           </p>
-          <button className="bg-green-600 text-white px-12 py-4 rounded-full text-xl font-semibold hover:bg-green-700 transition-all transform hover:scale-105 shadow-lg">
+          <button 
+            onClick={() => window.location.href = '/login'}
+            className="bg-green-600 text-white px-12 py-4 rounded-full text-xl font-semibold hover:bg-green-700 transition-all transform hover:scale-105 shadow-lg"
+          >
             Register Now
           </button>
         </div>

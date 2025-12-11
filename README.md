@@ -1,112 +1,90 @@
-# Siddha Savor
+# Siddha Savor - Healthcare Management System
 
-A Next.js application for managing doctors and patients with authentication and invite system.
+A modern healthcare management platform built with Next.js 16, TypeScript, and PostgreSQL.
 
-## Tech Stack
+## 🚀 Tech Stack
 
 - **Framework**: Next.js 16 (App Router)
 - **Language**: TypeScript (strict mode)
 - **Database**: PostgreSQL with Prisma ORM
 - **Styling**: Tailwind CSS v4
-- **Authentication**: bcrypt for password hashing
-- **Linting**: ESLint with Next.js config
+- **Authentication**: bcrypt password hashing
+- **Validation**: Zod schemas
 
-## Prerequisites
-
-- Node.js 18+
-- PostgreSQL database
-- npm, yarn, pnpm, or bun
-
-## Getting Started
-
-### 1. Install Dependencies
-
-```bash
-npm install
-```
-
-### 2. Environment Setup
-
-Create a `.env` file in the root directory:
-
-```env
-DATABASE_URL="postgresql://user:password@localhost:5432/siddha_savor?schema=public"
-NODE_ENV="development"
-ADMIN_EMAIL="admin@siddhasavor.com"
-ADMIN_PASSWORD="YourSecurePassword123"
-```
-
-**Important**: Change `ADMIN_PASSWORD` to a strong password in production!
-
-### 3. Database Setup
-
-Generate Prisma client and run migrations:
-
-```bash
-npx prisma generate
-npx prisma migrate dev
-```
-
-### 4. Seed Database
-
-Seed the database with initial admin user:
-
-```bash
-npm run prisma:seed
-# or
-npx prisma db seed
-```
-
-### 5. Run Development Server
-
-```bash
-npm run dev
-```
-
-Open [http://localhost:3000](http://localhost:3000) with your browser.
-
-## Project Structure
+## 📁 Project Structure
 
 ```
-siddha_savor/
-├── app/              # Next.js App Router pages
-├── lib/              # Utility functions
-│   ├── db.ts        # Prisma client singleton
-│   └── env.ts       # Environment variable validation
-├── prisma/          # Prisma schema and migrations
-│   ├── schema.prisma
-│   └── seed.ts
-└── public/          # Static assets
+├── app/                    # Next.js App Router
+│   ├── api/               # API routes
+│   ├── dashboard/         # Admin dashboard
+│   ├── login/            # Login page
+│   └── page.tsx          # Homepage
+├── components/            # Reusable components
+│   ├── auth/             # Authentication components
+│   └── ui/               # UI components
+├── lib/                  # Core utilities
+│   ├── constants/        # App constants
+│   ├── hooks/           # Custom hooks
+│   ├── services/        # API services
+│   └── validations/     # Zod schemas
+└── prisma/              # Database schema & seeds
 ```
 
-## Database Models
+## 🛠️ Setup
 
-- **Admin**: System administrators
-- **Doctor**: Medical practitioners with approval workflow
-- **Patient**: Patient records linked to doctors
-- **InviteLink**: Invitation system for doctors and patients
+1. **Install dependencies**
+   ```bash
+   npm install
+   ```
 
-## Scripts
+2. **Environment setup**
+   ```bash
+   cp .env.example .env
+   # Update DATABASE_URL and other variables
+   ```
+
+3. **Database setup**
+   ```bash
+   npm run db:generate
+   npm run db:migrate
+   npm run db:seed
+   ```
+
+4. **Start development**
+   ```bash
+   npm run dev
+   ```
+
+## 🔐 Default Admin Credentials
+
+- **Email**: admin@siddhasavor.com
+- **Password**: Admin@123
+
+## 📝 Available Scripts
 
 - `npm run dev` - Start development server
 - `npm run build` - Build for production
 - `npm run start` - Start production server
 - `npm run lint` - Run ESLint
-- `npx prisma studio` - Open Prisma Studio (database GUI)
+- `npm run db:generate` - Generate Prisma client
+- `npm run db:migrate` - Run database migrations
+- `npm run db:seed` - Seed database with initial data
 
-## Environment Variables
+## 🏗️ Architecture
 
-All environment variables are validated at startup. See `.env.example` for required variables.
+- **Service Layer**: Centralized API calls and business logic
+- **Error Handling**: Consistent error management across the app
+- **Type Safety**: Full TypeScript coverage with Zod validation
+- **Component-Based**: Reusable UI components with proper separation
 
-## Security Notes
+## 🔒 Security Features
 
-- Passwords are hashed using bcrypt
-- Environment variables are validated before use
-- Admin credentials should be changed in production
-- Never commit `.env` files to version control
+- Password hashing with bcrypt
+- Input validation with Zod
+- SQL injection protection with Prisma
+- Environment variable validation
+- Secure session management
 
-## Learn More
+---
 
-- [Next.js Documentation](https://nextjs.org/docs)
-- [Prisma Documentation](https://www.prisma.io/docs)
-- [Tailwind CSS Documentation](https://tailwindcss.com/docs)
+Built with ❤️ for modern healthcare management

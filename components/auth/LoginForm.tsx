@@ -94,7 +94,7 @@ export function LoginForm() {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      {hasError && (
+      {hasError && error && (
         <Alert variant="error" message={error.message} />
       )}
 

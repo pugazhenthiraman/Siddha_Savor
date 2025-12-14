@@ -10,8 +10,7 @@ const pool = new Pool({
   connectionString: env.DATABASE_URL,
   max: 5, // Smaller pool for seed script
 });
-const adapter = new PrismaPg(pool);
-const prisma = new PrismaClient({ adapter });
+const prisma = new PrismaClient();
 
 async function main() {
   try {

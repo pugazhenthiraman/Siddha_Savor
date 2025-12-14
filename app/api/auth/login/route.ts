@@ -54,20 +54,47 @@ export async function POST(request: NextRequest) {
       const doctorResult = await query('SELECT * FROM "Doctor" WHERE email = $1', [normalizedEmail]);
       const doctor = doctorResult.rows[0];
 
-      if (doctor && doctor.status === 'APPROVED' && doctor.password) {
-        user = doctor;
-        userRole = 'doctor';
-        logger.debug('User found in doctor table', { 
-          email: normalizedEmail, 
-          status: doctor.status,
-          doctorUID: doctor.doctorUID 
-        });
-      } else if (doctor) {
-        logger.warn('Doctor found but not approved or no password', { 
-          email: normalizedEmail, 
-          status: doctor.status,
-          hasPassword: !!doctor.password 
-        });
+      if (doctor) {
+        if (doctor.status === 'PENDING') {
+          logger.warn('Login attempt by pending doctor', { 
+            email: normalizedEmail,
+            status: doctor.status 
+          });
+          
+          return NextResponse.json(
+            { 
+              success: false,
+              error: 'Your account is pending admin approval. Please wait for verification.',
+              redirect: '/login?pending=true'
+            },
+            { status: 403 }
+          );
+        }
+        
+        if (doctor.status === 'REJECTED') {
+          logger.warn('Login attempt by rejected doctor', { 
+            email: normalizedEmail,
+            status: doctor.status 
+          });
+          
+          return NextResponse.json(
+            { 
+              success: false,
+              error: 'Your account has been rejected. Please contact admin for more information.'
+            },
+            { status: 403 }
+          );
+        }
+        
+        if (doctor.status === 'APPROVED' && doctor.password) {
+          user = doctor;
+          userRole = 'doctor';
+          logger.debug('User found in doctor table', { 
+            email: normalizedEmail, 
+            status: doctor.status,
+            doctorUID: doctor.doctorUID 
+          });
+        }
       }
     }
 

@@ -1,13 +1,45 @@
 'use client';
 
+import { useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { LoginForm } from '@/components/auth/LoginForm';
 import { Navbar } from '@/components/ui/Navbar';
+import { Alert } from '@/components/ui/Alert';
 
 export default function LoginPage() {
+  const searchParams = useSearchParams();
+  const [message, setMessage] = useState<{ type: 'success' | 'warning' | 'error'; text: string } | null>(null);
+
+  useEffect(() => {
+    const registered = searchParams.get('registered');
+    const pending = searchParams.get('pending');
+    
+    if (registered === 'true') {
+      setMessage({
+        type: 'success',
+        text: '✅ Registration successful! Please wait for admin approval before logging in.'
+      });
+    }
+    
+    if (pending === 'true') {
+      setMessage({
+        type: 'warning', 
+        text: '⏳ Your account is pending admin approval. Please wait for verification.'
+      });
+    }
+  }, [searchParams]);
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Navigation */}
       <Navbar showBackButton={true} />
+
+      {/* Message Alert */}
+      {message && (
+        <div className="max-w-md mx-auto pt-4 px-4">
+          <Alert variant={message.type} message={message.text} />
+        </div>
+      )}
 
       {/* Desktop Layout */}
       <div className="hidden lg:flex min-h-[calc(100vh-80px)]">

@@ -50,6 +50,7 @@ class AdminService {
     INVITES: '/api/admin/invites',
     APPROVE_DOCTOR: '/api/admin/doctors/approve',
     REJECT_DOCTOR: '/api/admin/doctors/reject',
+    REVERT_DOCTOR: '/api/admin/doctors/revert',
   } as const;
 
   /**
@@ -121,9 +122,27 @@ class AdminService {
   async approveDoctor(doctorId: number): Promise<ApiResponse<Doctor>> {
     try {
       logger.info('Approving doctor', { doctorId });
-      const response = await apiClient.post<Doctor>(`${this.ENDPOINTS.APPROVE_DOCTOR}/${doctorId}`);
-      logger.info('Doctor approved successfully', { doctorId, doctorUID: response.data?.doctorUID });
-      return response;
+      
+      // Use longer timeout for approval (30 seconds)
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000);
+      
+      const response = await fetch(`${this.ENDPOINTS.APPROVE_DOCTOR}/${doctorId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        signal: controller.signal
+      });
+      
+      clearTimeout(timeoutId);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+      
+      const result = await response.json();
+      logger.info('Doctor approved successfully', { doctorId, doctorUID: result.data?.doctorUID });
+      
+      return result;
     } catch (error) {
       logger.error('Failed to approve doctor', error, { doctorId });
       throw error;
@@ -136,11 +155,64 @@ class AdminService {
   async rejectDoctor(doctorId: number, reason?: string): Promise<ApiResponse<Doctor>> {
     try {
       logger.info('Rejecting doctor', { doctorId, reason });
-      const response = await apiClient.post<Doctor>(`${this.ENDPOINTS.REJECT_DOCTOR}/${doctorId}`, { reason });
+      
+      // Use longer timeout for rejection (30 seconds)
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000);
+      
+      const response = await fetch(`${this.ENDPOINTS.REJECT_DOCTOR}/${doctorId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reason }),
+        signal: controller.signal
+      });
+      
+      clearTimeout(timeoutId);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+      
+      const result = await response.json();
       logger.info('Doctor rejected successfully', { doctorId });
-      return response;
+      
+      return result;
     } catch (error) {
       logger.error('Failed to reject doctor', error, { doctorId, reason });
+      throw error;
+    }
+  }
+
+  /**
+   * Revert doctor status
+   */
+  async revertDoctor(doctorId: number, newStatus: string, reason?: string): Promise<ApiResponse<Doctor>> {
+    try {
+      logger.info('Reverting doctor status', { doctorId, newStatus, reason });
+      
+      // Use longer timeout for revert (30 seconds)
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000);
+      
+      const response = await fetch(`${this.ENDPOINTS.REVERT_DOCTOR}/${doctorId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ newStatus, reason }),
+        signal: controller.signal
+      });
+      
+      clearTimeout(timeoutId);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+      
+      const result = await response.json();
+      logger.info('Doctor status reverted successfully', { doctorId, newStatus });
+      
+      return result;
+    } catch (error) {
+      logger.error('Failed to revert doctor status', error, { doctorId, newStatus, reason });
       throw error;
     }
   }

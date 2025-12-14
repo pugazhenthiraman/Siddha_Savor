@@ -58,9 +58,27 @@ class AdminService {
   async getDashboardStats(): Promise<ApiResponse<DashboardStats>> {
     try {
       logger.info('Fetching dashboard statistics');
-      const response = await apiClient.get<DashboardStats>(this.ENDPOINTS.STATS);
-      logger.info('Dashboard statistics fetched successfully', { stats: response.data });
-      return response;
+      
+      // Use longer timeout for stats API (20 seconds)
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 20000);
+      
+      const response = await fetch('/api/admin/stats', {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+        signal: controller.signal
+      });
+      
+      clearTimeout(timeoutId);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+      
+      const result = await response.json();
+      logger.info('Dashboard statistics fetched successfully', { stats: result.data });
+      
+      return result;
     } catch (error) {
       logger.error('Failed to fetch dashboard statistics', error);
       throw error;

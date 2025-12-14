@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcrypt';
-import { prisma } from '@/lib/db';
+import { getAdminByEmail, query } from '@/lib/db';
 import { loginSchema } from '@/lib/validations/auth';
 import { ERROR_MESSAGES } from '@/lib/constants/messages';
 import { logger } from '@/lib/utils/logger';
@@ -41,9 +41,7 @@ export async function POST(request: NextRequest) {
     let userRole = '';
 
     // Check Admin table
-    const admin = await prisma.admin.findUnique({
-      where: { email: normalizedEmail },
-    });
+    const admin = await getAdminByEmail(normalizedEmail);
 
     if (admin) {
       user = admin;
@@ -53,9 +51,8 @@ export async function POST(request: NextRequest) {
 
     // Check Doctor table if not found in admin
     if (!user) {
-      const doctor = await prisma.doctor.findUnique({
-        where: { email: normalizedEmail },
-      });
+      const doctorResult = await query('SELECT * FROM "Doctor" WHERE email = $1', [normalizedEmail]);
+      const doctor = doctorResult.rows[0];
 
       if (doctor && doctor.status === 'APPROVED' && doctor.password) {
         user = doctor;
@@ -76,9 +73,8 @@ export async function POST(request: NextRequest) {
 
     // Check Patient table if not found in doctor
     if (!user) {
-      const patient = await prisma.patient.findUnique({
-        where: { email: normalizedEmail },
-      });
+      const patientResult = await query('SELECT * FROM "Patient" WHERE email = $1', [normalizedEmail]);
+      const patient = patientResult.rows[0];
 
       if (patient && patient.password) {
         user = patient;

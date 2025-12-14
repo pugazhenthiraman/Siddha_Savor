@@ -1,33 +1,30 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/db';
+import { query } from '@/lib/db';
 import { ERROR_MESSAGES } from '@/lib/constants/messages';
+import { logger } from '@/lib/utils/logger';
 
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url);
-    const status = searchParams.get('status');
+    logger.info('Admin doctors API called');
 
-    const whereClause = status ? { status: status as any } : {};
+    const result = await query('SELECT * FROM "Doctor" ORDER BY "createdAt" DESC');
+    const doctors = result.rows;
 
-    const doctors = await prisma.doctor.findMany({
-      where: whereClause,
-      orderBy: {
-        createdAt: 'desc'
-      }
-    });
+    logger.info('Doctors retrieved successfully', { count: doctors.length });
 
     return NextResponse.json({
       success: true,
       data: doctors,
+      message: 'Doctors retrieved successfully',
     });
 
   } catch (error) {
-    console.error('Admin doctors API error:', error);
+    logger.error('Admin doctors API error', error);
 
     return NextResponse.json(
-      { 
+      {
         success: false,
-        error: ERROR_MESSAGES.SERVER_ERROR 
+        error: ERROR_MESSAGES.SERVER_ERROR,
       },
       { status: 500 }
     );

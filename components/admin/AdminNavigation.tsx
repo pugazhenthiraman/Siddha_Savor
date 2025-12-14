@@ -25,6 +25,7 @@ export function AdminNavigation({ activeTab, onTabChange, userEmail, onLogout }:
     { id: 'invites', name: 'Invites', icon: '🔗', mobileIcon: '🔗' },
     { id: 'doctors', name: 'Doctors', icon: '👥', mobileIcon: '👥' },
     { id: 'patients', name: 'Patients', icon: '🏥', mobileIcon: '🏥' },
+    { id: 'settings', name: 'Settings', icon: '⚙️', mobileIcon: '⚙️' },
   ];
 
   return (
@@ -131,7 +132,7 @@ export function AdminNavigation({ activeTab, onTabChange, userEmail, onLogout }:
 
       {/* Mobile Bottom Navigation */}
       <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50">
-        <div className="grid grid-cols-5 gap-1">
+        <div className="grid grid-cols-6 gap-1">
           {tabs.map((tab) => (
             <button
               key={tab.id}

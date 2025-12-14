@@ -6,7 +6,8 @@ import { authService } from '@/lib/services/auth';
 import { AdminNavigation } from '@/components/admin/AdminNavigation';
 import { DashboardStats } from '@/components/admin/DashboardStats';
 import { DoctorApprovals } from '@/components/admin/DoctorApprovals';
-import { InviteGenerator } from '@/components/admin/InviteGenerator';
+import { InviteGenerator } from '@/components/ui/InviteGenerator';
+import { SMTPSettings } from '@/components/admin/SMTPSettings';
 
 interface User {
   id: number;
@@ -169,7 +170,27 @@ export default function AdminDashboard() {
               <p className="text-sm lg:text-base text-gray-600">Create secure registration links for doctors and patients.</p>
             </div>
             <div className="max-w-2xl mx-auto lg:mx-0">
-              <InviteGenerator />
+              <InviteGenerator
+                title="Create Registration Links"
+                description="Generate secure invite links for new users to join the platform"
+                defaultRole="DOCTOR"
+                onLinkGenerated={(link, role) => {
+                  console.log(`Generated ${role} invite:`, link);
+                }}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Settings Tab */}
+        {activeTab === 'settings' && (
+          <div className="space-y-4 lg:space-y-6">
+            <div className="text-center lg:text-left">
+              <h2 className="text-xl lg:text-2xl font-bold text-gray-900 mb-2">System Settings</h2>
+              <p className="text-sm lg:text-base text-gray-600">Configure SMTP and other system settings.</p>
+            </div>
+            <div className="max-w-4xl mx-auto lg:mx-0">
+              <SMTPSettings />
             </div>
           </div>
         )}

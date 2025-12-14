@@ -1,65 +1,41 @@
-import { Pool } from "pg";
-import { PrismaPg } from "@prisma/adapter-pg";
-import { PrismaClient } from "@prisma/client";
-import { env } from "./env";
+import { Client } from 'pg';
 
-// PrismaClient singleton for Next.js
-// Prevents multiple instances in development hot-reload
+const connectionString = process.env.DATABASE_URL || "postgresql://neondb_owner:npg_PM1myou5zhZp@ep-summer-bread-ad0a52d0-pooler.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require";
 
-const globalForPrisma = globalThis as unknown as {
-  prisma: PrismaClient | undefined;
-};
-
-// Enhance connection string for Neon/cloud databases
-// Add connect_timeout if not already present (helps with suspended databases)
-let connectionString = env.DATABASE_URL;
-if (!connectionString.includes('connect_timeout')) {
-  const separator = connectionString.includes('?') ? '&' : '?';
-  connectionString = `${connectionString}${separator}connect_timeout=60`;
-}
-
-// Create adapter for Prisma 7.x with connection pooling
-// Optimized for cloud databases (Neon, Supabase, etc.)
-const pool = new Pool({
-  connectionString,
-  max: 10, // Maximum number of clients in the pool
-  idleTimeoutMillis: 30000, // Close idle clients after 30 seconds
-  connectionTimeoutMillis: 20000, // Increased to 20 seconds for cloud databases (Neon can take time to resume)
-  // SSL configuration for cloud databases
-  ssl: connectionString.includes('sslmode=require') || connectionString.includes('sslmode=prefer') 
-    ? { rejectUnauthorized: false } 
-    : undefined,
-});
-
-const adapter = new PrismaPg(pool);
-
-export const prisma =
-  globalForPrisma.prisma ??
-  new PrismaClient({
-    adapter,
-    log: env.isDevelopment() ? ["query", "error", "warn"] : ["error"],
+export async function query(text: string, params?: any[]) {
+  const client = new Client({ 
+    connectionString,
+    connectionTimeoutMillis: 15000, // 15 second connection timeout
+    query_timeout: 10000, // 10 second query timeout
   });
-
-// Connection health check helper
-export async function checkDatabaseConnection(): Promise<boolean> {
+  
   try {
-    await prisma.$queryRaw`SELECT 1`;
-    return true;
-  } catch (error) {
-    console.error('Database connection check failed:', error);
-    return false;
+    await client.connect();
+    const result = await client.query(text, params);
+    return result;
+  } finally {
+    await client.end();
   }
 }
 
-// Graceful shutdown handler
-if (typeof process !== 'undefined') {
-  process.on('beforeExit', async () => {
-    await prisma.$disconnect();
-    await pool.end();
-  });
+export async function getAdmin() {
+  const result = await query('SELECT * FROM "Admin" LIMIT 1');
+  return result.rows[0] || null;
 }
 
-if (!env.isProduction()) {
-  globalForPrisma.prisma = prisma;
+export async function getAdminByEmail(email: string) {
+  const result = await query('SELECT * FROM "Admin" WHERE email = $1', [email]);
+  return result.rows[0] || null;
 }
 
+export async function updateAdminSmtpConfig(adminId: number, smtpConfig: any) {
+  await query(
+    'UPDATE "Admin" SET "smtpConfig" = $1 WHERE id = $2',
+    [JSON.stringify(smtpConfig), adminId]
+  );
+}
+
+export async function getSmtpConfig() {
+  const result = await query('SELECT "smtpConfig" FROM "Admin" LIMIT 1');
+  return result.rows[0]?.smtpConfig || null;
+}

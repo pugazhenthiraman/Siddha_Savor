@@ -8,7 +8,7 @@ import { Alert } from '@/components/ui/Alert';
 import { authService } from '@/lib/services/auth';
 import { loginSchema, type LoginFormData } from '@/lib/validations/auth';
 import { useErrorHandler } from '@/lib/hooks/useErrorHandler';
-import { SUCCESS_MESSAGES, INFO_MESSAGES } from '@/lib/constants/messages';
+import { SUCCESS_MESSAGES, INFO_MESSAGES, FORM_LABELS, FORM_PLACEHOLDERS } from '@/lib/constants/messages';
 
 export function LoginForm() {
   const router = useRouter();
@@ -46,10 +46,11 @@ export function LoginForm() {
       loginSchema.parse(formData);
       setFieldErrors({});
       return true;
-    } catch (error: any) {
-      if (error.errors) {
+    } catch (error: unknown) {
+      if (error && typeof error === 'object' && 'errors' in error) {
+        const zodError = error as { errors: Array<{ path: string[]; message: string }> };
         const errors: Partial<LoginFormData> = {};
-        error.errors.forEach((err: any) => {
+        zodError.errors.forEach((err) => {
           if (err.path[0]) {
             errors[err.path[0] as keyof LoginFormData] = err.message;
           }
@@ -104,7 +105,7 @@ export function LoginForm() {
 
       <div>
         <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-          Email Address
+          {FORM_LABELS.EMAIL_ADDRESS}
         </label>
         <Input
           id="email"
@@ -112,7 +113,7 @@ export function LoginForm() {
           value={formData.email}
           onChange={(e) => handleInputChange('email', e.target.value)}
           error={fieldErrors.email}
-          placeholder="admin@siddhasavor.com"
+          placeholder={FORM_PLACEHOLDERS.EMAIL}
           disabled={isLoading}
           autoComplete="email"
         />
@@ -120,7 +121,7 @@ export function LoginForm() {
 
       <div>
         <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
-          Password
+          {FORM_LABELS.PASSWORD}
         </label>
         <Input
           id="password"
@@ -128,7 +129,7 @@ export function LoginForm() {
           value={formData.password}
           onChange={(e) => handleInputChange('password', e.target.value)}
           error={fieldErrors.password}
-          placeholder="Enter your password"
+          placeholder={FORM_PLACEHOLDERS.PASSWORD}
           disabled={isLoading}
           autoComplete="current-password"
         />
@@ -142,7 +143,7 @@ export function LoginForm() {
         disabled={isLoading}
         className="w-full"
       >
-        {isLoading ? INFO_MESSAGES.PROCESSING : 'Sign In'}
+        {isLoading ? INFO_MESSAGES.PROCESSING : INFO_MESSAGES.SIGN_IN}
       </Button>
     </form>
   );

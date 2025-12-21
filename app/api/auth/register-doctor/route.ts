@@ -53,7 +53,6 @@ export async function POST(request: NextRequest) {
       },
       professionalInfo: {
         medicalLicense: formData.medicalLicense,
-        specialization: formData.specialization,
         experience: formData.experience,
         qualification: formData.qualification
       },

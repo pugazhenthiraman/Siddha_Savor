@@ -6,10 +6,15 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { useToast } from '@/lib/hooks/useToast';
 import { Toast } from '@/components/ui/Toast';
+import { PATIENT_VALIDATION, GENDER_OPTIONS, PATIENT_FORM_SECTIONS } from '@/lib/constants/patient';
+import { authService } from '@/lib/services/auth';
+import { InviteData } from '@/lib/types';
+import { ERROR_MESSAGES, SUCCESS_MESSAGES, FORM_LABELS, FORM_PLACEHOLDERS, VALIDATION_MESSAGES, REGISTRATION_LABELS } from '@/lib/constants/messages';
+import { logger } from '@/lib/utils/logger';
 
 interface PatientRegistrationFormProps {
   token: string;
-  inviteData: any;
+  inviteData: InviteData;
 }
 
 export function PatientRegistrationForm({ token, inviteData }: PatientRegistrationFormProps) {
@@ -34,69 +39,67 @@ export function PatientRegistrationForm({ token, inviteData }: PatientRegistrati
     termsAccepted: false,
   });
 
-  const handleInputChange = (field: string, value: any) => {
+  const handleInputChange = (field: string, value: string | boolean) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
   const validateForm = () => {
     // Personal Information
     if (!formData.firstName.trim()) {
-      error('Please enter your first name');
+      error(VALIDATION_MESSAGES.REQUIRED_FIRST_NAME);
       return false;
     }
     
     if (!formData.lastName.trim()) {
-      error('Please enter your last name');
+      error(VALIDATION_MESSAGES.REQUIRED_LAST_NAME);
       return false;
     }
     
     if (!formData.email.trim()) {
-      error('Please enter your email address');
+      error(VALIDATION_MESSAGES.REQUIRED_EMAIL);
       return false;
     }
     
     // Email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(formData.email)) {
-      error('Please enter a valid email address');
+    if (!PATIENT_VALIDATION.EMAIL_REGEX.test(formData.email)) {
+      error(VALIDATION_MESSAGES.INVALID_EMAIL);
       return false;
     }
     
     if (!formData.phone.trim()) {
-      error('Please enter your phone number');
+      error(VALIDATION_MESSAGES.REQUIRED_PHONE);
       return false;
     }
     
     // Mobile number validation
-    const phoneRegex = /^[+]?[0-9]{10,15}$/;
-    if (!phoneRegex.test(formData.phone.replace(/\s/g, ''))) {
-      error('Please enter a valid phone number (10-15 digits)');
+    if (!PATIENT_VALIDATION.PHONE_REGEX.test(formData.phone.replace(/\s/g, ''))) {
+      error(VALIDATION_MESSAGES.INVALID_PHONE);
       return false;
     }
     
     // Password validation
     if (!formData.password) {
-      error('Please create a password');
+      error(VALIDATION_MESSAGES.REQUIRED_PASSWORD);
       return false;
     }
     
-    if (formData.password.length < 8) {
-      error('Password must be at least 8 characters long');
+    if (formData.password.length < PATIENT_VALIDATION.PASSWORD_MIN_LENGTH) {
+      error(VALIDATION_MESSAGES.PASSWORD_MIN_LENGTH(PATIENT_VALIDATION.PASSWORD_MIN_LENGTH));
       return false;
     }
     
     if (!formData.confirmPassword) {
-      error('Please confirm your password');
+      error(VALIDATION_MESSAGES.REQUIRED_CONFIRM_PASSWORD);
       return false;
     }
     
     if (formData.password !== formData.confirmPassword) {
-      error('Passwords do not match');
+      error(VALIDATION_MESSAGES.PASSWORD_MISMATCH);
       return false;
     }
     
     if (!formData.termsAccepted) {
-      error('Please accept the terms and conditions to continue');
+      error(VALIDATION_MESSAGES.REQUIRED_TERMS);
       return false;
     }
     
@@ -111,27 +114,19 @@ export function PatientRegistrationForm({ token, inviteData }: PatientRegistrati
     try {
       setIsSubmitting(true);
       
-      const response = await fetch('/api/auth/register-patient', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          token,
-          ...formData
-        })
-      });
+      const response = await authService.registerPatient(token, formData);
       
-      const result = await response.json();
-      
-      if (result.success) {
-        success('Registration successful! You can now log in.');
+      if (response.success) {
+        success(SUCCESS_MESSAGES.REGISTRATION_SUCCESS_PATIENT);
         setTimeout(() => {
           router.push('/login?registered=true');
         }, 2000);
       } else {
-        error(result.error || 'Registration failed. Please try again.');
+        error(response.error || ERROR_MESSAGES.SOMETHING_WENT_WRONG);
       }
     } catch (err) {
-      error('Registration failed. Please check your connection and try again.');
+      logger.error('Patient registration failed', err);
+      error(ERROR_MESSAGES.NETWORK_ERROR);
     } finally {
       setIsSubmitting(false);
     }
@@ -160,47 +155,47 @@ export function PatientRegistrationForm({ token, inviteData }: PatientRegistrati
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Personal Information */}
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Personal Information</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">{PATIENT_FORM_SECTIONS.PERSONAL}</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">First Name *</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{FORM_LABELS.FIRST_NAME} *</label>
                 <Input
                   value={formData.firstName}
                   onChange={(e) => handleInputChange('firstName', e.target.value)}
-                  placeholder="Enter your first name"
+                  placeholder={FORM_PLACEHOLDERS.FIRST_NAME}
                   disabled={isSubmitting}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Last Name *</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{FORM_LABELS.LAST_NAME} *</label>
                 <Input
                   value={formData.lastName}
                   onChange={(e) => handleInputChange('lastName', e.target.value)}
-                  placeholder="Enter your last name"
+                  placeholder={FORM_PLACEHOLDERS.LAST_NAME}
                   disabled={isSubmitting}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Email Address *</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{FORM_LABELS.EMAIL_ADDRESS} *</label>
                 <Input
                   type="email"
                   value={formData.email}
                   onChange={(e) => handleInputChange('email', e.target.value)}
-                  placeholder="your.email@example.com"
+                  placeholder={FORM_PLACEHOLDERS.EMAIL_PATIENT}
                   disabled={isSubmitting}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number *</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{FORM_LABELS.PHONE_NUMBER} *</label>
                 <Input
                   value={formData.phone}
                   onChange={(e) => handleInputChange('phone', e.target.value)}
-                  placeholder="+91 9876543210"
+                  placeholder={FORM_PLACEHOLDERS.PHONE}
                   disabled={isSubmitting}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Date of Birth</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{FORM_LABELS.DATE_OF_BIRTH}</label>
                 <Input
                   type="date"
                   value={formData.dateOfBirth}
@@ -209,17 +204,19 @@ export function PatientRegistrationForm({ token, inviteData }: PatientRegistrati
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Gender</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{FORM_LABELS.GENDER}</label>
                 <select
                   value={formData.gender}
                   onChange={(e) => handleInputChange('gender', e.target.value)}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent disabled:bg-gray-50 disabled:cursor-not-allowed transition-all duration-200"
                   disabled={isSubmitting}
                 >
-                  <option value="" className="text-gray-500">Select Gender</option>
-                  <option value="Male" className="text-gray-900">Male</option>
-                  <option value="Female" className="text-gray-900">Female</option>
-                  <option value="Other" className="text-gray-900">Other</option>
+                  <option value="" className="text-gray-500">{REGISTRATION_LABELS.SELECT_GENDER}</option>
+                  {GENDER_OPTIONS.map((gender) => (
+                    <option key={gender.value} value={gender.value} className="text-gray-900">
+                      {gender.label}
+                    </option>
+                  ))}
                 </select>
               </div>
             </div>
@@ -227,41 +224,41 @@ export function PatientRegistrationForm({ token, inviteData }: PatientRegistrati
 
           {/* Address Information */}
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Address Information</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">{PATIENT_FORM_SECTIONS.CONTACT}</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-2">Address</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{FORM_LABELS.ADDRESS}</label>
                 <Input
                   value={formData.address}
                   onChange={(e) => handleInputChange('address', e.target.value)}
-                  placeholder="Enter your address"
+                  placeholder={FORM_PLACEHOLDERS.ADDRESS}
                   disabled={isSubmitting}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">City</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{FORM_LABELS.CITY}</label>
                 <Input
                   value={formData.city}
                   onChange={(e) => handleInputChange('city', e.target.value)}
-                  placeholder="e.g., Chennai, Mumbai, Bangalore"
+                  placeholder={FORM_PLACEHOLDERS.CITY}
                   disabled={isSubmitting}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">State</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{FORM_LABELS.STATE}</label>
                 <Input
                   value={formData.state}
                   onChange={(e) => handleInputChange('state', e.target.value)}
-                  placeholder="e.g., Tamil Nadu, Maharashtra"
+                  placeholder={FORM_PLACEHOLDERS.STATE}
                   disabled={isSubmitting}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">PIN Code</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{FORM_LABELS.PIN_CODE}</label>
                 <Input
                   value={formData.pincode}
                   onChange={(e) => handleInputChange('pincode', e.target.value)}
-                  placeholder="e.g., 600001"
+                  placeholder={FORM_PLACEHOLDERS.PIN_CODE}
                   disabled={isSubmitting}
                 />
               </div>
@@ -270,23 +267,23 @@ export function PatientRegistrationForm({ token, inviteData }: PatientRegistrati
 
           {/* Emergency Contact */}
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Emergency Contact</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">{PATIENT_FORM_SECTIONS.EMERGENCY}</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Emergency Contact Name</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{FORM_LABELS.EMERGENCY_CONTACT_NAME}</label>
                 <Input
                   value={formData.emergencyContact}
                   onChange={(e) => handleInputChange('emergencyContact', e.target.value)}
-                  placeholder="Enter emergency contact name"
+                  placeholder={FORM_PLACEHOLDERS.EMERGENCY_CONTACT_NAME}
                   disabled={isSubmitting}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Emergency Contact Phone</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{FORM_LABELS.EMERGENCY_CONTACT_PHONE}</label>
                 <Input
                   value={formData.emergencyPhone}
                   onChange={(e) => handleInputChange('emergencyPhone', e.target.value)}
-                  placeholder="Enter emergency contact phone"
+                  placeholder={FORM_PLACEHOLDERS.EMERGENCY_CONTACT_PHONE}
                   disabled={isSubmitting}
                 />
               </div>
@@ -298,22 +295,22 @@ export function PatientRegistrationForm({ token, inviteData }: PatientRegistrati
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Account Security</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Password *</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{FORM_LABELS.PASSWORD} *</label>
                 <Input
                   type="password"
                   value={formData.password}
                   onChange={(e) => handleInputChange('password', e.target.value)}
-                  placeholder="Create a strong password"
+                  placeholder={FORM_PLACEHOLDERS.PASSWORD_CREATE}
                   disabled={isSubmitting}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Confirm Password *</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{FORM_LABELS.CONFIRM_PASSWORD} *</label>
                 <Input
                   type="password"
                   value={formData.confirmPassword}
                   onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
-                  placeholder="Confirm your password"
+                  placeholder={FORM_PLACEHOLDERS.PASSWORD_CONFIRM}
                   disabled={isSubmitting}
                 />
               </div>
@@ -331,8 +328,8 @@ export function PatientRegistrationForm({ token, inviteData }: PatientRegistrati
                 disabled={isSubmitting}
               />
               <span className="text-sm text-gray-700">
-                I agree to the <a href="#" className="text-green-600 hover:underline">Terms and Conditions</a> and 
-                <a href="#" className="text-green-600 hover:underline ml-1">Privacy Policy</a>.
+                {REGISTRATION_LABELS.TERMS_TEXT} <a href="#" className="text-green-600 hover:underline">{REGISTRATION_LABELS.TERMS_LINK}</a> and 
+                <a href="#" className="text-green-600 hover:underline ml-1">{REGISTRATION_LABELS.PRIVACY_LINK}</a>.
               </span>
             </label>
           </div>
@@ -344,7 +341,7 @@ export function PatientRegistrationForm({ token, inviteData }: PatientRegistrati
             disabled={isSubmitting}
             className="w-full py-3 text-lg"
           >
-            {isSubmitting ? 'Submitting Registration...' : 'Complete Registration'}
+            {isSubmitting ? REGISTRATION_LABELS.SUBMITTING : REGISTRATION_LABELS.SUBMIT_BUTTON}
           </Button>
         </form>
 

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { adminService, type DashboardStats } from '@/lib/services/adminService';
+import { logger } from '@/lib/utils/logger';
 
 interface StatCardProps {
   title: string;
@@ -109,7 +110,7 @@ export function DashboardStats() {
       }
     } catch (error) {
       setError('Failed to load statistics');
-      console.error('Error loading stats:', error);
+      logger.error('Error loading stats', error);
     } finally {
       setIsLoading(false);
     }

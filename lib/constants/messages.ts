@@ -27,6 +27,8 @@ export const SUCCESS_MESSAGES = {
   LOGOUT_SUCCESS: 'You have been logged out successfully',
   PROFILE_UPDATED: 'Profile updated successfully',
   PASSWORD_CHANGED: 'Password changed successfully',
+  REGISTRATION_SUCCESS: 'Registration successful! Please wait for admin approval.',
+  REGISTRATION_SUCCESS_PATIENT: 'Registration successful! You can now log in.',
 } as const;
 
 export const INFO_MESSAGES = {
@@ -34,4 +36,189 @@ export const INFO_MESSAGES = {
   PROCESSING: 'Processing your request...',
   SAVING: 'Saving changes...',
   REDIRECTING: 'Redirecting...',
+  SIGN_IN: 'Sign In',
+} as const;
+
+// Validation Error Messages
+export const VALIDATION_MESSAGES = {
+  REQUIRED_FIRST_NAME: 'Please enter your first name',
+  REQUIRED_LAST_NAME: 'Please enter your last name',
+  REQUIRED_EMAIL: 'Please enter your email address',
+  INVALID_EMAIL: 'Please enter a valid email address',
+  REQUIRED_PHONE: 'Please enter your phone number',
+  INVALID_PHONE: 'Please enter a valid phone number (10-15 digits)',
+  REQUIRED_MEDICAL_LICENSE: 'Please enter your medical license number',
+  REQUIRED_QUALIFICATION: 'Please select your Siddha qualification',
+  REQUIRED_PASSWORD: 'Please create a password',
+  REQUIRED_CONFIRM_PASSWORD: 'Please confirm your password',
+  PASSWORD_MISMATCH: 'Passwords do not match',
+  REQUIRED_TERMS: 'Please accept the terms and conditions to continue',
+  PASSWORD_MIN_LENGTH: (min: number) => `Password must be at least ${min} characters long`,
+} as const;
+
+// Registration Form Labels
+export const REGISTRATION_LABELS = {
+  DOCTOR_TITLE: 'Doctor Registration',
+  DOCTOR_SUBTITLE: 'Join our Siddha Ayurveda network',
+  SUBMIT_BUTTON: 'Complete Registration',
+  SUBMITTING: 'Submitting Registration...',
+  ALREADY_HAVE_ACCOUNT: 'Already have an account?',
+  SIGN_IN_LINK: 'Sign in here',
+  SELECT_GENDER: 'Select Gender',
+  SELECT_QUALIFICATION: 'Select Qualification',
+  PASSWORD_REQUIREMENTS: 'Password must be at least 8 characters long and include letters and numbers.',
+  TERMS_TEXT: 'I agree to the',
+  TERMS_LINK: 'Terms and Conditions',
+  PRIVACY_LINK: 'Privacy Policy',
+  TERMS_CONFIRMATION: 'I confirm that all information provided is accurate and I have the right to practice medicine.',
+} as const;
+
+// Form Labels
+export const FORM_LABELS = {
+  EMAIL_ADDRESS: 'Email Address',
+  PASSWORD: 'Password',
+  FIRST_NAME: 'First Name',
+  LAST_NAME: 'Last Name',
+  PHONE_NUMBER: 'Phone Number',
+  DATE_OF_BIRTH: 'Date of Birth',
+  GENDER: 'Gender',
+  CONFIRM_PASSWORD: 'Confirm Password',
+  ADDRESS: 'Address',
+  CITY: 'City',
+  STATE: 'State',
+  PIN_CODE: 'PIN Code',
+  EMERGENCY_CONTACT_NAME: 'Emergency Contact Name',
+  EMERGENCY_CONTACT_PHONE: 'Emergency Contact Phone',
+  MEDICAL_LICENSE_NUMBER: 'Medical License Number',
+  SPECIALIZATION: 'Specialization',
+  YEARS_OF_EXPERIENCE: 'Years of Experience',
+  SIDDHA_QUALIFICATION: 'Siddha Qualification',
+  CLINIC_NAME: 'Clinic/Hospital Name',
+  CLINIC_PHONE: 'Clinic Phone Number',
+  CLINIC_ADDRESS: 'Clinic Address',
+} as const;
+
+// Form Placeholders
+export const FORM_PLACEHOLDERS = {
+  EMAIL: 'admin@siddhasavor.com',
+  EMAIL_DOCTOR: 'doctor@example.com',
+  EMAIL_PATIENT: 'your.email@example.com',
+  PASSWORD: 'Enter your password',
+  PASSWORD_CREATE: 'Create a strong password',
+  PASSWORD_CONFIRM: 'Confirm your password',
+  FIRST_NAME: 'Enter your first name',
+  LAST_NAME: 'Enter your last name',
+  PHONE: '+91 9876543210',
+  ADDRESS: 'Enter your address',
+  CITY: 'e.g., Chennai, Mumbai, Bangalore',
+  CITY_CLINIC: 'e.g., Chennai, Coimbatore',
+  STATE: 'e.g., Tamil Nadu, Maharashtra',
+  PIN_CODE: 'e.g., 600001',
+  EMERGENCY_CONTACT_NAME: 'Enter emergency contact name',
+  EMERGENCY_CONTACT_PHONE: 'Enter emergency contact phone',
+  MEDICAL_LICENSE: 'e.g., BSMS/12345/2020',
+  SPECIALIZATION: 'e.g., Siddha Medicine, Panchakosha Chikitsa',
+  EXPERIENCE: 'Years in Siddha practice',
+  CLINIC_NAME: 'e.g., Siddha Wellness Center, Ayush Clinic',
+  CLINIC_PHONE: 'e.g., +91 9876543210',
+  CLINIC_ADDRESS: 'Enter complete clinic address',
+  RECIPIENT_EMAIL: 'doctor@example.com',
+  RECIPIENT_NAME: 'Dr. John Smith',
+} as const;
+
+// Empty State Messages
+export const EMPTY_STATE = {
+  NOT_PROVIDED: 'Not provided',
+  NOT_SPECIFIED: 'Not specified',
+  YEARS: 'years',
+} as const;
+
+// Qualification Display Mapping
+export const QUALIFICATION_LABELS: Record<string, string> = {
+  'BACHELORS': 'Bachelor\'s (BSMS)',
+  'MASTERS': 'Master\'s (MD/MS/M.Phil)',
+} as const;
+
+// SMTP Settings Labels & Placeholders
+export const SMTP_LABELS = {
+  HOST: 'SMTP Host (Gmail Pre-configured)',
+  PORT: 'Port (587 - Free Gmail)',
+  GMAIL_ADDRESS: 'Gmail Address',
+  GMAIL_APP_PASSWORD: 'Gmail App Password',
+  FROM_EMAIL: 'From Email (Same as Gmail)',
+  FROM_NAME: 'From Name',
+  TEST_EMAIL: 'Test Email Address',
+  GENERATE_APP_PASSWORD: '🔑 Generate Gmail App Password',
+} as const;
+
+export const SMTP_PLACEHOLDERS = {
+  HOST: 'smtp.gmail.com',
+  PORT: '587',
+  GMAIL_ADDRESS: 'your-email@gmail.com',
+  APP_PASSWORD: '16-character app password',
+  FROM_EMAIL: 'your-email@gmail.com',
+  FROM_NAME: 'Siddha Savor',
+  TEST_EMAIL: 'Enter email to test (e.g., your-email@gmail.com)',
+} as const;
+
+export const SMTP_HELP_TEXT = {
+  HOST: 'Gmail is recommended for free usage',
+  PORT: 'Port 587 works with free Gmail accounts',
+  GMAIL_ADDRESS: 'Your Gmail address',
+  FROM_EMAIL: 'Must match your Gmail address',
+  TEST_CONNECTION_STEP: 'Test Connection: Click "Test Connection" button',
+  ENABLE_SENDING_STEP: 'Enable Sending: Check "Enable email sending"',
+} as const;
+
+export const SMTP_BUTTONS = {
+  TEST_CONNECTION: '🔍 Test Connection',
+  TESTING: 'Testing...',
+  SAVE_CONFIG: '💾 Save Configuration',
+  SAVING: 'Saving...',
+  SEND_TEST_EMAIL: '📤 Send Test Email',
+  SENDING: 'Sending...',
+} as const;
+
+// Invite Generator Buttons
+export const INVITE_BUTTONS = {
+  SEND_EMAIL: '📧 Send Invitation Email',
+  SENDING_EMAIL: 'Sending Email...',
+} as const;
+
+// Dashboard Stats Titles
+export const STAT_TITLES = {
+  TOTAL_DOCTORS: 'Total Doctors',
+  TOTAL_PATIENTS: 'Total Patients',
+  CURED_PATIENTS: 'Cured Patients',
+  PENDING_APPROVALS: 'Pending Approvals',
+  TODAY_APPOINTMENTS: "Today's Appointments",
+  PENDING_REVIEWS: 'Pending Reviews',
+  COMPLETED_TODAY: 'Completed Today',
+  THIS_WEEK_PATIENTS: 'This Week Patients',
+  MONTHLY_REVENUE: 'Monthly Revenue',
+} as const;
+
+// Role Selector Labels
+export const ROLE_LABELS = {
+  DOCTOR: 'Doctor',
+  DOCTOR_DESCRIPTION: 'Medical Professional',
+  PATIENT: 'Patient',
+  PATIENT_DESCRIPTION: 'Healthcare Recipient',
+} as const;
+
+// Error Messages
+export const ERROR_PAGE_MESSAGES = {
+  DEFAULT_TITLE: "Oops! Something went wrong",
+  DEFAULT_MESSAGE: "We're having trouble connecting to our servers. Please check your connection and try again.",
+  TRY_AGAIN: 'Try Again',
+  RETRYING: 'Retrying...',
+  APPLICATION_ERROR_TITLE: 'Application Error',
+  APPLICATION_ERROR_MESSAGE: 'Something went wrong in the application. Please try refreshing the page.',
+} as const;
+
+// Doctor Approvals Empty States
+export const DOCTOR_APPROVALS_EMPTY = {
+  ADJUST_SEARCH: 'Try adjusting your search or filter criteria',
+  NO_APPLICATIONS: 'Doctor applications will appear here once submitted',
+  FAILED_LOAD_DOCTORS: 'Failed to load doctors',
 } as const;

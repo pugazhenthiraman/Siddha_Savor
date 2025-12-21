@@ -37,6 +37,7 @@ class SMTPService {
     CONFIG: '/api/admin/smtp/config',
     TEST: '/api/admin/smtp/test',
     SEND: '/api/admin/smtp/send',
+    TEST_SEND: '/api/admin/smtp/test-send',
     VERIFY_2FA: '/api/admin/smtp/verify-2fa',
   } as const;
 
@@ -109,6 +110,22 @@ class SMTPService {
       );
     } catch (error) {
       logger.error('Failed to verify 2FA status', error, { email });
+      throw error;
+    }
+  }
+
+  /**
+   * Send test email to specified address
+   */
+  async sendTestEmail(testEmail: string): Promise<ApiResponse<{ message: string }>> {
+    try {
+      logger.info('Sending test email', { testEmail });
+      return await apiClient.post<{ message: string }>(
+        this.ENDPOINTS.TEST_SEND,
+        { testEmail }
+      );
+    } catch (error) {
+      logger.error('Failed to send test email', error, { testEmail });
       throw error;
     }
   }

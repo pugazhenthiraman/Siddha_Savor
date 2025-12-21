@@ -62,6 +62,15 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
           },
         });
 
+        // Map qualification value to readable label
+        const qualificationLabels: Record<string, string> = {
+          'BACHELORS': 'Bachelor\'s (BSMS)',
+          'MASTERS': 'Master\'s (MD/MS/M.Phil)'
+        };
+        const qualificationLabel = professionalInfo.qualification 
+          ? (qualificationLabels[professionalInfo.qualification] || professionalInfo.qualification)
+          : 'Not specified';
+
         const emailHtml = `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
             <div style="text-align: center; margin-bottom: 30px;">
@@ -79,7 +88,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
                 <h3 style="color: #374151; margin: 0 0 15px 0;">Your Account Details:</h3>
                 <p><strong>Doctor ID:</strong> ${doctorUID}</p>
                 <p><strong>Email:</strong> ${doctor.email}</p>
-                <p><strong>Specialization:</strong> ${professionalInfo.specialization}</p>
+                <p><strong>Qualification:</strong> ${qualificationLabel}</p>
                 <p><strong>Status:</strong> <span style="color: #10b981;">APPROVED</span></p>
               </div>
               

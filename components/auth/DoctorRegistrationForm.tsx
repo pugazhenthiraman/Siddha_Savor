@@ -7,10 +7,15 @@ import { Input } from '@/components/ui/Input';
 import { Alert } from '@/components/ui/Alert';
 import { useToast } from '@/lib/hooks/useToast';
 import { Toast } from '@/components/ui/Toast';
+import { DOCTOR_VALIDATION, GENDER_OPTIONS, SIDDHA_QUALIFICATIONS, DOCTOR_FORM_SECTIONS } from '@/lib/constants/doctor';
+import { authService } from '@/lib/services/auth';
+import { InviteData } from '@/lib/types';
+import { ERROR_MESSAGES, SUCCESS_MESSAGES, FORM_LABELS, FORM_PLACEHOLDERS, VALIDATION_MESSAGES, REGISTRATION_LABELS } from '@/lib/constants/messages';
+import { logger } from '@/lib/utils/logger';
 
 interface DoctorRegistrationFormProps {
   token: string;
-  inviteData: any;
+  inviteData: InviteData;
 }
 
 export function DoctorRegistrationForm({ token, inviteData }: DoctorRegistrationFormProps) {
@@ -28,7 +33,6 @@ export function DoctorRegistrationForm({ token, inviteData }: DoctorRegistration
     
     // Professional Information
     medicalLicense: '',
-    specialization: '',
     experience: '',
     qualification: '',
     
@@ -48,80 +52,78 @@ export function DoctorRegistrationForm({ token, inviteData }: DoctorRegistration
     termsAccepted: false,
   });
 
-  const handleInputChange = (field: string, value: any) => {
+  const handleInputChange = (field: string, value: string | boolean) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
   const validateForm = () => {
     // Personal Information
     if (!formData.firstName.trim()) {
-      error('Please enter your first name');
+      error(VALIDATION_MESSAGES.REQUIRED_FIRST_NAME);
       return false;
     }
     
     if (!formData.lastName.trim()) {
-      error('Please enter your last name');
+      error(VALIDATION_MESSAGES.REQUIRED_LAST_NAME);
       return false;
     }
     
     if (!formData.email.trim()) {
-      error('Please enter your email address');
+      error(VALIDATION_MESSAGES.REQUIRED_EMAIL);
       return false;
     }
     
     // Email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(formData.email)) {
-      error('Please enter a valid email address');
+    if (!DOCTOR_VALIDATION.EMAIL_REGEX.test(formData.email)) {
+      error(VALIDATION_MESSAGES.INVALID_EMAIL);
       return false;
     }
     
     if (!formData.phone.trim()) {
-      error('Please enter your phone number');
+      error(VALIDATION_MESSAGES.REQUIRED_PHONE);
       return false;
     }
     
     // Mobile number validation
-    const phoneRegex = /^[+]?[0-9]{10,15}$/;
-    if (!phoneRegex.test(formData.phone.replace(/\s/g, ''))) {
-      error('Please enter a valid phone number (10-15 digits)');
+    if (!DOCTOR_VALIDATION.PHONE_REGEX.test(formData.phone.replace(/\s/g, ''))) {
+      error(VALIDATION_MESSAGES.INVALID_PHONE);
       return false;
     }
     
     // Professional Information
     if (!formData.medicalLicense.trim()) {
-      error('Please enter your medical license number');
+      error(VALIDATION_MESSAGES.REQUIRED_MEDICAL_LICENSE);
       return false;
     }
     
-    if (!formData.specialization.trim()) {
-      error('Please enter your specialization');
+    if (!formData.qualification.trim()) {
+      error(VALIDATION_MESSAGES.REQUIRED_QUALIFICATION);
       return false;
     }
     
     // Password validation
     if (!formData.password) {
-      error('Please create a password');
+      error(VALIDATION_MESSAGES.REQUIRED_PASSWORD);
       return false;
     }
     
-    if (formData.password.length < 8) {
-      error('Password must be at least 8 characters long');
+    if (formData.password.length < DOCTOR_VALIDATION.PASSWORD_MIN_LENGTH) {
+      error(VALIDATION_MESSAGES.PASSWORD_MIN_LENGTH(DOCTOR_VALIDATION.PASSWORD_MIN_LENGTH));
       return false;
     }
     
     if (!formData.confirmPassword) {
-      error('Please confirm your password');
+      error(VALIDATION_MESSAGES.REQUIRED_CONFIRM_PASSWORD);
       return false;
     }
     
     if (formData.password !== formData.confirmPassword) {
-      error('Passwords do not match');
+      error(VALIDATION_MESSAGES.PASSWORD_MISMATCH);
       return false;
     }
     
     if (!formData.termsAccepted) {
-      error('Please accept the terms and conditions to continue');
+      error(VALIDATION_MESSAGES.REQUIRED_TERMS);
       return false;
     }
     
@@ -136,27 +138,19 @@ export function DoctorRegistrationForm({ token, inviteData }: DoctorRegistration
     try {
       setIsSubmitting(true);
       
-      const response = await fetch('/api/auth/register-doctor', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          token,
-          ...formData
-        })
-      });
+      const response = await authService.registerDoctor(token, formData);
       
-      const result = await response.json();
-      
-      if (result.success) {
-        success('Registration successful! Please wait for admin approval.');
+      if (response.success) {
+        success(SUCCESS_MESSAGES.REGISTRATION_SUCCESS || 'Registration successful! Please wait for admin approval.');
         setTimeout(() => {
           router.push('/login?registered=true');
         }, 2000);
       } else {
-        error(result.error || 'Registration failed. Please try again.');
+        error(response.error || ERROR_MESSAGES.SOMETHING_WENT_WRONG);
       }
     } catch (err) {
-      error('Registration failed. Please check your connection and try again.');
+      logger.error('Doctor registration failed', err);
+      error(ERROR_MESSAGES.NETWORK_ERROR);
     } finally {
       setIsSubmitting(false);
     }
@@ -178,8 +172,8 @@ export function DoctorRegistrationForm({ token, inviteData }: DoctorRegistration
           <div className="w-12 h-12 sm:w-16 sm:h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <span className="text-xl sm:text-2xl">👨‍⚕️</span>
           </div>
-          <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Doctor Registration</h2>
-          <p className="text-gray-600 mt-2 text-sm sm:text-base">Join our Siddha Ayurveda network</p>
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-900">{REGISTRATION_LABELS.DOCTOR_TITLE}</h2>
+          <p className="text-gray-600 mt-2 text-sm sm:text-base">{REGISTRATION_LABELS.DOCTOR_SUBTITLE}</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6 lg:space-y-8">
@@ -187,48 +181,48 @@ export function DoctorRegistrationForm({ token, inviteData }: DoctorRegistration
           <div>
             <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-4 flex items-center">
               <span className="w-5 h-5 sm:w-6 sm:h-6 bg-green-100 rounded-full flex items-center justify-center text-green-600 text-xs sm:text-sm font-bold mr-2 sm:mr-3">1</span>
-              Personal Information
+              {DOCTOR_FORM_SECTIONS.PERSONAL}
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">First Name *</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{FORM_LABELS.FIRST_NAME} *</label>
                 <Input
                   value={formData.firstName}
                   onChange={(e) => handleInputChange('firstName', e.target.value)}
-                  placeholder="Enter your first name"
+                  placeholder={FORM_PLACEHOLDERS.FIRST_NAME}
                   disabled={isSubmitting}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Last Name *</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{FORM_LABELS.LAST_NAME} *</label>
                 <Input
                   value={formData.lastName}
                   onChange={(e) => handleInputChange('lastName', e.target.value)}
-                  placeholder="Enter your last name"
+                  placeholder={FORM_PLACEHOLDERS.LAST_NAME}
                   disabled={isSubmitting}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Email Address *</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{FORM_LABELS.EMAIL_ADDRESS} *</label>
                 <Input
                   type="email"
                   value={formData.email}
                   onChange={(e) => handleInputChange('email', e.target.value)}
-                  placeholder="doctor@example.com"
+                  placeholder={FORM_PLACEHOLDERS.EMAIL_DOCTOR}
                   disabled={isSubmitting}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number *</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{FORM_LABELS.PHONE_NUMBER} *</label>
                 <Input
                   value={formData.phone}
                   onChange={(e) => handleInputChange('phone', e.target.value)}
-                  placeholder="+91 9876543210"
+                  placeholder={FORM_PLACEHOLDERS.PHONE}
                   disabled={isSubmitting}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Date of Birth</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{FORM_LABELS.DATE_OF_BIRTH}</label>
                 <Input
                   type="date"
                   value={formData.dateOfBirth}
@@ -237,17 +231,22 @@ export function DoctorRegistrationForm({ token, inviteData }: DoctorRegistration
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Gender</label>
+                <label htmlFor="gender" className="block text-sm font-medium text-gray-700 mb-2">{FORM_LABELS.GENDER}</label>
                 <select
+                  id="gender"
+                  title="Select gender"
+                  aria-label="Select gender"
                   value={formData.gender}
                   onChange={(e) => handleInputChange('gender', e.target.value)}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent disabled:bg-gray-50 disabled:cursor-not-allowed transition-all duration-200"
                   disabled={isSubmitting}
                 >
-                  <option value="" className="text-gray-500">Select Gender</option>
-                  <option value="Male" className="text-gray-900">Male</option>
-                  <option value="Female" className="text-gray-900">Female</option>
-                  <option value="Other" className="text-gray-900">Other</option>
+                  <option value="" className="text-gray-500">{REGISTRATION_LABELS.SELECT_GENDER}</option>
+                  {GENDER_OPTIONS.map((gender) => (
+                    <option key={gender.value} value={gender.value} className="text-gray-900">
+                      {gender.label}
+                    </option>
+                  ))}
                 </select>
               </div>
             </div>
@@ -257,43 +256,45 @@ export function DoctorRegistrationForm({ token, inviteData }: DoctorRegistration
           <div>
             <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
               <span className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center text-green-600 text-sm font-bold mr-3">2</span>
-              Professional Information
+              {DOCTOR_FORM_SECTIONS.PROFESSIONAL}
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Medical License Number *</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{FORM_LABELS.MEDICAL_LICENSE_NUMBER} *</label>
                 <Input
                   value={formData.medicalLicense}
                   onChange={(e) => handleInputChange('medicalLicense', e.target.value)}
-                  placeholder="e.g., BSMS/12345/2020"
+                  placeholder={FORM_PLACEHOLDERS.MEDICAL_LICENSE}
                   disabled={isSubmitting}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Specialization *</label>
-                <Input
-                  value={formData.specialization}
-                  onChange={(e) => handleInputChange('specialization', e.target.value)}
-                  placeholder="e.g., Siddha Medicine, Panchakosha Chikitsa"
+                <label htmlFor="qualification" className="block text-sm font-medium text-gray-700 mb-2">{FORM_LABELS.SIDDHA_QUALIFICATION} *</label>
+                <select
+                  id="qualification"
+                  title="Select Siddha qualification"
+                  aria-label="Select Siddha qualification"
+                  value={formData.qualification}
+                  onChange={(e) => handleInputChange('qualification', e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent disabled:bg-gray-50 disabled:cursor-not-allowed transition-all duration-200"
                   disabled={isSubmitting}
-                />
+                  required
+                >
+                  <option value="" className="text-gray-500">{REGISTRATION_LABELS.SELECT_QUALIFICATION}</option>
+                  {SIDDHA_QUALIFICATIONS.map((qual) => (
+                    <option key={qual.value} value={qual.value} className="text-gray-900">
+                      {qual.label}
+                    </option>
+                  ))}
+                </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Years of Experience</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{FORM_LABELS.YEARS_OF_EXPERIENCE}</label>
                 <Input
                   type="number"
                   value={formData.experience}
                   onChange={(e) => handleInputChange('experience', e.target.value)}
-                  placeholder="Years in Siddha practice"
-                  disabled={isSubmitting}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Qualification</label>
-                <Input
-                  value={formData.qualification}
-                  onChange={(e) => handleInputChange('qualification', e.target.value)}
-                  placeholder="e.g., BSMS, MD(Siddha), PhD"
+                  placeholder={FORM_PLACEHOLDERS.EXPERIENCE}
                   disabled={isSubmitting}
                 />
               </div>
@@ -304,60 +305,60 @@ export function DoctorRegistrationForm({ token, inviteData }: DoctorRegistration
           <div>
             <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
               <span className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center text-green-600 text-sm font-bold mr-3">3</span>
-              Practice Information
+              {DOCTOR_FORM_SECTIONS.PRACTICE}
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Clinic/Hospital Name</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{FORM_LABELS.CLINIC_NAME}</label>
                 <Input
                   value={formData.clinicName}
                   onChange={(e) => handleInputChange('clinicName', e.target.value)}
-                  placeholder="e.g., Siddha Wellness Center, Ayush Clinic"
+                  placeholder={FORM_PLACEHOLDERS.CLINIC_NAME}
                   disabled={isSubmitting}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Clinic Phone Number</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{FORM_LABELS.CLINIC_PHONE}</label>
                 <Input
                   value={formData.clinicNumber}
                   onChange={(e) => handleInputChange('clinicNumber', e.target.value)}
-                  placeholder="e.g., +91 9876543210"
+                  placeholder={FORM_PLACEHOLDERS.CLINIC_PHONE}
                   disabled={isSubmitting}
                 />
               </div>
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-2">Clinic Address</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{FORM_LABELS.CLINIC_ADDRESS}</label>
                 <Input
                   value={formData.clinicAddress}
                   onChange={(e) => handleInputChange('clinicAddress', e.target.value)}
-                  placeholder="Enter complete clinic address"
+                  placeholder={FORM_PLACEHOLDERS.CLINIC_ADDRESS}
                   disabled={isSubmitting}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">City</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{FORM_LABELS.CITY}</label>
                 <Input
                   value={formData.city}
                   onChange={(e) => handleInputChange('city', e.target.value)}
-                  placeholder="e.g., Chennai, Coimbatore"
+                  placeholder={FORM_PLACEHOLDERS.CITY_CLINIC}
                   disabled={isSubmitting}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">State</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{FORM_LABELS.STATE}</label>
                 <Input
                   value={formData.state}
                   onChange={(e) => handleInputChange('state', e.target.value)}
-                  placeholder="e.g., Tamil Nadu, Kerala"
+                  placeholder={FORM_PLACEHOLDERS.STATE}
                   disabled={isSubmitting}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">PIN Code</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{FORM_LABELS.PIN_CODE}</label>
                 <Input
                   value={formData.pincode}
                   onChange={(e) => handleInputChange('pincode', e.target.value)}
-                  placeholder="e.g., 600001"
+                  placeholder={FORM_PLACEHOLDERS.PIN_CODE}
                   disabled={isSubmitting}
                 />
               </div>
@@ -368,32 +369,32 @@ export function DoctorRegistrationForm({ token, inviteData }: DoctorRegistration
           <div>
             <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
               <span className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center text-green-600 text-sm font-bold mr-3">4</span>
-              Account Security
+              {DOCTOR_FORM_SECTIONS.SECURITY}
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Password *</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{FORM_LABELS.PASSWORD} *</label>
                 <Input
                   type="password"
                   value={formData.password}
                   onChange={(e) => handleInputChange('password', e.target.value)}
-                  placeholder="Create a strong password"
+                  placeholder={FORM_PLACEHOLDERS.PASSWORD_CREATE}
                   disabled={isSubmitting}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Confirm Password *</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{FORM_LABELS.CONFIRM_PASSWORD} *</label>
                 <Input
                   type="password"
                   value={formData.confirmPassword}
                   onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
-                  placeholder="Confirm your password"
+                  placeholder={FORM_PLACEHOLDERS.PASSWORD_CONFIRM}
                   disabled={isSubmitting}
                 />
               </div>
             </div>
             <p className="text-xs text-gray-500 mt-2">
-              Password must be at least 8 characters long and include letters and numbers.
+              {REGISTRATION_LABELS.PASSWORD_REQUIREMENTS}
             </p>
           </div>
 
@@ -408,9 +409,9 @@ export function DoctorRegistrationForm({ token, inviteData }: DoctorRegistration
                 disabled={isSubmitting}
               />
               <span className="text-sm text-gray-700">
-                I agree to the <a href="#" className="text-green-600 hover:underline">Terms and Conditions</a> and 
-                <a href="#" className="text-green-600 hover:underline ml-1">Privacy Policy</a>. 
-                I confirm that all information provided is accurate and I have the right to practice medicine.
+                {REGISTRATION_LABELS.TERMS_TEXT} <a href="#" className="text-green-600 hover:underline">{REGISTRATION_LABELS.TERMS_LINK}</a> and 
+                <a href="#" className="text-green-600 hover:underline ml-1">{REGISTRATION_LABELS.PRIVACY_LINK}</a>. 
+                {REGISTRATION_LABELS.TERMS_CONFIRMATION}
               </span>
             </label>
           </div>
@@ -422,14 +423,14 @@ export function DoctorRegistrationForm({ token, inviteData }: DoctorRegistration
             disabled={isSubmitting}
             className="w-full py-3 text-lg"
           >
-            {isSubmitting ? 'Submitting Registration...' : 'Complete Registration'}
+            {isSubmitting ? REGISTRATION_LABELS.SUBMITTING : REGISTRATION_LABELS.SUBMIT_BUTTON}
           </Button>
         </form>
 
         <div className="mt-6 text-center">
           <p className="text-sm text-gray-600">
-            Already have an account? 
-            <a href="/login" className="text-green-600 hover:underline ml-1">Sign in here</a>
+            {REGISTRATION_LABELS.ALREADY_HAVE_ACCOUNT} 
+            <a href="/login" className="text-green-600 hover:underline ml-1">{REGISTRATION_LABELS.SIGN_IN_LINK}</a>
           </p>
         </div>
       </div>

@@ -1,5 +1,7 @@
 'use client';
 
+import { DOCTOR_TABS, DOCTOR_LABELS } from '@/lib/constants/doctor';
+
 interface DoctorNavigationProps {
   activeTab: string;
   onTabChange: (tab: string) => void;
@@ -17,13 +19,7 @@ export function DoctorNavigation({
   doctorUID,
   onLogout 
 }: DoctorNavigationProps) {
-  const tabs = [
-    { id: 'overview', label: 'Overview', icon: '📊' },
-    { id: 'patients', label: 'Patients', icon: '👥' },
-    { id: 'appointments', label: 'Appointments', icon: '📅' },
-    { id: 'prescriptions', label: 'Prescriptions', icon: '💊' },
-    { id: 'profile', label: 'Profile', icon: '👤' },
-  ];
+  const tabs = DOCTOR_TABS;
 
   return (
     <>
@@ -38,15 +34,15 @@ export function DoctorNavigation({
                 </span>
               </div>
               <div>
-                <h1 className="text-xl font-bold text-gray-900">Dr. {doctorName}</h1>
-                <p className="text-sm text-gray-500">{doctorUID} • Siddha Savor</p>
+                <h1 className="text-xl font-bold text-gray-900">{DOCTOR_LABELS.DASHBOARD_TITLE.replace('{name}', doctorName)}</h1>
+                <p className="text-sm text-gray-500">{DOCTOR_LABELS.DASHBOARD_SUBTITLE.replace('{doctorUID}', doctorUID)}</p>
               </div>
             </div>
             
             <div className="hidden lg:flex items-center space-x-6">
               <div className="text-right">
                 <p className="text-sm font-medium text-gray-900">{userEmail}</p>
-                <p className="text-xs text-gray-500">Healthcare Professional</p>
+                <p className="text-xs text-gray-500">{DOCTOR_LABELS.USER_ROLE}</p>
               </div>
               <button
                 onClick={onLogout}

@@ -4,6 +4,9 @@ import { useState } from 'react';
 import { useInviteLink, type InviteRole } from '@/lib/hooks/useInviteLink';
 import { useToast } from '@/lib/hooks/useToast';
 import { smtpService } from '@/lib/services/smtpService';
+import { logger } from '@/lib/utils/logger';
+import { INVITE_GENERATOR } from '@/lib/constants/admin';
+import { FORM_PLACEHOLDERS } from '@/lib/constants/messages';
 import { RoleSelector } from './RoleSelector';
 import { GeneratedLinkDisplay } from './GeneratedLinkDisplay';
 import { Button } from './Button';
@@ -19,8 +22,8 @@ interface InviteGeneratorProps {
 }
 
 export function InviteGenerator({
-  title = "Generate Invite Link",
-  description = "Create secure registration links for new users",
+  title = INVITE_GENERATOR.TITLE,
+  description = INVITE_GENERATOR.DESCRIPTION,
   defaultRole = 'DOCTOR',
   onLinkGenerated,
   className = ""
@@ -115,7 +118,7 @@ export function InviteGenerator({
           return;
         }
       } catch (error) {
-        console.warn('2FA verification failed, continuing with email send:', error);
+        logger.warn('2FA verification failed, continuing with email send', error);
       }
 
       await sendEmailAfterValidation();
@@ -176,7 +179,7 @@ export function InviteGenerator({
           size="lg"
           disabled={isSendingEmail}
         >
-          {isGenerating ? 'Generating...' : `Generate ${selectedRole} Invite Link`}
+          {isGenerating ? INVITE_GENERATOR.GENERATING : INVITE_GENERATOR.GENERATE_BUTTON(selectedRole)}
         </Button>
 
         {generatedLink && (
@@ -195,7 +198,7 @@ export function InviteGenerator({
                   onClick={() => setIsEmailMode(!isEmailMode)}
                   className="text-sm text-green-600 hover:text-green-700 font-medium"
                 >
-                  {isEmailMode ? 'Cancel' : '📧 Send Email'}
+                  {isEmailMode ? INVITE_GENERATOR.CANCEL : INVITE_GENERATOR.SEND_EMAIL}
                 </button>
               </div>
 
@@ -204,26 +207,26 @@ export function InviteGenerator({
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Recipient Email *
+                        {INVITE_GENERATOR.EMAIL_LABEL} *
                       </label>
                       <Input
                         type="email"
                         value={recipientEmail}
                         onChange={(e) => setRecipientEmail(e.target.value)}
-                        placeholder="doctor@example.com"
+                        placeholder={FORM_PLACEHOLDERS.RECIPIENT_EMAIL}
                         disabled={isSendingEmail}
                       />
                     </div>
                     
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Recipient Name (Optional)
+                        {INVITE_GENERATOR.NAME_LABEL} (Optional)
                       </label>
                       <Input
                         type="text"
                         value={recipientName}
                         onChange={(e) => setRecipientName(e.target.value)}
-                        placeholder="Dr. John Smith"
+                        placeholder={FORM_PLACEHOLDERS.RECIPIENT_NAME}
                         disabled={isSendingEmail}
                       />
                     </div>

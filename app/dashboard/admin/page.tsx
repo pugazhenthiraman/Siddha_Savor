@@ -175,7 +175,7 @@ export default function AdminDashboard() {
                 description="Generate secure invite links for new users to join the platform"
                 defaultRole="DOCTOR"
                 onLinkGenerated={(link, role) => {
-                  console.log(`Generated ${role} invite:`, link);
+                  logger.info(`Generated ${role} invite`, { link });
                 }}
               />
             </div>

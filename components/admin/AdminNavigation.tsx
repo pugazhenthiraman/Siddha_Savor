@@ -1,13 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-
-interface Tab {
-  id: string;
-  name: string;
-  icon: string;
-  mobileIcon?: string;
-}
+import { ADMIN_TABS, ADMIN_LABELS } from '@/lib/constants/admin';
 
 interface AdminNavigationProps {
   activeTab: string;
@@ -19,14 +13,7 @@ interface AdminNavigationProps {
 export function AdminNavigation({ activeTab, onTabChange, userEmail, onLogout }: AdminNavigationProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  const tabs: Tab[] = [
-    { id: 'overview', name: 'Overview', icon: '📊', mobileIcon: '📊' },
-    { id: 'approvals', name: 'Approvals', icon: '👨‍⚕️', mobileIcon: '✅' },
-    { id: 'invites', name: 'Invites', icon: '🔗', mobileIcon: '🔗' },
-    { id: 'doctors', name: 'Doctors', icon: '👥', mobileIcon: '👥' },
-    { id: 'patients', name: 'Patients', icon: '🏥', mobileIcon: '🏥' },
-    { id: 'settings', name: 'Settings', icon: '⚙️', mobileIcon: '⚙️' },
-  ];
+  const tabs = ADMIN_TABS;
 
   return (
     <>
@@ -40,8 +27,8 @@ export function AdminNavigation({ activeTab, onTabChange, userEmail, onLogout }:
                 <span className="text-white font-bold text-lg lg:text-xl">S</span>
               </div>
               <div className="hidden sm:block">
-                <h1 className="text-xl lg:text-2xl font-bold text-gray-900">Admin Dashboard</h1>
-                <p className="text-xs lg:text-sm text-gray-500">Healthcare Management</p>
+                <h1 className="text-xl lg:text-2xl font-bold text-gray-900">{ADMIN_LABELS.DASHBOARD_TITLE}</h1>
+                <p className="text-xs lg:text-sm text-gray-500">{ADMIN_LABELS.DASHBOARD_SUBTITLE}</p>
               </div>
             </div>
 
@@ -59,7 +46,7 @@ export function AdminNavigation({ activeTab, onTabChange, userEmail, onLogout }:
             <div className="hidden lg:flex items-center space-x-4">
               <div className="text-right">
                 <p className="text-sm font-medium text-gray-900 truncate max-w-48">{userEmail}</p>
-                <p className="text-xs text-green-800 bg-green-100 px-2 py-1 rounded-full">Admin</p>
+                <p className="text-xs text-green-800 bg-green-100 px-2 py-1 rounded-full">{ADMIN_LABELS.USER_ROLE}</p>
               </div>
               <button
                 onClick={onLogout}
@@ -76,7 +63,7 @@ export function AdminNavigation({ activeTab, onTabChange, userEmail, onLogout }:
           <div className="lg:hidden bg-white border-t border-gray-200 shadow-lg">
             <div className="px-4 py-3 border-b border-gray-200">
               <p className="text-sm font-medium text-gray-900 truncate">{userEmail}</p>
-              <p className="text-xs text-green-800">Administrator</p>
+              <p className="text-xs text-green-800">{ADMIN_LABELS.USER_ROLE_MOBILE}</p>
             </div>
             <div className="py-2">
               {tabs.map((tab) => (

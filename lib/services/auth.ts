@@ -1,5 +1,6 @@
 import { apiClient, ApiResponse } from './api';
 import { ERROR_MESSAGES, SUCCESS_MESSAGES } from '@/lib/constants/messages';
+import { logger } from '@/lib/utils/logger';
 
 // Auth Types
 export interface LoginCredentials {
@@ -26,6 +27,8 @@ class AuthService {
     LOGOUT: '/api/auth/logout',
     REFRESH: '/api/auth/refresh',
     PROFILE: '/api/auth/profile',
+    REGISTER_DOCTOR: '/api/auth/register-doctor',
+    REGISTER_PATIENT: '/api/auth/register-patient',
   } as const;
 
   private readonly STORAGE_KEYS = {
@@ -84,7 +87,7 @@ class AuthService {
       await apiClient.post(this.ENDPOINTS.LOGOUT);
     } catch (error) {
       // Continue with logout even if API call fails
-      console.warn('Logout API call failed:', error);
+      logger.warn('Logout API call failed', error);
     } finally {
       // Always clear local storage
       this.clearStorage();
@@ -99,7 +102,7 @@ class AuthService {
       const userData = localStorage.getItem(this.STORAGE_KEYS.USER);
       return userData ? JSON.parse(userData) : null;
     } catch (error) {
-      console.error('Error parsing user data:', error);
+      logger.error('Error parsing user data', error);
       this.clearStorage();
       return null;
     }
@@ -134,7 +137,7 @@ class AuthService {
     try {
       localStorage.setItem(this.STORAGE_KEYS.USER, JSON.stringify(user));
     } catch (error) {
-      console.error('Error storing user data:', error);
+      logger.error('Error storing user data', error);
     }
   }
 
@@ -145,7 +148,7 @@ class AuthService {
     try {
       localStorage.setItem(this.STORAGE_KEYS.TOKEN, token);
     } catch (error) {
-      console.error('Error storing token:', error);
+      logger.error('Error storing token', error);
     }
   }
 
@@ -156,7 +159,7 @@ class AuthService {
     try {
       return localStorage.getItem(this.STORAGE_KEYS.TOKEN);
     } catch (error) {
-      console.error('Error getting token:', error);
+      logger.error('Error getting token', error);
       return null;
     }
   }
@@ -169,7 +172,7 @@ class AuthService {
       localStorage.removeItem(this.STORAGE_KEYS.USER);
       localStorage.removeItem(this.STORAGE_KEYS.TOKEN);
     } catch (error) {
-      console.error('Error clearing storage:', error);
+      logger.error('Error clearing storage', error);
     }
   }
 
@@ -187,6 +190,38 @@ class AuthService {
     // e.g., token expiry, user status, etc.
     
     return true;
+  }
+
+  /**
+   * Register doctor with invite token
+   */
+  async registerDoctor(token: string, formData: Record<string, unknown>): Promise<ApiResponse> {
+    try {
+      const response = await apiClient.post(
+        this.ENDPOINTS.REGISTER_DOCTOR,
+        { token, ...formData }
+      );
+      return response;
+    } catch (error) {
+      logger.error('Doctor registration failed', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Register patient with invite token
+   */
+  async registerPatient(token: string, formData: Record<string, unknown>): Promise<ApiResponse> {
+    try {
+      const response = await apiClient.post(
+        this.ENDPOINTS.REGISTER_PATIENT,
+        { token, ...formData }
+      );
+      return response;
+    } catch (error) {
+      logger.error('Patient registration failed', error);
+      throw error;
+    }
   }
 }
 

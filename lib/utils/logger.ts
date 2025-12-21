@@ -22,17 +22,40 @@ class Logger {
   }
 
   private writeLog(entry: LogEntry) {
-    const logString = `[${entry.timestamp}] ${entry.level.toUpperCase()}: ${entry.message}`;
-    
-    if (entry.context) {
-      console.log(logString, entry.context);
-    } else {
-      console.log(logString);
+    // In production, only log errors (not info/debug)
+    // In development, log everything
+    if (!this.isDevelopment && entry.level !== 'error') {
+      return; // Skip non-error logs in production
     }
 
-    // In production, you could send logs to external service
-    if (!this.isDevelopment) {
-      // Send to logging service (e.g., Sentry, LogRocket, etc.)
+    const logString = `[${entry.timestamp}] ${entry.level.toUpperCase()}: ${entry.message}`;
+    
+    // Use appropriate console method based on level
+    if (entry.level === 'error') {
+      if (entry.context) {
+        console.error(logString, entry.context);
+      } else {
+        console.error(logString);
+      }
+    } else if (entry.level === 'warn') {
+      if (entry.context) {
+        console.warn(logString, entry.context);
+      } else {
+        console.warn(logString);
+      }
+    } else {
+      // info/debug - only in development
+      if (entry.context) {
+        console.log(logString, entry.context);
+      } else {
+        console.log(logString);
+      }
+    }
+
+    // In production, send errors to external logging service
+    if (!this.isDevelopment && entry.level === 'error') {
+      // TODO: Send to logging service (e.g., Sentry, LogRocket, etc.)
+      // Example: Sentry.captureException(entry.error);
     }
   }
 

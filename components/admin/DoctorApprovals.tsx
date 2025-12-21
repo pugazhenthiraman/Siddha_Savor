@@ -6,6 +6,28 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { useToast } from '@/lib/hooks/useToast';
 import { Toast } from '@/components/ui/Toast';
+import { 
+  CONFIRMATION_MODAL_CONFIG, 
+  DOCTOR_STATUS, 
+  DOCTOR_STATUS_OPTIONS,
+  DOCTOR_FILTER_OPTIONS,
+  DOCTOR_FILTER_ALL,
+  getStatusBadgeClasses,
+  BUTTON_LABELS,
+  SUCCESS_MESSAGES,
+  ERROR_MESSAGES,
+  FORM_LABELS,
+  SECTION_TITLES,
+  EMPTY_STATE_MESSAGES,
+  ADMIN_ACTION_MESSAGES
+} from '@/lib/constants/admin';
+import { EMPTY_STATE, QUALIFICATION_LABELS, DOCTOR_APPROVALS_EMPTY } from '@/lib/constants/messages';
+
+// Helper function to get qualification display label
+const getQualificationLabel = (qualification?: string): string => {
+  if (!qualification) return EMPTY_STATE.NOT_SPECIFIED;
+  return QUALIFICATION_LABELS[qualification] || qualification;
+};
 
 interface ConfirmationModalProps {
   isOpen: boolean;
@@ -20,32 +42,11 @@ interface ConfirmationModalProps {
 function ConfirmationModal({ isOpen, type, doctorName, onConfirm, onCancel, isLoading, children }: ConfirmationModalProps) {
   if (!isOpen) return null;
 
+  const baseConfig = CONFIRMATION_MODAL_CONFIG[type];
   const config = {
-    approve: {
-      title: '✅ Confirm Approval',
-      message: `Are you sure you want to approve Dr. ${doctorName}?`,
-      description: 'This will send a welcome email and grant dashboard access.',
-      confirmText: 'Yes, Approve',
-      confirmClass: 'bg-green-600 hover:bg-green-700',
-      bgClass: 'bg-green-50 border-green-200'
-    },
-    reject: {
-      title: '❌ Confirm Rejection',
-      message: `Are you sure you want to reject Dr. ${doctorName}?`,
-      description: 'This will send a rejection email with your remarks.',
-      confirmText: 'Yes, Reject',
-      confirmClass: 'bg-red-600 hover:bg-red-700',
-      bgClass: 'bg-red-50 border-red-200'
-    },
-    revert: {
-      title: '🔄 Confirm Status Change',
-      message: `Change status for Dr. ${doctorName}?`,
-      description: 'This will update their status and send a notification email.',
-      confirmText: 'Yes, Change Status',
-      confirmClass: 'bg-blue-600 hover:bg-blue-700',
-      bgClass: 'bg-blue-50 border-blue-200'
-    }
-  }[type];
+    ...baseConfig,
+    message: baseConfig.message.replace('{name}', doctorName),
+  };
 
   return (
     <div 
@@ -72,7 +73,7 @@ function ConfirmationModal({ isOpen, type, doctorName, onConfirm, onCancel, isLo
               className="flex-1"
               disabled={isLoading}
             >
-              Cancel
+              {BUTTON_LABELS.CANCEL}
             </Button>
             <Button
               onClick={onConfirm}
@@ -168,14 +169,12 @@ function DoctorViewModal({ doctor, isOpen, onClose, onApprove, onReject, onRever
                   <h2 className="text-2xl font-bold text-gray-900">
                     Dr. {personalInfo.firstName} {personalInfo.lastName}
                   </h2>
-                  <p className="text-gray-600">{professionalInfo.specialization}</p>
+                  <p className="text-gray-600">
+                    {getQualificationLabel(professionalInfo.qualification)}
+                  </p>
                   <div className="flex items-center space-x-2 mt-1">
                     <p className="text-sm text-gray-500">{doctor.email}</p>
-                    <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                      doctor.status === 'PENDING' ? 'bg-yellow-100 text-yellow-800' :
-                      doctor.status === 'APPROVED' ? 'bg-green-100 text-green-800' :
-                      'bg-red-100 text-red-800'
-                    }`}>
+                    <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusBadgeClasses(doctor.status)}`}>
                       {doctor.status}
                     </span>
                   </div>
@@ -196,7 +195,7 @@ function DoctorViewModal({ doctor, isOpen, onClose, onApprove, onReject, onRever
             <div>
               <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
                 <span className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 text-sm font-bold mr-3">1</span>
-                Personal Information
+                {SECTION_TITLES.PERSONAL_INFORMATION}
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-50 rounded-lg p-4">
                 <div>
@@ -209,11 +208,11 @@ function DoctorViewModal({ doctor, isOpen, onClose, onApprove, onReject, onRever
                 </div>
                 <div>
                   <label className="text-sm font-medium text-gray-500">Phone</label>
-                  <p className="text-gray-900">{personalInfo.phone || 'Not provided'}</p>
+                  <p className="text-gray-900">{personalInfo.phone || EMPTY_STATE.NOT_PROVIDED}</p>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-gray-500">Date of Birth</label>
-                  <p className="text-gray-900">{personalInfo.dateOfBirth || 'Not provided'}</p>
+                  <p className="text-gray-900">{personalInfo.dateOfBirth || EMPTY_STATE.NOT_PROVIDED}</p>
                 </div>
               </div>
             </div>
@@ -222,24 +221,26 @@ function DoctorViewModal({ doctor, isOpen, onClose, onApprove, onReject, onRever
             <div>
               <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
                 <span className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center text-green-600 text-sm font-bold mr-3">2</span>
-                Professional Information
+                {SECTION_TITLES.PROFESSIONAL_INFORMATION}
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-50 rounded-lg p-4">
                 <div>
                   <label className="text-sm font-medium text-gray-500">Medical License</label>
-                  <p className="text-gray-900 font-mono">{professionalInfo.medicalLicense || 'Not provided'}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Specialization</label>
-                  <p className="text-gray-900">{professionalInfo.specialization || 'Not specified'}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Experience</label>
-                  <p className="text-gray-900">{professionalInfo.experience || 'Not specified'} years</p>
+                  <p className="text-gray-900 font-mono">{professionalInfo.medicalLicense || EMPTY_STATE.NOT_PROVIDED}</p>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-gray-500">Qualification</label>
-                  <p className="text-gray-900">{professionalInfo.qualification || 'Not provided'}</p>
+                  <p className="text-gray-900">
+                    {getQualificationLabel(professionalInfo.qualification)}
+                  </p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-500">Experience</label>
+                  <p className="text-gray-900">{professionalInfo.experience || EMPTY_STATE.NOT_SPECIFIED} {EMPTY_STATE.YEARS}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-500">Qualification</label>
+                  <p className="text-gray-900">{professionalInfo.qualification || EMPTY_STATE.NOT_PROVIDED}</p>
                 </div>
               </div>
             </div>
@@ -248,20 +249,20 @@ function DoctorViewModal({ doctor, isOpen, onClose, onApprove, onReject, onRever
             <div>
               <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
                 <span className="w-6 h-6 bg-purple-100 rounded-full flex items-center justify-center text-purple-600 text-sm font-bold mr-3">3</span>
-                Practice Information
+                {SECTION_TITLES.PRACTICE_INFORMATION}
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-50 rounded-lg p-4">
                 <div className="md:col-span-2">
                   <label className="text-sm font-medium text-gray-500">Clinic Name</label>
-                  <p className="text-gray-900">{practiceInfo.clinicName || 'Not provided'}</p>
+                  <p className="text-gray-900">{practiceInfo.clinicName || EMPTY_STATE.NOT_PROVIDED}</p>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-gray-500">Clinic Phone</label>
-                  <p className="text-gray-900">{practiceInfo.clinicNumber || 'Not provided'}</p>
+                  <p className="text-gray-900">{practiceInfo.clinicNumber || EMPTY_STATE.NOT_PROVIDED}</p>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-gray-500">City</label>
-                  <p className="text-gray-900">{practiceInfo.city || 'Not provided'}</p>
+                  <p className="text-gray-900">{practiceInfo.city || EMPTY_STATE.NOT_PROVIDED}</p>
                 </div>
               </div>
             </div>
@@ -269,7 +270,7 @@ function DoctorViewModal({ doctor, isOpen, onClose, onApprove, onReject, onRever
 
           {/* Actions */}
           <div className="bg-gray-50 px-6 py-4 border-t border-gray-200">
-            {doctor.status === 'PENDING' ? (
+            {doctor.status === DOCTOR_STATUS.PENDING ? (
               <div className="flex flex-col sm:flex-row gap-3">
                 <Button
                   onClick={handleApprove}
@@ -277,7 +278,7 @@ function DoctorViewModal({ doctor, isOpen, onClose, onApprove, onReject, onRever
                   isLoading={isLoading}
                   disabled={isLoading}
                 >
-                  ✅ Approve Doctor
+                  {BUTTON_LABELS.APPROVE_DOCTOR}
                 </Button>
                 <Button
                   onClick={handleReject}
@@ -285,46 +286,46 @@ function DoctorViewModal({ doctor, isOpen, onClose, onApprove, onReject, onRever
                   className="flex-1 border-red-300 text-red-600 hover:bg-red-50"
                   disabled={isLoading}
                 >
-                  ❌ Reject Application
+                  {BUTTON_LABELS.REJECT_APPLICATION}
                 </Button>
                 <Button onClick={onClose} variant="outline" className="sm:w-auto" disabled={isLoading}>
-                  Cancel
+                  {BUTTON_LABELS.CANCEL}
                 </Button>
               </div>
             ) : (
               <div className="flex flex-col sm:flex-row gap-3">
                 <Button
-                  onClick={() => handleRevert('PENDING')}
+                  onClick={() => handleRevert(DOCTOR_STATUS.PENDING)}
                   variant="outline"
                   className="flex-1 border-yellow-300 text-yellow-600 hover:bg-yellow-50"
-                  isLoading={isLoading && revertStatus === 'PENDING'}
+                  isLoading={isLoading && revertStatus === DOCTOR_STATUS.PENDING}
                   disabled={isLoading}
                 >
-                  🔄 Revert to Pending
+                  {BUTTON_LABELS.REVERT_TO_PENDING}
                 </Button>
-                {doctor.status === 'APPROVED' && (
+                {doctor.status === DOCTOR_STATUS.APPROVED && (
                   <Button
-                    onClick={() => handleRevert('REJECTED')}
+                    onClick={() => handleRevert(DOCTOR_STATUS.REJECTED)}
                     variant="outline"
                     className="flex-1 border-red-300 text-red-600 hover:bg-red-50"
-                    isLoading={isLoading && revertStatus === 'REJECTED'}
+                    isLoading={isLoading && revertStatus === DOCTOR_STATUS.REJECTED}
                     disabled={isLoading}
                   >
-                    ❌ Change to Rejected
+                    {BUTTON_LABELS.CHANGE_TO_REJECTED}
                   </Button>
                 )}
-                {doctor.status === 'REJECTED' && (
+                {doctor.status === DOCTOR_STATUS.REJECTED && (
                   <Button
-                    onClick={() => handleRevert('APPROVED')}
+                    onClick={() => handleRevert(DOCTOR_STATUS.APPROVED)}
                     className="flex-1 bg-green-600 hover:bg-green-700"
-                    isLoading={isLoading && revertStatus === 'APPROVED'}
+                    isLoading={isLoading && revertStatus === DOCTOR_STATUS.APPROVED}
                     disabled={isLoading}
                   >
-                    ✅ Change to Approved
+                    {BUTTON_LABELS.CHANGE_TO_APPROVED}
                   </Button>
                 )}
                 <Button onClick={onClose} variant="outline" className="sm:w-auto" disabled={isLoading}>
-                  Close
+                  {BUTTON_LABELS.CLOSE}
                 </Button>
               </div>
             )}
@@ -347,22 +348,22 @@ function DoctorViewModal({ doctor, isOpen, onClose, onApprove, onReject, onRever
         {showConfirmation === 'reject' && (
           <div className="mt-4">
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Reason for Rejection *
+              {FORM_LABELS.REASON_FOR_REJECTION}
             </label>
             <textarea
               value={rejectRemark}
               onChange={(e) => setRejectRemark(e.target.value)}
-              placeholder="Please provide a detailed reason for rejection..."
+              placeholder={FORM_LABELS.REJECTION_REASON_PLACEHOLDER}
               className="w-full px-3 py-2 border border-red-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent resize-none"
               rows={3}
               required
             />
             {!rejectRemark.trim() && (
-              <p className="text-xs text-red-600 mt-1">Rejection reason is required</p>
+              <p className="text-xs text-red-600 mt-1">{FORM_LABELS.REJECTION_REASON_REQUIRED}</p>
             )}
             {rejectRemark.trim() && (
               <div className="bg-gray-50 rounded-lg p-3 mt-3">
-                <p className="text-sm font-medium text-gray-700">Preview:</p>
+                <p className="text-sm font-medium text-gray-700">{FORM_LABELS.PREVIEW}</p>
                 <p className="text-sm text-gray-600 mt-1">{rejectRemark}</p>
               </div>
             )}
@@ -410,14 +411,12 @@ function DoctorCard({ doctor, onView, onQuickApprove, isLoading }: DoctorCardPro
                   Dr. {personalInfo.firstName} {personalInfo.lastName}
                 </h3>
                 <p className="text-sm text-gray-600">{doctor.email}</p>
-                <p className="text-sm text-green-600 font-medium">{professionalInfo.specialization}</p>
+                <p className="text-sm text-green-600 font-medium">
+                  {getQualificationLabel(professionalInfo.qualification)}
+                </p>
               </div>
             </div>
-            <span className={`px-3 py-1 text-sm font-medium rounded-full ${
-              doctor.status === 'PENDING' ? 'bg-yellow-100 text-yellow-800' :
-              doctor.status === 'APPROVED' ? 'bg-green-100 text-green-800' :
-              'bg-red-100 text-red-800'
-            }`}>
+            <span className={`px-3 py-1 text-sm font-medium rounded-full ${getStatusBadgeClasses(doctor.status)}`}>
               {doctor.status}
             </span>
           </div>
@@ -428,7 +427,7 @@ function DoctorCard({ doctor, onView, onQuickApprove, isLoading }: DoctorCardPro
           <div className="grid grid-cols-2 gap-4 mb-4">
             <div>
               <p className="text-xs font-medium text-gray-500">Experience</p>
-              <p className="text-sm text-gray-900">{professionalInfo.experience || 'Not specified'} years</p>
+              <p className="text-sm text-gray-900">{professionalInfo.experience || EMPTY_STATE.NOT_SPECIFIED} {EMPTY_STATE.YEARS}</p>
             </div>
             <div>
               <p className="text-xs font-medium text-gray-500">Applied</p>
@@ -438,16 +437,16 @@ function DoctorCard({ doctor, onView, onQuickApprove, isLoading }: DoctorCardPro
 
           {/* Actions */}
           <div className="flex gap-2">
-            <Button
-              onClick={() => onView(doctor)}
-              variant="outline"
-              size="sm"
-              className="flex-1"
-              disabled={isLoading}
-            >
-              👁️ View Details
-            </Button>
-            {doctor.status === 'PENDING' && (
+              <Button
+                onClick={() => onView(doctor)}
+                variant="outline"
+                size="sm"
+                className="flex-1"
+                disabled={isLoading}
+              >
+                {BUTTON_LABELS.VIEW_DETAILS}
+              </Button>
+            {doctor.status === DOCTOR_STATUS.PENDING && (
               <Button
                 onClick={handleQuickApprove}
                 size="sm"
@@ -455,7 +454,7 @@ function DoctorCard({ doctor, onView, onQuickApprove, isLoading }: DoctorCardPro
                 isLoading={isLoading}
                 disabled={isLoading}
               >
-                ✅ Quick Approve
+                {BUTTON_LABELS.QUICK_APPROVE}
               </Button>
             )}
           </div>
@@ -483,7 +482,7 @@ export function DoctorApprovals() {
   const [selectedDoctor, setSelectedDoctor] = useState<Doctor | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('ALL');
+  const [statusFilter, setStatusFilter] = useState(DOCTOR_FILTER_ALL);
 
   const { toasts, removeToast, success, error } = useToast();
 
@@ -503,7 +502,7 @@ export function DoctorApprovals() {
         setAllDoctors(response.data);
       }
     } catch (err) {
-      error('Failed to load doctors');
+      error(DOCTOR_APPROVALS_EMPTY.FAILED_LOAD_DOCTORS);
     } finally {
       setIsLoading(false);
     }
@@ -513,7 +512,7 @@ export function DoctorApprovals() {
     let filtered = allDoctors;
 
     // Status filter
-    if (statusFilter !== 'ALL') {
+    if (statusFilter !== DOCTOR_FILTER_ALL) {
       filtered = filtered.filter(doctor => doctor.status === statusFilter);
     }
 
@@ -529,7 +528,7 @@ export function DoctorApprovals() {
           doctor.email.toLowerCase().includes(term) ||
           personalInfo.firstName?.toLowerCase().includes(term) ||
           personalInfo.lastName?.toLowerCase().includes(term) ||
-          professionalInfo.specialization?.toLowerCase().includes(term) ||
+          professionalInfo.qualification?.toLowerCase().includes(term) ||
           professionalInfo.medicalLicense?.toLowerCase().includes(term)
         );
       });
@@ -549,12 +548,12 @@ export function DoctorApprovals() {
       
       const response = await adminService.approveDoctor(doctorId);
       if (response.success) {
-        success('Doctor approved successfully! Welcome email sent.');
+        success(SUCCESS_MESSAGES.DOCTOR_APPROVED);
         await loadAllDoctors();
         setShowModal(false);
       }
     } catch (err) {
-      error('Failed to approve doctor');
+      error(ERROR_MESSAGES.APPROVE_DOCTOR_FAILED);
     } finally {
       setActionLoading(null);
     }
@@ -566,12 +565,12 @@ export function DoctorApprovals() {
       
       const response = await adminService.rejectDoctor(doctorId, remark);
       if (response.success) {
-        success('Doctor application rejected. Notification email sent.');
+        success(SUCCESS_MESSAGES.DOCTOR_REJECTED);
         await loadAllDoctors();
         setShowModal(false);
       }
     } catch (err) {
-      error('Failed to reject doctor');
+      error(ERROR_MESSAGES.REJECT_DOCTOR_FAILED);
     } finally {
       setActionLoading(null);
     }
@@ -581,15 +580,15 @@ export function DoctorApprovals() {
     try {
       setActionLoading(doctorId);
       
-      const response = await adminService.revertDoctor(doctorId, newStatus, 'Status changed by admin');
+      const response = await adminService.revertDoctor(doctorId, newStatus, ADMIN_ACTION_MESSAGES.STATUS_CHANGED_BY_ADMIN);
       
       if (response.success) {
-        success(`Doctor status changed to ${newStatus}. Notification email sent.`);
+        success(SUCCESS_MESSAGES.DOCTOR_STATUS_CHANGED(newStatus));
         await loadAllDoctors();
         setShowModal(false);
       }
     } catch (err) {
-      error('Failed to change doctor status');
+      error(ERROR_MESSAGES.CHANGE_STATUS_FAILED);
     } finally {
       setActionLoading(null);
     }
@@ -645,7 +644,7 @@ export function DoctorApprovals() {
             <div className="flex-1">
               <Input
                 type="text"
-                placeholder="Search by name, email, specialization, or license..."
+                placeholder={FORM_LABELS.SEARCH_PLACEHOLDER}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full"
@@ -655,12 +654,14 @@ export function DoctorApprovals() {
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
+                aria-label="Filter by status"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
               >
-                <option value="ALL">All Status</option>
-                <option value="PENDING">Pending</option>
-                <option value="APPROVED">Approved</option>
-                <option value="REJECTED">Rejected</option>
+                {DOCTOR_FILTER_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
               </select>
             </div>
           </div>
@@ -673,12 +674,12 @@ export function DoctorApprovals() {
               <span className="text-4xl">🔍</span>
             </div>
             <h3 className="text-xl font-medium text-gray-900 mb-2">
-              {searchTerm || statusFilter !== 'ALL' ? 'No Results Found' : 'No Doctors Yet'}
+              {searchTerm || statusFilter !== DOCTOR_FILTER_ALL ? EMPTY_STATE_MESSAGES.NO_RESULTS : EMPTY_STATE_MESSAGES.NO_DOCTORS}
             </h3>
             <p className="text-gray-600">
-              {searchTerm || statusFilter !== 'ALL' 
-                ? 'Try adjusting your search or filter criteria'
-                : 'Doctor applications will appear here once submitted'
+              {searchTerm || statusFilter !== DOCTOR_FILTER_ALL 
+                ? DOCTOR_APPROVALS_EMPTY.ADJUST_SEARCH
+                : DOCTOR_APPROVALS_EMPTY.NO_APPLICATIONS
               }
             </p>
           </div>

@@ -6,6 +6,8 @@ import { smtpService, type SMTPConfig } from '@/lib/services/smtpService';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Alert } from '@/components/ui/Alert';
+import { ERROR_MESSAGES, SUCCESS_MESSAGES } from '@/lib/constants/messages';
+import { logger } from '@/lib/utils/logger';
 
 export function SMTPSettings() {
   const router = useRouter();
@@ -61,7 +63,7 @@ export function SMTPSettings() {
         setOriginalConfig(config);
       }
     } catch (error) {
-      console.error('Failed to load SMTP config:', error);
+      logger.error('Failed to load SMTP config', error);
       setOriginalConfig(config);
     } finally {
       setIsLoading(false);
@@ -117,28 +119,23 @@ export function SMTPSettings() {
       setIsSendingTest(true);
       setMessage(null);
       
-      const response = await fetch('/api/admin/smtp/test-send', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ testEmail })
-      });
+      const response = await smtpService.sendTestEmail(testEmail);
       
-      const result = await response.json();
-      
-      if (result.success) {
-        setMessage({ type: 'success', text: result.message });
+      if (response.success && response.data) {
+        setMessage({ type: 'success', text: response.data.message });
         setTestEmail(''); // Clear the input
       } else {
-        setMessage({ type: 'error', text: result.error });
+        setMessage({ type: 'error', text: response.error || ERROR_MESSAGES.SOMETHING_WENT_WRONG });
       }
     } catch (error) {
-      setMessage({ type: 'error', text: 'Failed to send test email' });
+      logger.error('Failed to send test email', error);
+      setMessage({ type: 'error', text: ERROR_MESSAGES.NETWORK_ERROR });
     } finally {
       setIsSendingTest(false);
     }
   };
 
-  const updateConfig = (field: keyof SMTPConfig, value: any) => {
+  const updateConfig = (field: keyof SMTPConfig, value: string | number | boolean) => {
     setConfig(prev => ({ ...prev, [field]: value }));
     if (message) setMessage(null);
   };

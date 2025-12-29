@@ -35,12 +35,45 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // Send email
-    const emailResult = await transporter.sendMail({
-      from: `${config.fromName} <${config.fromEmail}>`,
-      to: to,
-      subject: subject,
-      html: `
+    // Generate email HTML based on template
+    let emailHtml = '';
+    
+    if (template === 'password-reset') {
+      emailHtml = `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <div style="text-align: center; margin-bottom: 30px;">
+            <h1 style="color: #10b981; margin: 0;">Siddha Savor Healthcare</h1>
+            <p style="color: #666; margin: 5px 0 0 0;">Healthcare Management Platform</p>
+          </div>
+          
+          <h2 style="color: #333;">Password Reset Request</h2>
+          <p>Hello,</p>
+          
+          <p>You requested to reset your password. Use the verification code below:</p>
+          
+          <div style="text-align: center; margin: 30px 0;">
+            <div style="background: #f8f9fa; border: 2px solid #10b981; padding: 20px; border-radius: 8px; display: inline-block;">
+              <h1 style="margin: 0; color: #10b981; font-size: 32px; letter-spacing: 4px;">${data.code}</h1>
+            </div>
+          </div>
+          
+          <div style="background: #fff3cd; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #ffc107;">
+            <p style="margin: 0; color: #856404; font-size: 14px;">
+              <strong>⏰ Important:</strong> This code expires in 15 minutes for security reasons.
+            </p>
+          </div>
+          
+          <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
+          
+          <p style="color: #666; font-size: 12px; text-align: center;">
+            If you didn't request this password reset, please ignore this email.<br>
+            This email was sent from Siddha Savor Healthcare Management System.
+          </p>
+        </div>
+      `;
+    } else {
+      // Default invite template
+      emailHtml = `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
           <div style="text-align: center; margin-bottom: 30px;">
             <h1 style="color: #10b981; margin: 0;">Siddha Savor Healthcare</h1>
@@ -72,7 +105,15 @@ export async function POST(request: NextRequest) {
             This email was sent from Siddha Savor Healthcare Management System.
           </p>
         </div>
-      `
+      `;
+    }
+
+    // Send email
+    const emailResult = await transporter.sendMail({
+      from: `${config.fromName} <${config.fromEmail}>`,
+      to: to,
+      subject: subject,
+      html: emailHtml
     });
 
     logger.info('Email sent successfully', { to, messageId: emailResult.messageId });

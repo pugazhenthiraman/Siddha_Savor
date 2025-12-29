@@ -33,8 +33,17 @@ export default function AdminDashboard() {
   }, [router]);
 
   const handleLogout = async () => {
-    await authService.logout();
-    router.push('/login');
+    try {
+      await authService.logout();
+      // Show success message briefly before redirect
+      setTimeout(() => {
+        router.push('/login');
+      }, 500);
+    } catch (error) {
+      // Even if logout fails, redirect to login
+      console.warn('Logout error (ignored):', error);
+      router.push('/login');
+    }
   };
 
   if (isLoading) {

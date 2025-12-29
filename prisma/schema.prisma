@@ -1,5 +1,6 @@
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-3.0.x", "windows"]
 }
 
 datasource db {
@@ -56,6 +57,19 @@ model InviteLink {
   usedAt      DateTime?  // When the link was used for registration
   expiresAt   DateTime
   createdAt   DateTime   @default(now())
+}
+
+model PasswordReset {
+  id        Int      @id @default(autoincrement())
+  email     String
+  token     String   @unique
+  code      String   // 6-digit verification code
+  userRole  String   // "admin", "doctor", "patient"
+  data      Json     // Flexible JSON for additional fields
+  isUsed    Boolean  @default(false)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 enum DoctorStatus {

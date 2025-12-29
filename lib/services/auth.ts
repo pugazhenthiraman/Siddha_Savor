@@ -83,13 +83,19 @@ class AuthService {
    */
   async logout(): Promise<void> {
     try {
-      // Call logout endpoint if needed
-      await apiClient.post(this.ENDPOINTS.LOGOUT);
+      // Always clear local storage first
+      this.clearStorage();
+      
+      // Try to call logout endpoint (optional)
+      try {
+        await apiClient.post(this.ENDPOINTS.LOGOUT);
+      } catch (error) {
+        // Ignore logout API errors - user is already logged out locally
+        logger.warn('Logout API call failed (ignored)', error);
+      }
     } catch (error) {
-      // Continue with logout even if API call fails
-      logger.warn('Logout API call failed', error);
-    } finally {
-      // Always clear local storage
+      // Even if everything fails, ensure user is logged out locally
+      logger.error('Logout error', error);
       this.clearStorage();
     }
   }

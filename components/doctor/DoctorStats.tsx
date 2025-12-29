@@ -1,45 +1,99 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
+import { doctorService, DoctorStats as DoctorStatsData } from '@/lib/services/doctorService';
+import { authService } from '@/lib/services/auth';
+import { DOCTOR_STATS_LABELS } from '@/lib/constants/doctor';
+import { useToast } from '@/lib/hooks/useToast';
+import { logger } from '@/lib/utils/logger';
 
-interface DoctorStatsData {
-  totalPatients: number;
-  todayAppointments: number;
-  pendingReviews: number;
-  completedToday: number;
-  thisWeekPatients: number;
-  thisMonthRevenue: number;
-}
+// Memoized stat card component
+const StatCard = ({ stat, index }: { stat: any; index: number }) => (
+  <div className={`${stat.bgColor} rounded-xl shadow-lg p-6 border border-gray-100 hover:shadow-xl transition-all duration-300`}>
+    <div className="flex items-center justify-between mb-4">
+      <div className={`w-12 h-12 ${stat.color} rounded-lg flex items-center justify-center text-white text-xl`}>
+        {stat.icon}
+      </div>
+      <div className={`text-xs font-medium px-2 py-1 rounded-full ${
+        stat.changeType === 'positive' 
+          ? 'bg-green-100 text-green-600' 
+          : stat.changeType === 'warning'
+          ? 'bg-yellow-100 text-yellow-600'
+          : 'bg-red-100 text-red-600'
+      }`}>
+        {stat.change}
+      </div>
+    </div>
+    
+    <div>
+      <p className={`text-2xl font-bold ${stat.textColor} mb-1`}>
+        {typeof stat.value === 'number' && !stat.title.includes('Rating')
+          ? stat.value.toLocaleString() 
+          : stat.value
+        }
+      </p>
+      <p className="text-sm font-medium text-gray-600">{stat.title}</p>
+    </div>
+  </div>
+);
 
 export function DoctorStats() {
+  const { error } = useToast();
   const [stats, setStats] = useState<DoctorStatsData>({
     totalPatients: 0,
-    todayAppointments: 0,
-    pendingReviews: 0,
-    completedToday: 0,
-    thisWeekPatients: 0,
-    thisMonthRevenue: 0,
+    activePatients: 0,
+    curedPatients: 0,
+    pendingApprovals: 0,
+    thisMonthVisits: 0,
+    averageRating: 0,
   });
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Simulate API call - replace with actual API
-    setTimeout(() => {
-      setStats({
-        totalPatients: 24,
-        todayAppointments: 8,
-        pendingReviews: 3,
-        completedToday: 5,
-        thisWeekPatients: 12,
-        thisMonthRevenue: 15000,
-      });
-      setIsLoading(false);
-    }, 1000);
+    fetchStats();
   }, []);
 
-  const statCards = [
+  const fetchStats = async () => {
+    try {
+      const user = authService.getCurrentUser();
+      if (!user?.doctorUID) {
+        // Use mock data for doctors without UID
+        setStats({
+          totalPatients: 24,
+          activePatients: 18,
+          curedPatients: 6,
+          pendingApprovals: 3,
+          thisMonthVisits: 45,
+          averageRating: 4.8,
+        });
+        setIsLoading(false);
+        return;
+      }
+
+      const response = await doctorService.getStats(user.doctorUID);
+      if (response.success && response.data) {
+        setStats(response.data);
+      }
+    } catch (err) {
+      logger.error('Failed to fetch doctor stats', err);
+      error('Failed to load statistics');
+      // Use mock data on error
+      setStats({
+        totalPatients: 24,
+        activePatients: 18,
+        curedPatients: 6,
+        pendingApprovals: 3,
+        thisMonthVisits: 45,
+        averageRating: 4.8,
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const statCards = useMemo(() => [
     {
-      title: 'Total Patients',
+      title: DOCTOR_STATS_LABELS.TOTAL_PATIENTS,
       value: stats.totalPatients,
       change: '+12%',
       changeType: 'positive',
@@ -49,56 +103,56 @@ export function DoctorStats() {
       textColor: 'text-blue-600'
     },
     {
-      title: "Today's Appointments",
-      value: stats.todayAppointments,
-      change: '+3 from yesterday',
+      title: DOCTOR_STATS_LABELS.ACTIVE_TREATMENTS,
+      value: stats.activePatients,
+      change: '+5 this week',
       changeType: 'positive',
-      icon: '📅',
+      icon: '🩺',
       color: 'bg-green-500',
       bgColor: 'bg-green-50',
       textColor: 'text-green-600'
     },
     {
-      title: 'Pending Reviews',
-      value: stats.pendingReviews,
-      change: '-2 from yesterday',
-      changeType: 'negative',
-      icon: '📋',
+      title: DOCTOR_STATS_LABELS.CURED_PATIENTS,
+      value: stats.curedPatients,
+      change: '+2 this month',
+      changeType: 'positive',
+      icon: '✅',
+      color: 'bg-emerald-500',
+      bgColor: 'bg-emerald-50',
+      textColor: 'text-emerald-600'
+    },
+    {
+      title: DOCTOR_STATS_LABELS.PENDING_APPROVALS,
+      value: stats.pendingApprovals,
+      change: 'Needs attention',
+      changeType: 'warning',
+      icon: '⏳',
       color: 'bg-yellow-500',
       bgColor: 'bg-yellow-50',
       textColor: 'text-yellow-600'
     },
     {
-      title: 'Completed Today',
-      value: stats.completedToday,
-      change: '+1 from yesterday',
+      title: DOCTOR_STATS_LABELS.THIS_MONTH_VISITS,
+      value: stats.thisMonthVisits,
+      change: '+18%',
       changeType: 'positive',
-      icon: '✅',
+      icon: '📅',
       color: 'bg-purple-500',
       bgColor: 'bg-purple-50',
       textColor: 'text-purple-600'
     },
     {
-      title: 'This Week Patients',
-      value: stats.thisWeekPatients,
-      change: '+8%',
+      title: DOCTOR_STATS_LABELS.AVERAGE_RATING,
+      value: `${stats.averageRating.toFixed(1)}⭐`,
+      change: '+0.2 this month',
       changeType: 'positive',
-      icon: '📈',
+      icon: '⭐',
       color: 'bg-indigo-500',
       bgColor: 'bg-indigo-50',
       textColor: 'text-indigo-600'
     },
-    {
-      title: 'Monthly Revenue',
-      value: `₹${stats.thisMonthRevenue.toLocaleString()}`,
-      change: '+15%',
-      changeType: 'positive',
-      icon: '💰',
-      color: 'bg-emerald-500',
-      bgColor: 'bg-emerald-50',
-      textColor: 'text-emerald-600'
-    },
-  ];
+  ], [stats]);
 
   if (isLoading) {
     return (
@@ -122,30 +176,7 @@ export function DoctorStats() {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 lg:gap-6">
       {statCards.map((stat, index) => (
-        <div key={index} className={`${stat.bgColor} rounded-xl shadow-lg p-6 border border-gray-100 hover:shadow-xl transition-all duration-300`}>
-          <div className="flex items-center justify-between mb-4">
-            <div className={`w-12 h-12 ${stat.color} rounded-lg flex items-center justify-center text-white text-xl`}>
-              {stat.icon}
-            </div>
-            <div className={`text-xs font-medium px-2 py-1 rounded-full ${
-              stat.changeType === 'positive' 
-                ? 'bg-green-100 text-green-600' 
-                : 'bg-red-100 text-red-600'
-            }`}>
-              {stat.change}
-            </div>
-          </div>
-          
-          <div>
-            <p className={`text-2xl font-bold ${stat.textColor} mb-1`}>
-              {typeof stat.value === 'number' && stat.title !== 'Monthly Revenue' 
-                ? stat.value.toLocaleString() 
-                : stat.value
-              }
-            </p>
-            <p className="text-sm font-medium text-gray-600">{stat.title}</p>
-          </div>
-        </div>
+        <StatCard key={index} stat={stat} index={index} />
       ))}
     </div>
   );

@@ -1,34 +1,63 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Disable Turbopack for better stability with Node 18
+  // Enable optimizations
   experimental: {
     turbo: false,
+    optimizeCss: true,
+    optimizePackageImports: ['@/components', '@/lib'],
   },
   
   // Optimize for development
   webpack: (config, { dev, isServer }) => {
     if (dev) {
-      // Reduce memory usage in development
+      // Faster rebuilds
       config.watchOptions = {
-        poll: 1000,
-        aggregateTimeout: 300,
+        poll: false,
+        aggregateTimeout: 200,
       };
       
-      // Disable source maps for faster builds
-      config.devtool = false;
+      // Enable source maps only for debugging
+      config.devtool = 'eval-cheap-module-source-map';
+      
+      // Optimize chunks
+      config.optimization = {
+        ...config.optimization,
+        splitChunks: {
+          chunks: 'all',
+          cacheGroups: {
+            vendor: {
+              test: /[\\/]node_modules[\\/]/,
+              name: 'vendors',
+              chunks: 'all',
+            },
+          },
+        },
+      };
     }
     
     return config;
   },
   
-  // Reduce build cache issues
+  // Optimize pages
   onDemandEntries: {
-    maxInactiveAge: 25 * 1000,
-    pagesBufferLength: 2,
+    maxInactiveAge: 60 * 1000,
+    pagesBufferLength: 5,
   },
   
-  // Disable strict mode to prevent double renders
+  // Enable React optimizations
   reactStrictMode: false,
+  
+  // Optimize images and assets
+  images: {
+    domains: [],
+    formats: ['image/webp', 'image/avif'],
+  },
+  
+  // Compress responses
+  compress: true,
+  
+  // Optimize fonts
+  optimizeFonts: true,
 };
 
 module.exports = nextConfig;

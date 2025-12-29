@@ -1,21 +1,39 @@
 export const ERROR_MESSAGES = {
   // Validation Errors
   REQUIRED_FIELD: 'This field is required',
+  ALL_FIELDS_REQUIRED: 'All fields are required',
   INVALID_EMAIL: 'Please enter a valid email address',
   PASSWORD_MIN_LENGTH: 'Password must be at least 6 characters',
   PASSWORD_WEAK: 'Password must contain at least one uppercase letter, one lowercase letter, and one number',
   
-  // Authentication Errors
-  INVALID_CREDENTIALS: 'Invalid email or password',
+  // Authentication Errors - Generic
+  INVALID_CREDENTIALS: 'Email or password is incorrect',
+  INVALID_EMAIL_FORMAT: 'Please enter a valid email address',
+  INVALID_PASSWORD: 'Password is incorrect',
+  EMAIL_NOT_FOUND: 'No account found with this email address',
+  EMAIL_ALREADY_EXISTS: 'This email is already registered. Please use a different email or try logging in.',
   ACCOUNT_LOCKED: 'Account has been locked due to multiple failed attempts',
   ACCOUNT_DISABLED: 'Your account has been disabled. Please contact support',
   SESSION_EXPIRED: 'Your session has expired. Please login again',
   UNAUTHORIZED: 'You are not authorized to access this resource',
   
+  // Role-specific Authentication Errors
+  ADMIN_NOT_FOUND: 'Admin account not found with this email',
+  ADMIN_INVALID_PASSWORD: 'Incorrect admin password',
+  DOCTOR_NOT_FOUND: 'Doctor account not found with this email',
+  DOCTOR_INVALID_PASSWORD: 'Incorrect doctor password',
+  DOCTOR_PENDING_APPROVAL: 'Your doctor account is pending admin approval',
+  DOCTOR_REJECTED: 'Your doctor account has been rejected. Contact admin for details',
+  DOCTOR_NOT_APPROVED: 'Your doctor account is not approved yet',
+  PATIENT_NOT_FOUND: 'Patient account not found with this email',
+  PATIENT_INVALID_PASSWORD: 'Incorrect patient password',
+  PATIENT_NOT_REGISTERED: 'Please complete your registration first',
+  
   // Network Errors
   NETWORK_ERROR: 'Network error. Please check your connection and try again',
   SERVER_ERROR: 'Server error. Please try again later',
   TIMEOUT_ERROR: 'Request timeout. Please try again',
+  DATABASE_ERROR: 'Database connection error. Please try again later',
   
   // Generic Errors
   SOMETHING_WENT_WRONG: 'Something went wrong. Please try again',
@@ -24,6 +42,9 @@ export const ERROR_MESSAGES = {
 
 export const SUCCESS_MESSAGES = {
   LOGIN_SUCCESS: 'Login successful! Redirecting to dashboard...',
+  ADMIN_LOGIN_SUCCESS: 'Welcome back, Admin! Redirecting to admin dashboard...',
+  DOCTOR_LOGIN_SUCCESS: 'Welcome back, Doctor! Redirecting to your practice dashboard...',
+  PATIENT_LOGIN_SUCCESS: 'Welcome back! Redirecting to your patient portal...',
   LOGOUT_SUCCESS: 'You have been logged out successfully',
   PROFILE_UPDATED: 'Profile updated successfully',
   PASSWORD_CHANGED: 'Password changed successfully',
@@ -221,4 +242,40 @@ export const DOCTOR_APPROVALS_EMPTY = {
   ADJUST_SEARCH: 'Try adjusting your search or filter criteria',
   NO_APPLICATIONS: 'Doctor applications will appear here once submitted',
   FAILED_LOAD_DOCTORS: 'Failed to load doctors',
+} as const;
+// Login Help Messages
+export const LOGIN_HELP_MESSAGES = {
+  ADMIN_HELP: 'Use your admin email and password to access the admin dashboard',
+  DOCTOR_HELP: 'Use your registered doctor email and password. Account must be approved by admin',
+  PATIENT_HELP: 'Use your registered patient email and password to access your health records',
+  FORGOT_PASSWORD: 'Forgot your password? Contact support for assistance',
+  REGISTRATION_HELP: 'Don\'t have an account? You need an invitation link to register',
+} as const;
+
+// Role-specific Login Instructions
+export const ROLE_LOGIN_INSTRUCTIONS = {
+  ADMIN: {
+    TITLE: 'Admin Login',
+    DESCRIPTION: 'Access the administrative dashboard',
+    DEFAULT_EMAIL: 'admin@siddhasavor.com',
+    HELP_TEXT: 'Use your admin credentials to manage the platform',
+  },
+  DOCTOR: {
+    TITLE: 'Doctor Login', 
+    DESCRIPTION: 'Access your practice dashboard',
+    HELP_TEXT: 'Your account must be approved by admin before you can login',
+  },
+  PATIENT: {
+    TITLE: 'Patient Login',
+    DESCRIPTION: 'Access your health records and appointments',
+    HELP_TEXT: 'Login with the credentials you created during registration',
+  },
+} as const;
+
+// Authentication Status Messages
+export const AUTH_STATUS_MESSAGES = {
+  CHECKING_CREDENTIALS: 'Verifying your credentials...',
+  LOGGING_IN: 'Logging you in...',
+  REDIRECTING: 'Redirecting to your dashboard...',
+  INVALID_ATTEMPT: 'Login attempt failed. Please check your credentials.',
 } as const;

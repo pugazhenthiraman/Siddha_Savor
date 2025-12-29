@@ -71,10 +71,26 @@ class ApiClient {
       clearTimeout(timeoutId);
 
       let data;
+      const contentType = response.headers.get('content-type');
+      
       try {
-        data = await response.json();
+        if (contentType && contentType.includes('application/json')) {
+          data = await response.json();
+        } else {
+          // Handle non-JSON responses (like 404 pages)
+          const text = await response.text();
+          if (response.ok) {
+            data = { success: true, message: 'Operation completed' };
+          } else {
+            logger.error('Non-JSON error response', { url, status: response.status, text });
+            throw new ApiException(
+              response.status === 404 ? 'Endpoint not found' : 'Server error',
+              response.status
+            );
+          }
+        }
       } catch (parseError) {
-        logger.error('Failed to parse response JSON', parseError, { url, status: response.status });
+        logger.error('Failed to parse response', parseError, { url, status: response.status });
         throw new ApiException('Invalid response format', response.status);
       }
 

@@ -437,15 +437,15 @@ function DoctorCard({ doctor, onView, onQuickApprove, isLoading }: DoctorCardPro
 
           {/* Actions */}
           <div className="flex gap-2">
-              <Button
-                onClick={() => onView(doctor)}
-                variant="outline"
-                size="sm"
-                className="flex-1"
-                disabled={isLoading}
-              >
+            <Button
+              onClick={() => onView(doctor)}
+              variant="outline"
+              size="sm"
+              className="flex-1"
+              disabled={isLoading}
+            >
                 {BUTTON_LABELS.VIEW_DETAILS}
-              </Button>
+            </Button>
             {doctor.status === DOCTOR_STATUS.PENDING && (
               <Button
                 onClick={handleQuickApprove}

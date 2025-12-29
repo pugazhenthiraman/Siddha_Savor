@@ -5,6 +5,10 @@ import { useRouter } from 'next/navigation';
 import { authService } from '@/lib/services/auth';
 import { DoctorNavigation } from '@/components/doctor/DoctorNavigation';
 import { DoctorStats } from '@/components/doctor/DoctorStats';
+import { PatientManagement } from '@/components/doctor/PatientManagement';
+import { PatientInviteGenerator } from '@/components/doctor/PatientInviteGenerator';
+import { PatientDetails } from '@/components/doctor/PatientDetails';
+import { Patient } from '@/lib/types';
 
 interface User {
   id: number;
@@ -20,6 +24,7 @@ export default function DoctorDashboard() {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
+  const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
 
   useEffect(() => {
     const userData = authService.getCurrentUser();
@@ -32,8 +37,21 @@ export default function DoctorDashboard() {
   }, [router]);
 
   const handleLogout = async () => {
-    await authService.logout();
-    router.push('/login');
+    try {
+      await authService.logout();
+      // Show success message briefly before redirect
+      setTimeout(() => {
+        router.push('/login');
+      }, 500);
+    } catch (error) {
+      // Even if logout fails, redirect to login
+      console.warn('Logout error (ignored):', error);
+      router.push('/login');
+    }
+  };
+
+  const handlePatientSelect = (patient: Patient) => {
+    setSelectedPatient(patient);
   };
 
   if (isLoading) {
@@ -102,37 +120,37 @@ export default function DoctorDashboard() {
                     </div>
                     <div>
                       <h4 className="font-semibold text-gray-900">My Patients</h4>
-                      <p className="text-sm text-gray-600">View patient records</p>
+                      <p className="text-sm text-gray-600">Manage patient records</p>
+                    </div>
+                  </div>
+                </button>
+
+                <button 
+                  onClick={() => setActiveTab('patients')}
+                  className="bg-gradient-to-r from-green-50 to-green-100 rounded-xl p-6 hover:from-green-100 hover:to-green-200 transition-all transform hover:scale-105 text-left"
+                >
+                  <div className="flex items-center space-x-4">
+                    <div className="w-12 h-12 bg-green-500 rounded-lg flex items-center justify-center text-white text-xl">
+                      ➕
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-gray-900">Add Patient</h4>
+                      <p className="text-sm text-gray-600">Generate invite links</p>
                     </div>
                   </div>
                 </button>
 
                 <button 
                   onClick={() => setActiveTab('appointments')}
-                  className="bg-gradient-to-r from-green-50 to-green-100 rounded-xl p-6 hover:from-green-100 hover:to-green-200 transition-all transform hover:scale-105 text-left"
-                >
-                  <div className="flex items-center space-x-4">
-                    <div className="w-12 h-12 bg-green-500 rounded-lg flex items-center justify-center text-white text-xl">
-                      📅
-                    </div>
-                    <div>
-                      <h4 className="font-semibold text-gray-900">Appointments</h4>
-                      <p className="text-sm text-gray-600">Manage schedule</p>
-                    </div>
-                  </div>
-                </button>
-
-                <button 
-                  onClick={() => setActiveTab('prescriptions')}
                   className="bg-gradient-to-r from-purple-50 to-purple-100 rounded-xl p-6 hover:from-purple-100 hover:to-purple-200 transition-all transform hover:scale-105 text-left"
                 >
                   <div className="flex items-center space-x-4">
                     <div className="w-12 h-12 bg-purple-500 rounded-lg flex items-center justify-center text-white text-xl">
-                      💊
+                      📅
                     </div>
                     <div>
-                      <h4 className="font-semibold text-gray-900">Prescriptions</h4>
-                      <p className="text-sm text-gray-600">Create prescriptions</p>
+                      <h4 className="font-semibold text-gray-900">Appointments</h4>
+                      <p className="text-sm text-gray-600">Schedule visits</p>
                     </div>
                   </div>
                 </button>
@@ -159,9 +177,9 @@ export default function DoctorDashboard() {
               <h3 className="text-lg lg:text-xl font-semibold text-gray-900 mb-6">Recent Activity</h3>
               <div className="space-y-4">
                 {[
-                  { time: '10:30 AM', action: 'Consultation completed', patient: 'Patient #1234', type: 'success' },
-                  { time: '09:15 AM', action: 'Prescription issued', patient: 'Patient #1235', type: 'info' },
-                  { time: '08:45 AM', action: 'Appointment scheduled', patient: 'Patient #1236', type: 'warning' },
+                  { time: '10:30 AM', action: 'Patient consultation completed', patient: 'John Doe', type: 'success' },
+                  { time: '09:15 AM', action: 'Diagnosis updated', patient: 'Sarah Smith', type: 'info' },
+                  { time: '08:45 AM', action: 'New patient registered', patient: 'Mike Johnson', type: 'warning' },
                 ].map((activity, index) => (
                   <div key={index} className="flex items-center space-x-4 p-4 bg-gray-50 rounded-lg">
                     <div className={`w-3 h-3 rounded-full ${
@@ -180,8 +198,21 @@ export default function DoctorDashboard() {
           </div>
         )}
 
+        {/* Patients Tab */}
+        {activeTab === 'patients' && (
+          <div className="space-y-6 lg:space-y-8">
+            <div className="text-center lg:text-left">
+              <h2 className="text-xl lg:text-2xl font-bold text-gray-900 mb-2">Patient Management</h2>
+              <p className="text-sm lg:text-base text-gray-600">Manage your patients, approvals, and treatments.</p>
+            </div>
+            
+            <PatientInviteGenerator />
+            <PatientManagement onPatientSelect={handlePatientSelect} />
+          </div>
+        )}
+
         {/* Placeholder for other tabs */}
-        {activeTab !== 'overview' && (
+        {!['overview', 'patients'].includes(activeTab) && (
           <div className="text-center py-12 lg:py-16">
             <div className="w-16 h-16 lg:w-24 lg:h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <span className="text-2xl lg:text-4xl">🚧</span>
@@ -193,6 +224,14 @@ export default function DoctorDashboard() {
           </div>
         )}
       </main>
+
+      {/* Patient Details Modal */}
+      {selectedPatient && (
+        <PatientDetails
+          patient={selectedPatient}
+          onClose={() => setSelectedPatient(null)}
+        />
+      )}
     </div>
   );
 }

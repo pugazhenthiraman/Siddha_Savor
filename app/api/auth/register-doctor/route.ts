@@ -2,13 +2,15 @@ import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcrypt';
 import { query } from '@/lib/db';
 import { logger } from '@/lib/utils/logger';
+import { ERROR_MESSAGES } from '@/lib/constants/messages';
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const { token, ...formData } = body;
 
-    logger.info('Doctor registration attempt', { email: formData.email });
+    const normalizedEmail = formData.email.toLowerCase();
+    logger.info('Doctor registration attempt', { email: normalizedEmail });
 
     // Validate token first
     const tokenResult = await query(
@@ -25,16 +27,31 @@ export async function POST(request: NextRequest) {
 
     const inviteData = tokenResult.rows[0];
 
-    // Check if email already exists
-    const existingDoctor = await query(
-      'SELECT id FROM "Doctor" WHERE email = $1',
-      [formData.email]
+    // Check if email already exists in ANY table (Admin, Doctor, Patient)
+    
+    // Check Admin table
+    const existingAdmin = await query(
+      'SELECT id FROM "Admin" WHERE email = $1',
+      [normalizedEmail]
     );
 
-    if (existingDoctor.rows.length > 0) {
+    // Check Doctor table
+    const existingDoctor = await query(
+      'SELECT id FROM "Doctor" WHERE email = $1',
+      [normalizedEmail]
+    );
+
+    // Check Patient table
+    const existingPatient = await query(
+      'SELECT id FROM "Patient" WHERE email = $1',
+      [normalizedEmail]
+    );
+
+    if (existingAdmin.rows.length > 0 || existingDoctor.rows.length > 0 || existingPatient.rows.length > 0) {
+      logger.warn('Registration attempt with existing email', { email: normalizedEmail });
       return NextResponse.json({
         success: false,
-        error: 'A doctor with this email already exists'
+        error: ERROR_MESSAGES.EMAIL_ALREADY_EXISTS
       }, { status: 400 });
     }
 
@@ -46,7 +63,7 @@ export async function POST(request: NextRequest) {
       personalInfo: {
         firstName: formData.firstName,
         lastName: formData.lastName,
-        email: formData.email,
+        email: normalizedEmail,
         phone: formData.phone,
         dateOfBirth: formData.dateOfBirth,
         gender: formData.gender
@@ -78,7 +95,7 @@ export async function POST(request: NextRequest) {
        VALUES ($1, $2, $3, $4, $5, NOW(), NOW()) 
        RETURNING id, email, status`,
       [
-        formData.email,
+        normalizedEmail,
         hashedPassword,
         'PENDING',
         JSON.stringify(doctorFormData),

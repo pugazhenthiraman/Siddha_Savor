@@ -31,9 +31,10 @@ export class ApiException extends Error {
 // Base API Configuration
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '';
 const DEFAULT_TIMEOUT = 10000; // 10 seconds
+const REGISTRATION_TIMEOUT = 30000; // 30 seconds for registration endpoints
 
 // HTTP Client with error handling
-class ApiClient {
+export class ApiClient {
   private baseURL: string;
   private timeout: number;
 
@@ -96,10 +97,22 @@ class ApiClient {
 
       if (!response.ok) {
         const errorMessage = data.error || this.getErrorMessage(response.status);
-        logger.apiError(method, endpoint, new Error(errorMessage), { 
-          status: response.status, 
-          responseData: data 
-        });
+        
+        // Log validation errors (400) as warnings, server errors as errors
+        if (response.status >= 400 && response.status < 500) {
+          // Client errors (400-499) are usually validation/input errors - log as warning
+          logger.warn(`API ${method} ${endpoint} validation error`, { 
+            status: response.status, 
+            error: errorMessage,
+            responseData: data 
+          });
+        } else {
+          // Server errors (500+) are system errors - log as error
+          logger.apiError(method, endpoint, new Error(errorMessage), { 
+            status: response.status, 
+            responseData: data 
+          });
+        }
         
         throw new ApiException(errorMessage, response.status, data.code);
       }

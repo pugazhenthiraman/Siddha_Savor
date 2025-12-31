@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { logger } from '@/lib/utils/logger';
 import { withErrorHandler } from '@/lib/middleware/api-error-handler';
 
 export const POST = withErrorHandler(async (request: NextRequest) => {
@@ -41,13 +42,19 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
       }
     });
 
+    logger.info('Patient invite generated successfully', { 
+      doctorUID, 
+      token: inviteLink.token.substring(0, 8) + '...',
+      expiresAt: inviteLink.expiresAt 
+    });
+
     return NextResponse.json({
       success: true,
       data: inviteLink,
       message: 'Patient invite generated successfully',
     });
   } catch (error) {
-    console.error('Error generating patient invite:', error);
+    logger.error('Error generating patient invite', error, { doctorUID });
     return NextResponse.json(
       { success: false, error: 'Failed to generate patient invite' },
       { status: 500 }

@@ -123,6 +123,8 @@ export const BUTTON_LABELS = {
   REVERT_TO_PENDING: '🔄 Revert to Pending',
   CHANGE_TO_REJECTED: '❌ Change to Rejected',
   CHANGE_TO_APPROVED: '✅ Change to Approved',
+  REAPPROVE_DOCTOR: '✅ Reapprove Doctor',
+  DEACTIVATE_DOCTOR: 'Deactivate Doctor',
 } as const;
 
 // Success Messages

@@ -109,7 +109,7 @@ export default function DoctorDashboard() {
             {/* Quick Actions */}
             <div className="bg-white rounded-xl shadow-lg p-6 lg:p-8">
               <h3 className="text-lg lg:text-xl font-semibold text-gray-900 mb-6">Quick Actions</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:gap-6">
                 <button 
                   onClick={() => setActiveTab('patients')}
                   className="bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl p-6 hover:from-blue-100 hover:to-blue-200 transition-all transform hover:scale-105 text-left"
@@ -136,36 +136,6 @@ export default function DoctorDashboard() {
                     <div>
                       <h4 className="font-semibold text-gray-900">Add Patient</h4>
                       <p className="text-sm text-gray-600">Generate invite links</p>
-                    </div>
-                  </div>
-                </button>
-
-                <button 
-                  onClick={() => setActiveTab('appointments')}
-                  className="bg-gradient-to-r from-purple-50 to-purple-100 rounded-xl p-6 hover:from-purple-100 hover:to-purple-200 transition-all transform hover:scale-105 text-left"
-                >
-                  <div className="flex items-center space-x-4">
-                    <div className="w-12 h-12 bg-purple-500 rounded-lg flex items-center justify-center text-white text-xl">
-                      📅
-                    </div>
-                    <div>
-                      <h4 className="font-semibold text-gray-900">Appointments</h4>
-                      <p className="text-sm text-gray-600">Schedule visits</p>
-                    </div>
-                  </div>
-                </button>
-
-                <button 
-                  onClick={() => setActiveTab('profile')}
-                  className="bg-gradient-to-r from-indigo-50 to-indigo-100 rounded-xl p-6 hover:from-indigo-100 hover:to-indigo-200 transition-all transform hover:scale-105 text-left"
-                >
-                  <div className="flex items-center space-x-4">
-                    <div className="w-12 h-12 bg-indigo-500 rounded-lg flex items-center justify-center text-white text-xl">
-                      👤
-                    </div>
-                    <div>
-                      <h4 className="font-semibold text-gray-900">My Profile</h4>
-                      <p className="text-sm text-gray-600">Update information</p>
                     </div>
                   </div>
                 </button>
@@ -211,7 +181,7 @@ export default function DoctorDashboard() {
           </div>
         )}
 
-        {/* Placeholder for other tabs */}
+        {/* Other tabs will be implemented later */}
         {!['overview', 'patients'].includes(activeTab) && (
           <div className="text-center py-12 lg:py-16">
             <div className="w-16 h-16 lg:w-24 lg:h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">

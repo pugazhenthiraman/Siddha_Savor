@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcrypt';
-import { getAdminByEmail, query } from '@/lib/db';
+import { getAdminByEmail, query, retryQuery } from '@/lib/db';
 import { loginSchema } from '@/lib/validations/auth';
 import { ERROR_MESSAGES, SUCCESS_MESSAGES } from '@/lib/constants/messages';
 import { logger } from '@/lib/utils/logger';
@@ -41,11 +41,11 @@ export async function POST(request: NextRequest) {
     // Try to find user in all tables with specific error messages
     let user = null;
     let userRole = '';
-    let specificError = '';
+    let specificError: string = '';
     let doctorResult = null;
     let patientResult = null;
 
-    // Check Admin table
+    // Check Admin table (getAdminByEmail already uses query with retry)
     const admin = await getAdminByEmail(normalizedEmail);
     if (admin) {
       // Ensure password field exists and is not null/empty
@@ -69,9 +69,11 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Check Doctor table if not found in admin
+    // Check Doctor table if not found in admin (with retry)
     if (!user && !admin) {
-      doctorResult = await query('SELECT * FROM "Doctor" WHERE email = $1', [normalizedEmail]);
+      doctorResult = await retryQuery(async () => {
+        return await query('SELECT * FROM "Doctor" WHERE email = $1', [normalizedEmail]);
+      });
       const doctor = doctorResult.rows[0];
 
       if (doctor) {
@@ -97,10 +99,15 @@ export async function POST(request: NextRequest) {
             status: doctor.status 
           });
           
-      return NextResponse.json(
-        { 
-          success: false,
-              error: ERROR_MESSAGES.DOCTOR_REJECTED
+          const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+          const registerUrl = `${baseUrl}/register?role=doctor&email=${encodeURIComponent(normalizedEmail)}&rejected=true`;
+          
+          return NextResponse.json(
+            { 
+              success: false,
+              error: ERROR_MESSAGES.DOCTOR_REJECTED_REREGISTER,
+              redirect: registerUrl,
+              canReregister: true
             },
             { status: 403 }
           );
@@ -140,43 +147,91 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Check Patient table if not found in doctor
+    // Check Patient table if not found in doctor (with retry)
     if (!user && !admin && !specificError.includes('DOCTOR')) {
-      patientResult = await query('SELECT * FROM "Patient" WHERE email = $1', [normalizedEmail]);
+      patientResult = await retryQuery(async () => {
+        return await query('SELECT * FROM "Patient" WHERE email = $1', [normalizedEmail]);
+      });
       const patient = patientResult.rows[0];
 
-      if (patient && patient.password) {
-        // Ensure password is valid
-        if (patient.password.trim().length === 0) {
-          logger.error('Patient found but password is empty', { email: normalizedEmail, patientId: patient.id });
-          specificError = ERROR_MESSAGES.PATIENT_NOT_REGISTERED;
-        } else {
-          const isValidPassword = await bcrypt.compare(trimmedPassword, patient.password);
-          if (isValidPassword) {
-            user = patient;
-            userRole = 'patient';
-            logger.debug('Patient login successful', { 
-              email: normalizedEmail,
-              doctorUID: patient.doctorUID 
-            });
-          } else {
-            specificError = ERROR_MESSAGES.PATIENT_INVALID_PASSWORD;
-            logger.warn('Patient login failed - invalid password', { 
-              email: normalizedEmail,
-              hasPassword: !!patient.password,
-              passwordLength: patient.password?.length
-            });
-          }
+      if (patient) {
+        // Check if patient is rejected
+        const patientFormData = patient.formData as any;
+        const isRejected = patientFormData?.registrationInfo?.rejected === true ||
+          (patient.inviteToken && patient.inviteToken.startsWith('rejected_'));
+        
+        if (isRejected) {
+          logger.warn('Login attempt by rejected patient', { 
+            email: normalizedEmail,
+            doctorUID: patient.doctorUID 
+          });
+          
+          const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+          const registerUrl = `${baseUrl}/register?role=patient&email=${encodeURIComponent(normalizedEmail)}&rejected=true`;
+          
+          return NextResponse.json(
+            { 
+              success: false,
+              error: ERROR_MESSAGES.PATIENT_REJECTED_REREGISTER,
+              redirect: registerUrl,
+              canReregister: true
+            },
+            { status: 403 }
+          );
         }
-      } else if (patient) {
-        specificError = ERROR_MESSAGES.PATIENT_NOT_REGISTERED;
-        logger.warn('Patient found but no password', { email: normalizedEmail });
+        
+        // Check if patient is pending approval (has inviteToken - not yet approved by doctor)
+        if (patient.inviteToken !== null) {
+          logger.warn('Login attempt by pending patient', { 
+            email: normalizedEmail,
+            hasInviteToken: !!patient.inviteToken,
+            doctorUID: patient.doctorUID 
+          });
+          
+          return NextResponse.json(
+            { 
+              success: false,
+              error: ERROR_MESSAGES.PATIENT_PENDING_APPROVAL,
+              redirect: '/login?pending=true'
+            },
+            { status: 403 }
+          );
+        }
+
+        // Patient is approved (no inviteToken), now check password
+        if (patient.password) {
+          // Ensure password is valid
+          if (patient.password.trim().length === 0) {
+            logger.error('Patient found but password is empty', { email: normalizedEmail, patientId: patient.id });
+            specificError = ERROR_MESSAGES.PATIENT_NOT_REGISTERED;
+          } else {
+            const isValidPassword = await bcrypt.compare(trimmedPassword, patient.password);
+            if (isValidPassword) {
+              user = patient;
+              userRole = 'patient';
+              logger.debug('Patient login successful', { 
+                email: normalizedEmail,
+                doctorUID: patient.doctorUID 
+              });
+            } else {
+              specificError = ERROR_MESSAGES.PATIENT_INVALID_PASSWORD;
+              logger.warn('Patient login failed - invalid password', { 
+                email: normalizedEmail,
+                hasPassword: !!patient.password,
+                passwordLength: patient.password?.length
+              });
+            }
+          }
+        } else {
+          specificError = ERROR_MESSAGES.PATIENT_NOT_REGISTERED;
+          logger.warn('Patient found but no password', { email: normalizedEmail });
+        }
       }
     }
 
     // Handle login failure with specific error messages
     if (!user) {
-      let errorMessage = ERROR_MESSAGES.INVALID_CREDENTIALS;
+      let errorMessage: string = ERROR_MESSAGES.INVALID_CREDENTIALS;
       
       if (specificError) {
         errorMessage = specificError;

@@ -1,4 +1,4 @@
-import { apiClient, ApiResponse } from './api';
+import { apiClient, ApiResponse, ApiClient } from './api';
 import { logger } from '@/lib/utils/logger';
 
 export interface SMTPConfig {
@@ -73,7 +73,9 @@ class SMTPService {
   async testConnection(): Promise<ApiResponse<{ success: boolean; message: string }>> {
     try {
       logger.info('Testing SMTP connection');
-      return await apiClient.post<{ success: boolean; message: string }>(this.ENDPOINTS.TEST);
+      // Use longer timeout for SMTP test (60 seconds) - connection test can be slow
+      const emailClient = new ApiClient('', 60000);
+      return await emailClient.post<{ success: boolean; message: string }>(this.ENDPOINTS.TEST);
     } catch (error) {
       logger.error('SMTP connection test failed', error);
       throw error;
@@ -91,7 +93,9 @@ class SMTPService {
         expiresAt: emailRequest.data.expiresAt 
       });
       
-      return await apiClient.post<EmailResponse>(this.ENDPOINTS.SEND, emailRequest);
+      // Use longer timeout for email sending (60 seconds) - SMTP can be slow
+      const emailClient = new ApiClient('', 60000);
+      return await emailClient.post<EmailResponse>(this.ENDPOINTS.SEND, emailRequest);
     } catch (error) {
       logger.error('Failed to send invite email', error, { to: emailRequest.to });
       throw error;
@@ -104,7 +108,9 @@ class SMTPService {
   async verify2FA(email: string): Promise<ApiResponse<{ has2FA: boolean; provider?: string }>> {
     try {
       logger.info('Verifying 2FA status', { email });
-      return await apiClient.post<{ has2FA: boolean; provider?: string }>(
+      // Use longer timeout for 2FA verification (60 seconds) - can involve external API calls
+      const emailClient = new ApiClient('', 60000);
+      return await emailClient.post<{ has2FA: boolean; provider?: string }>(
         this.ENDPOINTS.VERIFY_2FA, 
         { email }
       );
@@ -120,7 +126,9 @@ class SMTPService {
   async sendTestEmail(testEmail: string): Promise<ApiResponse<{ message: string }>> {
     try {
       logger.info('Sending test email', { testEmail });
-      return await apiClient.post<{ message: string }>(
+      // Use longer timeout for email sending (60 seconds) - SMTP can be slow
+      const emailClient = new ApiClient('', 60000);
+      return await emailClient.post<{ message: string }>(
         this.ENDPOINTS.TEST_SEND,
         { testEmail }
       );

@@ -50,7 +50,7 @@ function ConfirmationModal({ isOpen, type, doctorName, onConfirm, onCancel, isLo
 
   return (
     <div 
-      className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[110] p-4"
+      className="fixed inset-0 bg-gray-500/30 backdrop-blur-sm flex items-center justify-center z-[110] p-4"
       onClick={onCancel}
     >
       <div 
@@ -97,9 +97,10 @@ interface DoctorViewModalProps {
   onReject: (doctorId: number, remark?: string) => void;
   onRevert: (doctorId: number, newStatus: string) => void;
   isLoading: boolean;
+  loadingAction: 'approve' | 'reject' | 'revert' | null;
 }
 
-function DoctorViewModal({ doctor, isOpen, onClose, onApprove, onReject, onRevert, isLoading }: DoctorViewModalProps) {
+function DoctorViewModal({ doctor, isOpen, onClose, onApprove, onReject, onRevert, isLoading, loadingAction }: DoctorViewModalProps) {
   const [rejectRemark, setRejectRemark] = useState('');
   const [showConfirmation, setShowConfirmation] = useState<'approve' | 'reject' | 'revert' | null>(null);
   const [revertStatus, setRevertStatus] = useState('');
@@ -123,6 +124,7 @@ function DoctorViewModal({ doctor, isOpen, onClose, onApprove, onReject, onRever
     setRevertStatus(newStatus);
     setShowConfirmation('revert');
   };
+
 
   const confirmAction = () => {
     if (showConfirmation === 'approve') {
@@ -151,7 +153,7 @@ function DoctorViewModal({ doctor, isOpen, onClose, onApprove, onReject, onRever
   return (
     <>
       <div 
-        className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[100] p-4"
+        className="fixed inset-0 bg-gray-500/30 backdrop-blur-sm flex items-center justify-center z-[100] p-4"
         onClick={onClose}
       >
         <div 
@@ -275,7 +277,7 @@ function DoctorViewModal({ doctor, isOpen, onClose, onApprove, onReject, onRever
                 <Button
                   onClick={handleApprove}
                   className="flex-1 bg-green-600 hover:bg-green-700"
-                  isLoading={isLoading}
+                  isLoading={loadingAction === 'approve'}
                   disabled={isLoading}
                 >
                   {BUTTON_LABELS.APPROVE_DOCTOR}
@@ -284,6 +286,7 @@ function DoctorViewModal({ doctor, isOpen, onClose, onApprove, onReject, onRever
                   onClick={handleReject}
                   variant="outline"
                   className="flex-1 border-red-300 text-red-600 hover:bg-red-50"
+                  isLoading={loadingAction === 'reject'}
                   disabled={isLoading}
                 >
                   {BUTTON_LABELS.REJECT_APPLICATION}
@@ -292,39 +295,25 @@ function DoctorViewModal({ doctor, isOpen, onClose, onApprove, onReject, onRever
                   {BUTTON_LABELS.CANCEL}
                 </Button>
               </div>
-            ) : (
+            ) : doctor.status === DOCTOR_STATUS.REJECTED ? (
+              // Rejected: Show Reapprove button (moves back to PENDING)
               <div className="flex flex-col sm:flex-row gap-3">
                 <Button
                   onClick={() => handleRevert(DOCTOR_STATUS.PENDING)}
-                  variant="outline"
-                  className="flex-1 border-yellow-300 text-yellow-600 hover:bg-yellow-50"
-                  isLoading={isLoading && revertStatus === DOCTOR_STATUS.PENDING}
+                  className="flex-1 bg-green-600 hover:bg-green-700"
+                  isLoading={loadingAction === 'revert'}
                   disabled={isLoading}
                 >
-                  {BUTTON_LABELS.REVERT_TO_PENDING}
+                  {BUTTON_LABELS.REAPPROVE_DOCTOR}
                 </Button>
-                {doctor.status === DOCTOR_STATUS.APPROVED && (
-                  <Button
-                    onClick={() => handleRevert(DOCTOR_STATUS.REJECTED)}
-                    variant="outline"
-                    className="flex-1 border-red-300 text-red-600 hover:bg-red-50"
-                    isLoading={isLoading && revertStatus === DOCTOR_STATUS.REJECTED}
-                    disabled={isLoading}
-                  >
-                    {BUTTON_LABELS.CHANGE_TO_REJECTED}
-                  </Button>
-                )}
-                {doctor.status === DOCTOR_STATUS.REJECTED && (
-                  <Button
-                    onClick={() => handleRevert(DOCTOR_STATUS.APPROVED)}
-                    className="flex-1 bg-green-600 hover:bg-green-700"
-                    isLoading={isLoading && revertStatus === DOCTOR_STATUS.APPROVED}
-                    disabled={isLoading}
-                  >
-                    {BUTTON_LABELS.CHANGE_TO_APPROVED}
-                  </Button>
-                )}
                 <Button onClick={onClose} variant="outline" className="sm:w-auto" disabled={isLoading}>
+                  {BUTTON_LABELS.CLOSE}
+                </Button>
+              </div>
+            ) : (
+              // Approved: Only show Close button (no actions allowed)
+              <div className="flex justify-end">
+                <Button onClick={onClose} variant="outline" disabled={isLoading}>
                   {BUTTON_LABELS.CLOSE}
                 </Button>
               </div>
@@ -343,7 +332,7 @@ function DoctorViewModal({ doctor, isOpen, onClose, onApprove, onReject, onRever
           setShowConfirmation(null);
           setRejectRemark('');
         }}
-        isLoading={isLoading}
+        isLoading={loadingAction === showConfirmation}
       >
         {showConfirmation === 'reject' && (
           <div className="mt-4">
@@ -354,7 +343,7 @@ function DoctorViewModal({ doctor, isOpen, onClose, onApprove, onReject, onRever
               value={rejectRemark}
               onChange={(e) => setRejectRemark(e.target.value)}
               placeholder={FORM_LABELS.REJECTION_REASON_PLACEHOLDER}
-              className="w-full px-3 py-2 border border-red-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent resize-none"
+              className="w-full p-3 border border-gray-300 rounded-lg resize-none h-24 text-sm text-gray-900 bg-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
               rows={3}
               required
             />
@@ -479,6 +468,7 @@ export function DoctorApprovals() {
   const [filteredDoctors, setFilteredDoctors] = useState<Doctor[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<number | null>(null);
+  const [loadingAction, setLoadingAction] = useState<'approve' | 'reject' | 'revert' | null>(null);
   const [selectedDoctor, setSelectedDoctor] = useState<Doctor | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -545,6 +535,7 @@ export function DoctorApprovals() {
   const handleApprove = async (doctorId: number) => {
     try {
       setActionLoading(doctorId);
+      setLoadingAction('approve');
       
       const response = await adminService.approveDoctor(doctorId);
       if (response.success) {
@@ -556,12 +547,14 @@ export function DoctorApprovals() {
       error(ERROR_MESSAGES.APPROVE_DOCTOR_FAILED);
     } finally {
       setActionLoading(null);
+      setLoadingAction(null);
     }
   };
 
   const handleReject = async (doctorId: number, remark?: string) => {
     try {
       setActionLoading(doctorId);
+      setLoadingAction('reject');
       
       const response = await adminService.rejectDoctor(doctorId, remark);
       if (response.success) {
@@ -573,12 +566,14 @@ export function DoctorApprovals() {
       error(ERROR_MESSAGES.REJECT_DOCTOR_FAILED);
     } finally {
       setActionLoading(null);
+      setLoadingAction(null);
     }
   };
 
   const handleRevert = async (doctorId: number, newStatus: string) => {
     try {
       setActionLoading(doctorId);
+      setLoadingAction('revert');
       
       const response = await adminService.revertDoctor(doctorId, newStatus, ADMIN_ACTION_MESSAGES.STATUS_CHANGED_BY_ADMIN);
       
@@ -591,8 +586,10 @@ export function DoctorApprovals() {
       error(ERROR_MESSAGES.CHANGE_STATUS_FAILED);
     } finally {
       setActionLoading(null);
+      setLoadingAction(null);
     }
   };
+
 
   if (isLoading) {
     return (
@@ -655,10 +652,11 @@ export function DoctorApprovals() {
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
                 aria-label="Filter by status"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 bg-white focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                style={{ color: '#111827' }}
               >
                 {DOCTOR_FILTER_OPTIONS.map((option) => (
-                  <option key={option.value} value={option.value}>
+                  <option key={option.value} value={option.value} style={{ color: '#111827' }}>
                     {option.label}
                   </option>
                 ))}
@@ -707,6 +705,7 @@ export function DoctorApprovals() {
         onReject={handleReject}
         onRevert={handleRevert}
         isLoading={actionLoading === selectedDoctor?.id}
+        loadingAction={loadingAction}
       />
     </>
   );

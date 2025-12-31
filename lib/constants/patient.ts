@@ -75,9 +75,24 @@ export const PATIENT_FORM_SECTIONS = {
   SECURITY: 'Account Security',
 } as const;
 
+// Patient Navigation Tabs
+export interface PatientTab {
+  id: string;
+  label: string;
+  icon: string;
+}
+
+export const PATIENT_TABS: PatientTab[] = [
+  { id: 'overview', label: 'Overview', icon: '📊' },
+  { id: 'appointments', label: 'Appointments', icon: '📅' },
+  { id: 'prescriptions', label: 'Prescriptions', icon: '💊' },
+  { id: 'profile', label: 'Profile', icon: '👤' },
+];
+
 // Patient Dashboard Labels
 export const PATIENT_LABELS = {
-  DASHBOARD_TITLE: 'Patient Dashboard',
+  DASHBOARD_TITLE: 'Welcome, {name}',
+  DASHBOARD_SUBTITLE: 'Patient Portal • Siddha Savor',
   USER_ROLE: 'Patient',
 } as const;
 

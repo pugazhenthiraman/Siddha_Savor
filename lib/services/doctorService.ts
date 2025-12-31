@@ -89,6 +89,28 @@ class DoctorService {
     }
   }
 
+  async reapprovePatient(patientId: number): Promise<ApiResponse> {
+    try {
+      logger.info('Reapproving patient', { patientId });
+      const response = await apiClient.post('/api/doctor/patients/reapprove', { patientId });
+      return response;
+    } catch (error) {
+      logger.error('Failed to reapprove patient', error);
+      throw error;
+    }
+  }
+
+  async deactivatePatient(patientId: number): Promise<ApiResponse> {
+    try {
+      logger.info('Deactivating patient', { patientId });
+      const response = await apiClient.post('/api/doctor/patients/deactivate', { patientId });
+      return response;
+    } catch (error) {
+      logger.error('Failed to deactivate patient', error);
+      throw error;
+    }
+  }
+
   async updateDiagnosis(diagnosis: PatientDiagnosis): Promise<ApiResponse> {
     try {
       logger.info('Updating patient diagnosis', { patientId: diagnosis.patientId });

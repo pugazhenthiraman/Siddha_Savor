@@ -148,9 +148,11 @@ export function DoctorRegistrationForm({ token, inviteData }: DoctorRegistration
       } else {
         error(response.error || ERROR_MESSAGES.SOMETHING_WENT_WRONG);
       }
-    } catch (err) {
+    } catch (err: any) {
       logger.error('Doctor registration failed', err);
-      error(ERROR_MESSAGES.NETWORK_ERROR);
+      // Extract error message from ApiException or use generic error
+      const errorMessage = err?.message || err?.error || ERROR_MESSAGES.NETWORK_ERROR;
+      error(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
@@ -209,8 +211,14 @@ export function DoctorRegistrationForm({ token, inviteData }: DoctorRegistration
                   value={formData.email}
                   onChange={(e) => handleInputChange('email', e.target.value)}
                   placeholder={FORM_PLACEHOLDERS.EMAIL_DOCTOR}
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || !!inviteData?.recipientEmail}
+                  className={inviteData?.recipientEmail ? 'bg-gray-50 cursor-not-allowed' : ''}
                 />
+                {inviteData?.recipientEmail && (
+                  <p className="mt-1 text-xs text-gray-500">
+                    Email is pre-filled from your invitation link and cannot be changed
+                  </p>
+                )}
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">{FORM_LABELS.PHONE_NUMBER} *</label>
@@ -238,12 +246,13 @@ export function DoctorRegistrationForm({ token, inviteData }: DoctorRegistration
                   aria-label="Select gender"
                   value={formData.gender}
                   onChange={(e) => handleInputChange('gender', e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent disabled:bg-gray-50 disabled:cursor-not-allowed transition-all duration-200"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent disabled:bg-gray-50 disabled:text-gray-500 disabled:cursor-not-allowed transition-all duration-200"
+                  style={{ color: '#111827' }}
                   disabled={isSubmitting}
                 >
-                  <option value="" className="text-gray-500">{REGISTRATION_LABELS.SELECT_GENDER}</option>
+                  <option value="" style={{ color: '#6b7280' }}>{REGISTRATION_LABELS.SELECT_GENDER}</option>
                   {GENDER_OPTIONS.map((gender) => (
-                    <option key={gender.value} value={gender.value} className="text-gray-900">
+                    <option key={gender.value} value={gender.value} style={{ color: '#111827' }}>
                       {gender.label}
                     </option>
                   ))}
@@ -276,13 +285,14 @@ export function DoctorRegistrationForm({ token, inviteData }: DoctorRegistration
                   aria-label="Select Siddha qualification"
                   value={formData.qualification}
                   onChange={(e) => handleInputChange('qualification', e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent disabled:bg-gray-50 disabled:cursor-not-allowed transition-all duration-200"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent disabled:bg-gray-50 disabled:text-gray-500 disabled:cursor-not-allowed transition-all duration-200"
+                  style={{ color: '#111827' }}
                   disabled={isSubmitting}
                   required
                 >
-                  <option value="" className="text-gray-500">{REGISTRATION_LABELS.SELECT_QUALIFICATION}</option>
+                  <option value="" style={{ color: '#6b7280' }}>{REGISTRATION_LABELS.SELECT_QUALIFICATION}</option>
                   {SIDDHA_QUALIFICATIONS.map((qual) => (
-                    <option key={qual.value} value={qual.value} className="text-gray-900">
+                    <option key={qual.value} value={qual.value} style={{ color: '#111827' }}>
                       {qual.label}
                     </option>
                   ))}

@@ -54,7 +54,7 @@ function isRetryableError(error: any): boolean {
 }
 
 // Retry wrapper for database queries
-async function retryQuery<T>(
+export async function retryQuery<T>(
   queryFn: () => Promise<T>,
   retries = MAX_RETRIES
 ): Promise<T> {

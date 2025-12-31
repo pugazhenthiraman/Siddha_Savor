@@ -1,25 +1,23 @@
 'use client';
 
-import { DOCTOR_TABS, DOCTOR_LABELS } from '@/lib/constants/doctor';
+import { PATIENT_TABS, PATIENT_LABELS } from '@/lib/constants/patient';
 
-interface DoctorNavigationProps {
+interface PatientNavigationProps {
   activeTab: string;
   onTabChange: (tab: string) => void;
   userEmail: string;
-  doctorName: string;
-  doctorUID: string;
+  patientName: string;
   onLogout: () => void;
 }
 
-export function DoctorNavigation({ 
+export function PatientNavigation({ 
   activeTab, 
   onTabChange, 
   userEmail, 
-  doctorName,
-  doctorUID,
+  patientName,
   onLogout 
-}: DoctorNavigationProps) {
-  const tabs = DOCTOR_TABS;
+}: PatientNavigationProps) {
+  const tabs = PATIENT_TABS;
 
   return (
     <>
@@ -28,21 +26,21 @@ export function DoctorNavigation({
         <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8 xl:px-12">
           <div className="flex justify-between items-center py-4">
             <div className="flex items-center space-x-4">
-              <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-green-500 rounded-full flex items-center justify-center">
+              <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-blue-500 rounded-full flex items-center justify-center">
                 <span className="text-white font-bold text-lg">
-                  {doctorName.split(' ').map(n => n[0]).join('').toUpperCase()}
+                  {patientName.split(' ').map(n => n[0]).join('').toUpperCase() || 'P'}
                 </span>
               </div>
               <div>
-                <h1 className="text-xl font-bold text-gray-900">{DOCTOR_LABELS.DASHBOARD_TITLE.replace('{name}', doctorName)}</h1>
-                <p className="text-sm text-gray-500">{DOCTOR_LABELS.DASHBOARD_SUBTITLE.replace('{doctorUID}', doctorUID)}</p>
+                <h1 className="text-xl font-bold text-gray-900">{PATIENT_LABELS.DASHBOARD_TITLE.replace('{name}', patientName)}</h1>
+                <p className="text-sm text-gray-500">{PATIENT_LABELS.DASHBOARD_SUBTITLE}</p>
               </div>
             </div>
             
             <div className="hidden lg:flex items-center space-x-6">
               <div className="text-right">
                 <p className="text-sm font-medium text-gray-900">{userEmail}</p>
-                <p className="text-xs text-gray-500">{DOCTOR_LABELS.USER_ROLE}</p>
+                <p className="text-xs text-gray-500">{PATIENT_LABELS.USER_ROLE}</p>
               </div>
               <button
                 onClick={onLogout}
@@ -89,7 +87,7 @@ export function DoctorNavigation({
 
       {/* Mobile Bottom Navigation */}
       <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50">
-        <div className="grid grid-cols-2 gap-1">
+        <div className="grid grid-cols-4 gap-1">
           {tabs.map((tab) => (
             <button
               key={tab.id}
@@ -109,3 +107,4 @@ export function DoctorNavigation({
     </>
   );
 }
+

@@ -13,9 +13,7 @@ export interface DoctorTab {
 export const DOCTOR_TABS: DoctorTab[] = [
   { id: 'overview', label: 'Overview', icon: '📊' },
   { id: 'patients', label: 'Patients', icon: '👥' },
-  { id: 'appointments', label: 'Appointments', icon: '📅' },
-  { id: 'prescriptions', label: 'Prescriptions', icon: '💊' },
-  { id: 'profile', label: 'Profile', icon: '👤' },
+  // Appointments, Prescriptions, and Profile tabs will be implemented later
 ];
 
 // Doctor Registration Form Fields
@@ -171,6 +169,8 @@ export const DOCTOR_BUTTONS = {
   GENERATE_INVITE: 'Generate Patient Invite',
   APPROVE_PATIENT: 'Approve Patient',
   REJECT_PATIENT: 'Reject Patient',
+  REAPPROVE_PATIENT: '✅ Reapprove Patient',
+  DEACTIVATE_PATIENT: 'Deactivate Patient',
   VIEW_DETAILS: 'View Details',
   UPDATE_DIAGNOSIS: 'Update Diagnosis',
   SCHEDULE_VISIT: 'Schedule Visit',

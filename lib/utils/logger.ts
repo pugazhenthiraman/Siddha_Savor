@@ -56,11 +56,11 @@ class Logger {
       }
     } else {
       // info/debug - only in development
-      if (entry.context) {
-        console.log(logString, entry.context);
-      } else {
-        console.log(logString);
-      }
+    if (entry.context) {
+      console.log(logString, entry.context);
+    } else {
+      console.log(logString);
+    }
     }
 
     // In production, send errors to external logging service

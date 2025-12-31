@@ -35,7 +35,8 @@ model Doctor {
 
 model Patient {
   id          Int      @id @default(autoincrement())
-  email       String   @unique
+  patientUID  String?  @unique @db.VarChar(8)
+  email       String
   password    String?
   formData    Json
   inviteToken String?  @unique
@@ -46,26 +47,26 @@ model Patient {
 }
 
 model InviteLink {
-  id          Int        @id @default(autoincrement())
-  token       String     @unique
-  role        InviteRole
-  doctorUID   String?    // For patient invites: which doctor they'll be assigned to
-  createdBy   String     @default("ADMIN") // "ADMIN" or doctorUID who created it
+  id             Int        @id @default(autoincrement())
+  token          String     @unique
+  role           InviteRole
+  doctorUID      String? // For patient invites: which doctor they'll be assigned to
+  createdBy      String     @default("ADMIN") // "ADMIN" or doctorUID who created it
   recipientEmail String? // Email address of intended recipient
   recipientName  String? // Name of intended recipient
-  isUsed      Boolean    @default(false) // Track if link has been used
-  usedAt      DateTime?  // When the link was used for registration
-  expiresAt   DateTime
-  createdAt   DateTime   @default(now())
+  isUsed         Boolean    @default(false) // Track if link has been used
+  usedAt         DateTime? // When the link was used for registration
+  expiresAt      DateTime
+  createdAt      DateTime   @default(now())
 }
 
 model PasswordReset {
   id        Int      @id @default(autoincrement())
   email     String
   token     String   @unique
-  code      String   // 6-digit verification code
-  userRole  String   // "admin", "doctor", "patient"
-  data      Json     // Flexible JSON for additional fields
+  code      String // 6-digit verification code
+  userRole  String // "admin", "doctor", "patient"
+  data      Json // Flexible JSON for additional fields
   isUsed    Boolean  @default(false)
   expiresAt DateTime
   createdAt DateTime @default(now())

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getSmtpConfig } from '@/lib/db';
+import { getSmtpConfig, retryQuery } from '@/lib/db';
 import nodemailer from 'nodemailer';
 import { ERROR_MESSAGES } from '@/lib/constants/messages';
 import { logger } from '@/lib/utils/logger';
@@ -8,8 +8,10 @@ export async function POST(request: NextRequest) {
   try {
     logger.info('SMTP send email API called');
     
-    // Get SMTP config from database
-    const config = await getSmtpConfig();
+    // Get SMTP config from database (with retry)
+    const config = await retryQuery(async () => {
+      return await getSmtpConfig();
+    });
     
     if (!config || !config.isActive) {
       logger.warn('SMTP configuration not found or not active');
@@ -20,9 +22,9 @@ export async function POST(request: NextRequest) {
     }
     
     const body = await request.json();
-    const { to, subject, template, data } = body;
+    const { to, subject, template, data, html, text } = body;
 
-    logger.info('Email send request', { to, subject, template });
+    logger.info('Email send request', { to, subject, template, hasCustomHtml: !!html });
 
     // Create transporter with config
     const transporter = nodemailer.createTransport({
@@ -35,10 +37,12 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // Generate email HTML based on template
-    let emailHtml = '';
+    // If custom HTML is provided, use it directly
+    let emailHtml = html;
+    let emailText = text;
     
-    if (template === 'password-reset') {
+    // Otherwise, generate email HTML based on template
+    if (!emailHtml && template === 'password-reset') {
       emailHtml = `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
           <div style="text-align: center; margin-bottom: 30px;">
@@ -71,7 +75,7 @@ export async function POST(request: NextRequest) {
           </p>
         </div>
       `;
-    } else {
+    } else if (!emailHtml) {
       // Default invite template
       emailHtml = `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
@@ -113,7 +117,8 @@ export async function POST(request: NextRequest) {
       from: `${config.fromName} <${config.fromEmail}>`,
       to: to,
       subject: subject,
-      html: emailHtml
+      html: emailHtml,
+      text: emailText || undefined
     });
 
     logger.info('Email sent successfully', { to, messageId: emailResult.messageId });

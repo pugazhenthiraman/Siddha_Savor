@@ -97,6 +97,7 @@ export type PatientStatus = 'ACTIVE' | 'CURED' | 'INACTIVE';
 
 export interface Patient {
   id: number;
+  patientUID: string | null;
   email: string;
   password?: string | null;
   formData: PatientFormData;

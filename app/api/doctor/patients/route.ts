@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { logger } from '@/lib/utils/logger';
+import { ERROR_MESSAGES } from '@/lib/constants/messages';
 import { withErrorHandler } from '@/lib/middleware/api-error-handler';
 
 export const GET = withErrorHandler(async (request: NextRequest) => {
@@ -28,14 +30,16 @@ export const GET = withErrorHandler(async (request: NextRequest) => {
       }
     });
 
+    logger.info('Fetched doctor patients', { doctorUID, count: patients.length });
+
     return NextResponse.json({
       success: true,
       data: patients,
     });
   } catch (error) {
-    console.error('Error fetching doctor patients:', error);
+    logger.error('Error fetching doctor patients', error, { doctorUID });
     return NextResponse.json(
-      { success: false, error: 'Failed to fetch patients' },
+      { success: false, error: ERROR_MESSAGES.SERVER_ERROR },
       { status: 500 }
     );
   }
@@ -64,22 +68,18 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
       );
     }
 
+    // Note: This POST endpoint is deprecated in favor of separate /approve and /reject endpoints
+    // Redirect to use the proper endpoints that handle email notifications
+    logger.warn('Using deprecated POST /api/doctor/patients endpoint', { action, patientId });
+    
     if (action === 'APPROVE') {
-      // For approval, we might want to send an email notification
-      // For now, just update the patient status or clear invite token
-      await prisma.patient.update({
-        where: { id: patientId },
-        data: {
-          // Clear invite token to indicate approval
-          inviteToken: null,
-          updatedAt: new Date(),
-        }
+      // Redirect to approve endpoint
+      const approveResponse = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/doctor/patients/approve`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ patientId, action: 'APPROVE' })
       });
-
-      return NextResponse.json({
-        success: true,
-        message: 'Patient approved successfully',
-      });
+      return await approveResponse.json();
     } else if (action === 'REJECT') {
       if (!reason) {
         return NextResponse.json(
@@ -87,19 +87,14 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
           { status: 400 }
         );
       }
-
-      // Delete the patient record for rejection
-      await prisma.patient.delete({
-        where: { id: patientId }
+      
+      // Redirect to reject endpoint
+      const rejectResponse = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/doctor/patients/reject`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ patientId, action: 'REJECT', reason })
       });
-
-      // Here you would typically send an email with the rejection reason
-      // Implementation depends on your email service setup
-
-      return NextResponse.json({
-        success: true,
-        message: 'Patient rejected successfully',
-      });
+      return await rejectResponse.json();
     } else {
       return NextResponse.json(
         { success: false, error: 'Invalid action' },
@@ -107,9 +102,12 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
       );
     }
   } catch (error) {
-    console.error('Error processing patient action:', error);
+    logger.error('Error processing patient action', error, { 
+      url: request.url,
+      method: request.method 
+    });
     return NextResponse.json(
-      { success: false, error: 'Failed to process patient action' },
+      { success: false, error: ERROR_MESSAGES.SERVER_ERROR },
       { status: 500 }
     );
   }

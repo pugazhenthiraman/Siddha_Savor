@@ -134,11 +134,15 @@ export function PatientDetails({ patient, onClose }: PatientDetailsProps) {
     }));
   };
 
-  const fullName = `${patient.formData.firstName || ''} ${patient.formData.lastName || ''}`.trim();
+  const formData = patient.formData as any;
+  const personalInfo = formData?.personalInfo || {};
+  const addressInfo = formData?.addressInfo || {};
+  const emergencyContact = formData?.emergencyContact || {};
+  const fullName = `${personalInfo.firstName || ''} ${personalInfo.lastName || ''}`.trim();
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl w-full max-w-4xl max-h-[90vh] overflow-hidden">
+    <div className="fixed inset-0 bg-gray-500/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-xl w-full max-w-4xl max-h-[90vh] overflow-hidden shadow-2xl border-2 border-gray-300">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <div className="flex items-center space-x-4">
@@ -199,15 +203,15 @@ export function PatientDetails({ patient, onClose }: PatientDetailsProps) {
                     </div>
                     <div>
                       <label className="text-sm font-medium text-gray-500">Phone</label>
-                      <p className="text-gray-900">{patient.formData.phone || 'Not provided'}</p>
+                      <p className="text-gray-900">{personalInfo.phone || 'Not provided'}</p>
                     </div>
                     <div>
                       <label className="text-sm font-medium text-gray-500">Date of Birth</label>
-                      <p className="text-gray-900">{patient.formData.dateOfBirth || 'Not provided'}</p>
+                      <p className="text-gray-900">{personalInfo.dateOfBirth || 'Not provided'}</p>
                     </div>
                     <div>
                       <label className="text-sm font-medium text-gray-500">Gender</label>
-                      <p className="text-gray-900 capitalize">{patient.formData.gender || 'Not provided'}</p>
+                      <p className="text-gray-900 capitalize">{personalInfo.gender || 'Not provided'}</p>
                     </div>
                   </div>
                 </div>
@@ -217,25 +221,25 @@ export function PatientDetails({ patient, onClose }: PatientDetailsProps) {
                   <div className="space-y-3">
                     <div>
                       <label className="text-sm font-medium text-gray-500">Address</label>
-                      <p className="text-gray-900">{patient.formData.address || 'Not provided'}</p>
+                      <p className="text-gray-900">{addressInfo.address || 'Not provided'}</p>
                     </div>
                     <div>
                       <label className="text-sm font-medium text-gray-500">City, State</label>
                       <p className="text-gray-900">
-                        {patient.formData.city && patient.formData.state 
-                          ? `${patient.formData.city}, ${patient.formData.state}` 
+                        {addressInfo.city && addressInfo.state 
+                          ? `${addressInfo.city}, ${addressInfo.state}` 
                           : 'Not provided'}
                       </p>
                     </div>
                     <div>
                       <label className="text-sm font-medium text-gray-500">PIN Code</label>
-                      <p className="text-gray-900">{patient.formData.pincode || 'Not provided'}</p>
+                      <p className="text-gray-900">{addressInfo.pincode || 'Not provided'}</p>
                     </div>
                     <div>
                       <label className="text-sm font-medium text-gray-500">Emergency Contact</label>
                       <p className="text-gray-900">
-                        {patient.formData.emergencyContact 
-                          ? `${patient.formData.emergencyContact} (${patient.formData.emergencyPhone})`
+                        {emergencyContact.name 
+                          ? `${emergencyContact.name} (${emergencyContact.phone || 'N/A'})`
                           : 'Not provided'}
                       </p>
                     </div>
@@ -266,7 +270,7 @@ export function PatientDetails({ patient, onClose }: PatientDetailsProps) {
                       <textarea
                         value={diagnosisForm.diagnosis}
                         onChange={(e) => setDiagnosisForm(prev => ({ ...prev, diagnosis: e.target.value }))}
-                        className="w-full p-3 border border-gray-300 rounded-lg resize-none h-24"
+                        className="w-full p-3 border border-gray-300 rounded-lg resize-none h-24 text-gray-900 bg-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
                         placeholder="Enter diagnosis..."
                       />
                     </div>
@@ -275,7 +279,7 @@ export function PatientDetails({ patient, onClose }: PatientDetailsProps) {
                       <textarea
                         value={diagnosisForm.treatment}
                         onChange={(e) => setDiagnosisForm(prev => ({ ...prev, treatment: e.target.value }))}
-                        className="w-full p-3 border border-gray-300 rounded-lg resize-none h-24"
+                        className="w-full p-3 border border-gray-300 rounded-lg resize-none h-24 text-gray-900 bg-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
                         placeholder="Enter treatment plan..."
                       />
                     </div>
@@ -403,7 +407,7 @@ export function PatientDetails({ patient, onClose }: PatientDetailsProps) {
                     <textarea
                       value={diagnosisForm.notes}
                       onChange={(e) => setDiagnosisForm(prev => ({ ...prev, notes: e.target.value }))}
-                      className="w-full p-3 border border-gray-300 rounded-lg resize-none h-20"
+                      className="w-full p-3 border border-gray-300 rounded-lg resize-none h-20 text-gray-900 bg-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
                       placeholder="Additional notes..."
                     />
                   </div>

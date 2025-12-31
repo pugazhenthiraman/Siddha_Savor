@@ -11,7 +11,7 @@ export async function POST(request: NextRequest) {
     // Find user in any table
     const admin = await prisma.admin.findUnique({ where: { email } });
     const doctor = await prisma.doctor.findUnique({ where: { email } });
-    const patient = await prisma.patient.findUnique({ where: { email } });
+    const patient = await prisma.patient.findFirst({ where: { email } });
 
     if (!admin && !doctor && !patient) {
       return NextResponse.json({ success: false, error: 'Email not found' }, { status: 404 });

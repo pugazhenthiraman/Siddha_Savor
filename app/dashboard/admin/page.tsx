@@ -6,6 +6,7 @@ import { authService } from '@/lib/services/auth';
 import { AdminNavigation } from '@/components/admin/AdminNavigation';
 import { DashboardStats } from '@/components/admin/DashboardStats';
 import { DoctorApprovals } from '@/components/admin/DoctorApprovals';
+import { PatientManagement } from '@/components/admin/PatientManagement';
 import { InviteGenerator } from '@/components/ui/InviteGenerator';
 import { SMTPSettings } from '@/components/admin/SMTPSettings';
 
@@ -204,8 +205,19 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* Placeholder for other tabs */}
-        {(activeTab === 'doctors' || activeTab === 'patients') && (
+        {/* Patients Tab */}
+        {activeTab === 'patients' && (
+          <div className="space-y-4 lg:space-y-6">
+            <div className="text-center lg:text-left">
+              <h2 className="text-xl lg:text-2xl font-bold text-gray-900 mb-2">Patient Management</h2>
+              <p className="text-sm lg:text-base text-gray-600">View and manage all registered patients.</p>
+            </div>
+            <PatientManagement />
+          </div>
+        )}
+
+        {/* Placeholder for doctors tab */}
+        {activeTab === 'doctors' && (
           <div className="text-center py-12 lg:py-16">
             <div className="w-16 h-16 lg:w-24 lg:h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <span className="text-2xl lg:text-4xl">🚧</span>

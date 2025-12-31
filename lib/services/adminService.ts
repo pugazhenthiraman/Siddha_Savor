@@ -24,6 +24,7 @@ export interface Doctor {
 
 export interface Patient {
   id: number;
+  patientUID: string | null;
   email: string;
   formData: any;
   doctorUID: string | null;
@@ -160,10 +161,11 @@ class AdminService {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 30000);
       
+      // Send as 'remark' to match API expectation (API accepts both 'remark' and 'reason')
       const response = await fetch(`${this.ENDPOINTS.REJECT_DOCTOR}/${doctorId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reason }),
+        body: JSON.stringify({ remark: reason }),
         signal: controller.signal
       });
       
@@ -186,6 +188,17 @@ class AdminService {
   /**
    * Revert doctor status
    */
+  async deactivateDoctor(doctorId: number): Promise<ApiResponse<Doctor>> {
+    try {
+      logger.info('Deactivating doctor', { doctorId });
+      const response = await apiClient.post<Doctor>(`${this.ENDPOINTS.DOCTORS}/deactivate/${doctorId}`);
+      return response;
+    } catch (error) {
+      logger.error('Failed to deactivate doctor', error);
+      throw error;
+    }
+  }
+
   async revertDoctor(doctorId: number, newStatus: string, reason?: string): Promise<ApiResponse<Doctor>> {
     try {
       logger.info('Reverting doctor status', { doctorId, newStatus, reason });

@@ -18,7 +18,9 @@ export default function RegisterPage() {
 
   useEffect(() => {
     if (!token) {
-      setError('Invalid registration link. No token provided.');
+      // Allow registration without token (for home page registration)
+      // Show patient registration form with doctorID field
+      setInviteData({ role: 'PATIENT', allowManualDoctorID: true });
       setLoading(false);
       return;
     }
@@ -96,7 +98,7 @@ export default function RegisterPage() {
             />
           ) : (
             <PatientRegistrationForm 
-              token={token!} 
+              token={token || undefined} 
               inviteData={inviteData}
             />
           )}

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -13,14 +13,20 @@ import { ERROR_MESSAGES, SUCCESS_MESSAGES, FORM_LABELS, FORM_PLACEHOLDERS, VALID
 import { logger } from '@/lib/utils/logger';
 
 interface PatientRegistrationFormProps {
-  token: string;
-  inviteData: InviteData;
+  token?: string;
+  inviteData?: InviteData & { allowManualDoctorID?: boolean };
 }
 
 export function PatientRegistrationForm({ token, inviteData }: PatientRegistrationFormProps) {
   const router = useRouter();
   const { toasts, removeToast, success, error } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  
+  // Initialize formData with inviteData if available
+  const initialDoctorID = inviteData?.doctorUID || '';
+  
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -34,10 +40,25 @@ export function PatientRegistrationForm({ token, inviteData }: PatientRegistrati
     pincode: '',
     emergencyContact: '',
     emergencyPhone: '',
+    doctorID: initialDoctorID, // Pre-fill from invite or allow manual entry
     password: '',
     confirmPassword: '',
     termsAccepted: false,
   });
+  
+  // Update doctorID when inviteData changes (in case it loads asynchronously)
+  useEffect(() => {
+    if (inviteData?.doctorUID && formData.doctorID !== inviteData.doctorUID) {
+      setFormData(prev => ({ ...prev, doctorID: inviteData.doctorUID }));
+    }
+  }, [inviteData?.doctorUID]);
+  
+  // Check if doctorID field should be shown and if it's editable
+  // Always show the field, but:
+  // - If there's a token (from doctor invite): show as read-only with pre-filled doctorID
+  // - If no token (home page registration): show as editable for manual entry
+  const showDoctorIDField = true; // Always show
+  const isDoctorIDEditable = !token || token === '' || inviteData?.allowManualDoctorID === true;
 
   const handleInputChange = (field: string, value: string | boolean) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -103,6 +124,17 @@ export function PatientRegistrationForm({ token, inviteData }: PatientRegistrati
       return false;
     }
     
+    // Validate doctorID if required (when editable - no token or manual entry allowed)
+    if (isDoctorIDEditable && !formData.doctorID.trim()) {
+      error(ERROR_MESSAGES.DOCTOR_ID_REQUIRED);
+      return false;
+    }
+    
+    // If there's a token but no doctorID in formData, use the one from inviteData
+    if (token && inviteData?.doctorUID && !formData.doctorID.trim()) {
+      setFormData(prev => ({ ...prev, doctorID: inviteData.doctorUID }));
+    }
+    
     return true;
   };
 
@@ -114,7 +146,10 @@ export function PatientRegistrationForm({ token, inviteData }: PatientRegistrati
     try {
       setIsSubmitting(true);
       
-      const response = await authService.registerPatient(token, formData);
+      // If no token, register without token but with doctorID
+      const response = token 
+        ? await authService.registerPatient(token, formData)
+        : await authService.registerPatientWithoutToken(formData);
       
       if (response.success) {
         success(SUCCESS_MESSAGES.REGISTRATION_SUCCESS_PATIENT);
@@ -206,14 +241,18 @@ export function PatientRegistrationForm({ token, inviteData }: PatientRegistrati
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">{FORM_LABELS.GENDER}</label>
                 <select
+                  id="gender"
+                  title="Select gender"
+                  aria-label="Select gender"
                   value={formData.gender}
                   onChange={(e) => handleInputChange('gender', e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent disabled:bg-gray-50 disabled:cursor-not-allowed transition-all duration-200"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent disabled:bg-gray-50 disabled:text-gray-500 disabled:cursor-not-allowed transition-all duration-200"
+                  style={{ color: '#111827' }}
                   disabled={isSubmitting}
                 >
-                  <option value="" className="text-gray-500">{REGISTRATION_LABELS.SELECT_GENDER}</option>
+                  <option value="" style={{ color: '#6b7280' }}>{REGISTRATION_LABELS.SELECT_GENDER}</option>
                   {GENDER_OPTIONS.map((gender) => (
-                    <option key={gender.value} value={gender.value} className="text-gray-900">
+                    <option key={gender.value} value={gender.value} style={{ color: '#111827' }}>
                       {gender.label}
                     </option>
                   ))}
@@ -265,6 +304,61 @@ export function PatientRegistrationForm({ token, inviteData }: PatientRegistrati
             </div>
           </div>
 
+          {/* Doctor ID Field - Always show, but editable only when no token */}
+          {showDoctorIDField && (
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Doctor Information</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="md:col-span-2">
+                  <label htmlFor="doctorID" className="block text-sm font-medium text-gray-700 mb-2">
+                    {FORM_LABELS.DOCTOR_ID} {isDoctorIDEditable ? '*' : ''}
+                  </label>
+                  <div className="relative">
+                    <Input
+                      id="doctorID"
+                      value={formData.doctorID || inviteData?.doctorUID || ''}
+                      onChange={(e) => {
+                        if (isDoctorIDEditable) {
+                          handleInputChange('doctorID', e.target.value.toUpperCase());
+                        }
+                      }}
+                      placeholder={FORM_PLACEHOLDERS.DOCTOR_ID}
+                      disabled={isSubmitting || !isDoctorIDEditable}
+                      readOnly={!isDoctorIDEditable}
+                      required={isDoctorIDEditable}
+                      className={!isDoctorIDEditable ? 'bg-gray-100 cursor-not-allowed pr-10' : ''}
+                      title={!isDoctorIDEditable ? 'Doctor ID is pre-filled from your invitation link' : 'Enter your doctor ID'}
+                    />
+                    {!isDoctorIDEditable && (
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                        <svg
+                          className="w-5 h-5 text-green-600"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                          xmlns="http://www.w3.org/2000/svg"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                          />
+                        </svg>
+                      </div>
+                    )}
+                  </div>
+                  <p className="mt-2 text-sm text-gray-500">
+                    {isDoctorIDEditable 
+                      ? 'Enter the Doctor ID provided by your doctor.'
+                      : '✓ This Doctor ID is pre-filled from your invitation link and cannot be changed. You will be registered under this doctor.'
+                    }
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Emergency Contact */}
           <div>
             <h3 className="text-lg font-semibold text-gray-900 mb-4">{PATIENT_FORM_SECTIONS.EMERGENCY}</h3>
@@ -295,24 +389,124 @@ export function PatientRegistrationForm({ token, inviteData }: PatientRegistrati
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Account Security</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">{FORM_LABELS.PASSWORD} *</label>
-                <Input
-                  type="password"
-                  value={formData.password}
-                  onChange={(e) => handleInputChange('password', e.target.value)}
-                  placeholder={FORM_PLACEHOLDERS.PASSWORD_CREATE}
-                  disabled={isSubmitting}
-                />
+                <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">{FORM_LABELS.PASSWORD} *</label>
+                <div className="relative">
+                  <Input
+                    id="password"
+                    type={showPassword ? 'text' : 'password'}
+                    value={formData.password}
+                    onChange={(e) => handleInputChange('password', e.target.value)}
+                    placeholder={FORM_PLACEHOLDERS.PASSWORD_CREATE}
+                    disabled={isSubmitting}
+                    className="pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none focus:text-gray-700 transition-colors"
+                    disabled={isSubmitting}
+                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                    tabIndex={-1}
+                  >
+                    {showPassword ? (
+                      <svg
+                        className="w-5 h-5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"
+                        />
+                      </svg>
+                    ) : (
+                      <svg
+                        className="w-5 h-5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                        />
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                        />
+                      </svg>
+                    )}
+                  </button>
+                </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">{FORM_LABELS.CONFIRM_PASSWORD} *</label>
-                <Input
-                  type="password"
-                  value={formData.confirmPassword}
-                  onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
-                  placeholder={FORM_PLACEHOLDERS.PASSWORD_CONFIRM}
-                  disabled={isSubmitting}
-                />
+                <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-2">{FORM_LABELS.CONFIRM_PASSWORD} *</label>
+                <div className="relative">
+                  <Input
+                    id="confirmPassword"
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    value={formData.confirmPassword}
+                    onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
+                    placeholder={FORM_PLACEHOLDERS.PASSWORD_CONFIRM}
+                    disabled={isSubmitting}
+                    className="pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none focus:text-gray-700 transition-colors"
+                    disabled={isSubmitting}
+                    aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
+                    tabIndex={-1}
+                  >
+                    {showConfirmPassword ? (
+                      <svg
+                        className="w-5 h-5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"
+                        />
+                      </svg>
+                    ) : (
+                      <svg
+                        className="w-5 h-5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                        />
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                        />
+                      </svg>
+                    )}
+                  </button>
+                </div>
               </div>
             </div>
           </div>

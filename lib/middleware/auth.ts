@@ -103,7 +103,7 @@ export async function getUserByEmail(email: string) {
     }
 
     // Try patient
-    const patient = await prisma.patient.findUnique({ where: { email } });
+    const patient = await prisma.patient.findFirst({ where: { email } });
     if (patient) {
       return { ...patient, role: 'patient' as UserRole };
     }

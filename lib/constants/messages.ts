@@ -24,10 +24,16 @@ export const ERROR_MESSAGES = {
   DOCTOR_INVALID_PASSWORD: 'Incorrect doctor password',
   DOCTOR_PENDING_APPROVAL: 'Your doctor account is pending admin approval',
   DOCTOR_REJECTED: 'Your doctor account has been rejected. Contact admin for details',
+  DOCTOR_REJECTED_REREGISTER: 'Your application was rejected. Please update your information and register with new link through email for approval.',
   DOCTOR_NOT_APPROVED: 'Your doctor account is not approved yet',
   PATIENT_NOT_FOUND: 'Patient account not found with this email',
   PATIENT_INVALID_PASSWORD: 'Incorrect patient password',
   PATIENT_NOT_REGISTERED: 'Please complete your registration first',
+  PATIENT_PENDING_APPROVAL: 'Your patient registration is pending doctor approval. Please wait for your doctor to approve your registration.',
+  PATIENT_REJECTED: 'Your patient registration has been rejected. Please contact your doctor for details',
+  PATIENT_REJECTED_REREGISTER: 'Your application was rejected. Please update your information and register again.',
+  DOCTOR_ID_NOT_FOUND: 'Doctor ID not found. Please check and try again.',
+  DOCTOR_ID_REQUIRED: 'Doctor ID is required for registration',
   
   // Network Errors
   NETWORK_ERROR: 'Network error. Please check your connection and try again',
@@ -117,6 +123,7 @@ export const FORM_LABELS = {
   CLINIC_NAME: 'Clinic/Hospital Name',
   CLINIC_PHONE: 'Clinic Phone Number',
   CLINIC_ADDRESS: 'Clinic Address',
+  DOCTOR_ID: 'Doctor ID',
 } as const;
 
 // Form Placeholders
@@ -144,6 +151,7 @@ export const FORM_PLACEHOLDERS = {
   CLINIC_PHONE: 'e.g., +91 9876543210',
   CLINIC_ADDRESS: 'Enter complete clinic address',
   RECIPIENT_EMAIL: 'doctor@example.com',
+  DOCTOR_ID: 'Enter your doctor ID (e.g., DOC001)',
   RECIPIENT_NAME: 'Dr. John Smith',
 } as const;
 

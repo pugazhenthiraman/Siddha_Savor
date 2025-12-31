@@ -153,17 +153,17 @@ export function LoginForm() {
           {FORM_LABELS.PASSWORD}
         </label>
         <div className="relative">
-          <Input
-            id="password"
+        <Input
+          id="password"
             type={showPassword ? 'text' : 'password'}
-            value={formData.password}
-            onChange={(e) => handleInputChange('password', e.target.value)}
-            error={fieldErrors.password}
+          value={formData.password}
+          onChange={(e) => handleInputChange('password', e.target.value)}
+          error={fieldErrors.password}
             placeholder={FORM_PLACEHOLDERS.PASSWORD}
-            disabled={isLoading}
-            autoComplete="current-password"
+          disabled={isLoading}
+          autoComplete="current-password"
             className="pr-10"
-          />
+        />
           <button
             type="button"
             onClick={() => setShowPassword(!showPassword)}

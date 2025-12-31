@@ -130,7 +130,7 @@ export default function Home() {
             Join thousands of patients who trust Siddha Savor for their healthcare needs
           </p>
           <button 
-            onClick={() => window.location.href = '/login'}
+            onClick={() => window.location.href = '/register'}
             className="bg-green-600 text-white px-12 py-4 rounded-full text-xl font-semibold hover:bg-green-700 transition-all transform hover:scale-105 shadow-lg"
           >
             Register Now

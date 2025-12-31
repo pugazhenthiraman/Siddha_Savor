@@ -1,4 +1,4 @@
-import { apiClient, ApiResponse } from './api';
+import { apiClient, ApiResponse, ApiClient } from './api';
 import { ERROR_MESSAGES, SUCCESS_MESSAGES } from '@/lib/constants/messages';
 import { logger } from '@/lib/utils/logger';
 
@@ -57,7 +57,9 @@ class AuthService {
    */
   async login(credentials: LoginCredentials): Promise<ApiResponse<LoginResponse>> {
     try {
-      const response = await apiClient.post<LoginResponse>(
+      // Use longer timeout for login (60 seconds) - login can be slow with multiple DB queries
+      const loginClient = new ApiClient('', 60000);
+      const response = await loginClient.post<LoginResponse>(
         this.ENDPOINTS.LOGIN,
         credentials
       );
@@ -88,7 +90,7 @@ class AuthService {
       
       // Try to call logout endpoint (optional)
       try {
-        await apiClient.post(this.ENDPOINTS.LOGOUT);
+      await apiClient.post(this.ENDPOINTS.LOGOUT);
       } catch (error) {
         // Ignore logout API errors - user is already logged out locally
         logger.warn('Logout API call failed (ignored)', error);
@@ -203,7 +205,9 @@ class AuthService {
    */
   async registerDoctor(token: string, formData: Record<string, unknown>): Promise<ApiResponse> {
     try {
-      const response = await apiClient.post(
+      // Use longer timeout for registration (60 seconds)
+      const registrationClient = new ApiClient('', 60000);
+      const response = await registrationClient.post(
         this.ENDPOINTS.REGISTER_DOCTOR,
         { token, ...formData }
       );
@@ -219,13 +223,33 @@ class AuthService {
    */
   async registerPatient(token: string, formData: Record<string, unknown>): Promise<ApiResponse> {
     try {
-      const response = await apiClient.post(
+      // Use longer timeout for registration (60 seconds)
+      const registrationClient = new ApiClient('', 60000);
+      const response = await registrationClient.post(
         this.ENDPOINTS.REGISTER_PATIENT,
         { token, ...formData }
       );
       return response;
     } catch (error) {
       logger.error('Patient registration failed', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Register patient without token (using doctorID)
+   */
+  async registerPatientWithoutToken(formData: Record<string, unknown>): Promise<ApiResponse> {
+    try {
+      // Use longer timeout for registration (60 seconds)
+      const registrationClient = new ApiClient('', 60000);
+      const response = await registrationClient.post(
+        this.ENDPOINTS.REGISTER_PATIENT,
+        formData // No token, just formData with doctorID
+      );
+      return response;
+    } catch (error) {
+      logger.error('Patient registration without token failed', error);
       throw error;
     }
   }

@@ -213,6 +213,36 @@ export function PatientDetails({ patient, onClose }: PatientDetailsProps) {
                       <label className="text-sm font-medium text-gray-500">Gender</label>
                       <p className="text-gray-900 capitalize">{personalInfo.gender || 'Not provided'}</p>
                     </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-500">Age</label>
+                      <p className="text-gray-900">{personalInfo.age ? `${personalInfo.age} years old` : 'Not provided'}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-500">Occupation</label>
+                      <p className="text-gray-900 capitalize">
+                        {personalInfo.occupation === 'other' && personalInfo.customOccupation
+                          ? personalInfo.customOccupation
+                          : personalInfo.occupation || 'Not provided'}
+                      </p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-500">Work Type</label>
+                      <p className="text-gray-900">
+                        {personalInfo.workType ? (
+                          <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
+                            personalInfo.workType === 'soft' ? 'bg-green-100 text-green-800' :
+                            personalInfo.workType === 'medium' ? 'bg-yellow-100 text-yellow-800' :
+                            personalInfo.workType === 'hard' ? 'bg-red-100 text-red-800' :
+                            'bg-gray-100 text-gray-800'
+                          }`}>
+                            {personalInfo.workType === 'soft' ? 'Soft Work (Desk job)' :
+                             personalInfo.workType === 'medium' ? 'Medium Work (Moderate activity)' :
+                             personalInfo.workType === 'hard' ? 'Hard Work (Heavy labor)' :
+                             personalInfo.workType}
+                          </span>
+                        ) : 'Not provided'}
+                      </p>
+                    </div>
                   </div>
                 </div>
 

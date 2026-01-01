@@ -108,10 +108,10 @@ export class ApiClient {
           });
         } else {
           // Server errors (500+) are system errors - log as error
-          logger.apiError(method, endpoint, new Error(errorMessage), { 
-            status: response.status, 
-            responseData: data 
-          });
+        logger.apiError(method, endpoint, new Error(errorMessage), { 
+          status: response.status, 
+          responseData: data 
+        });
         }
         
         throw new ApiException(errorMessage, response.status, data.code);

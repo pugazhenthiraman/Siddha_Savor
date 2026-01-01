@@ -11,7 +11,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
       <div className="w-full">
         <input
           className={cn(
-            'w-full px-4 py-3 border rounded-lg text-gray-900 bg-white placeholder-gray-500 transition-all duration-200',
+            'w-full px-3 py-2 sm:px-4 sm:py-3 border rounded-lg text-gray-900 bg-white placeholder-gray-500 transition-all duration-200 text-sm sm:text-base',
             'focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent',
             'disabled:bg-gray-50 disabled:text-gray-500 disabled:cursor-not-allowed',
             error

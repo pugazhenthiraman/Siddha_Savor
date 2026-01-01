@@ -45,7 +45,29 @@ export const GENDER_OPTIONS = [
   { value: 'prefer-not-to-say', label: 'Prefer not to say' },
 ] as const;
 
-// Validation Rules
+// Occupation Options
+export const OCCUPATION_OPTIONS = [
+  { value: 'student', label: 'Student' },
+  { value: 'teacher', label: 'Teacher' },
+  { value: 'engineer', label: 'Engineer' },
+  { value: 'doctor', label: 'Doctor' },
+  { value: 'nurse', label: 'Nurse' },
+  { value: 'business', label: 'Business' },
+  { value: 'farmer', label: 'Farmer' },
+  { value: 'government', label: 'Government Employee' },
+  { value: 'private', label: 'Private Employee' },
+  { value: 'retired', label: 'Retired' },
+  { value: 'homemaker', label: 'Homemaker' },
+  { value: 'freelancer', label: 'Freelancer' },
+  { value: 'other', label: 'Other' },
+] as const;
+
+// Work Type Options (for Siddha treatment planning)
+export const WORK_TYPE_OPTIONS = [
+  { value: 'soft', label: 'Soft Work (Desk job, minimal physical activity)' },
+  { value: 'medium', label: 'Medium Work (Moderate physical activity)' },
+  { value: 'hard', label: 'Hard Work (Heavy physical labor)' },
+] as const;// Validation Rules
 export const PATIENT_VALIDATION = {
   PASSWORD_MIN_LENGTH: 8,
   PHONE_REGEX: /^[+]?[0-9]{10,15}$/,

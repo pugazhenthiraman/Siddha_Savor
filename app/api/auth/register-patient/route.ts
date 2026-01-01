@@ -162,7 +162,11 @@ export async function POST(request: NextRequest) {
           email: normalizedEmail,
           phone: formData.phone,
           dateOfBirth: formData.dateOfBirth,
-          gender: formData.gender
+          age: formData.age,
+          gender: formData.gender,
+          occupation: formData.occupation,
+          customOccupation: formData.customOccupation,
+          workType: formData.workType
         },
         addressInfo: {
           address: formData.address,
@@ -244,7 +248,11 @@ export async function POST(request: NextRequest) {
         email: normalizedEmail,
         phone: formData.phone,
         dateOfBirth: formData.dateOfBirth,
-        gender: formData.gender
+        age: formData.age,
+        gender: formData.gender,
+        occupation: formData.occupation,
+        customOccupation: formData.customOccupation,
+        workType: formData.workType
       },
       addressInfo: {
         address: formData.address,

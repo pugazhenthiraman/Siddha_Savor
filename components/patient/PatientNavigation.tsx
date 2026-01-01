@@ -23,17 +23,19 @@ export function PatientNavigation({
     <>
       {/* Desktop Header */}
       <header className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
-        <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8 xl:px-12">
-          <div className="flex justify-between items-center py-4">
-            <div className="flex items-center space-x-4">
-              <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-blue-500 rounded-full flex items-center justify-center">
-                <span className="text-white font-bold text-lg">
+        <div className="max-w-full mx-auto px-3 sm:px-4 lg:px-8 xl:px-12">
+          <div className="flex justify-between items-center py-3 sm:py-4">
+            <div className="flex items-center space-x-2 sm:space-x-4">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 bg-gradient-to-r from-green-500 to-blue-500 rounded-full flex items-center justify-center">
+                <span className="text-white font-bold text-xs sm:text-sm lg:text-lg">
                   {patientName.split(' ').map(n => n[0]).join('').toUpperCase() || 'P'}
                 </span>
               </div>
               <div>
-                <h1 className="text-xl font-bold text-gray-900">{PATIENT_LABELS.DASHBOARD_TITLE.replace('{name}', patientName)}</h1>
-                <p className="text-sm text-gray-500">{PATIENT_LABELS.DASHBOARD_SUBTITLE}</p>
+                <h1 className="text-sm sm:text-base lg:text-xl font-bold text-gray-900">
+                  {PATIENT_LABELS.DASHBOARD_TITLE.replace('{name}', patientName)}
+                </h1>
+                <p className="text-xs sm:text-sm text-gray-500">{PATIENT_LABELS.DASHBOARD_SUBTITLE}</p>
               </div>
             </div>
             
@@ -54,7 +56,7 @@ export function PatientNavigation({
             <div className="lg:hidden">
               <button
                 onClick={onLogout}
-                className="bg-red-600 text-white px-3 py-2 rounded-lg hover:bg-red-700 transition-colors text-sm"
+                className="bg-red-600 text-white px-2 py-1 sm:px-3 sm:py-2 rounded-lg hover:bg-red-700 transition-colors text-xs sm:text-sm"
               >
                 Logout
               </button>
@@ -86,20 +88,20 @@ export function PatientNavigation({
       </div>
 
       {/* Mobile Bottom Navigation */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50">
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50 safe-area-pb">
         <div className="grid grid-cols-4 gap-1">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => onTabChange(tab.id)}
-              className={`flex flex-col items-center justify-center py-2 px-1 text-xs font-medium transition-colors ${
+              className={`flex flex-col items-center justify-center py-2 px-1 text-xs font-medium transition-colors min-h-[60px] ${
                 activeTab === tab.id
                   ? 'text-blue-600 bg-blue-50'
                   : 'text-gray-500 hover:text-gray-700'
               }`}
             >
-              <span className="text-lg mb-1">{tab.icon}</span>
-              <span className="truncate">{tab.label}</span>
+              <span className="text-base sm:text-lg mb-1">{tab.icon}</span>
+              <span className="truncate text-[10px] sm:text-xs leading-tight">{tab.label}</span>
             </button>
           ))}
         </div>
@@ -107,4 +109,3 @@ export function PatientNavigation({
     </>
   );
 }
-

@@ -45,7 +45,7 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
     const patientUID = `PAT${String(patientId).padStart(5, '0')}`;
 
     // Approve patient by clearing invite token and setting patientUID
-    await prisma.patient.update({
+    const updatedPatient = await prisma.patient.update({
       where: { id: patientId },
       data: {
         patientUID: patientUID,
@@ -54,48 +54,49 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
       }
     });
 
-    logger.info('Patient approved', { patientId, patientUID, patientEmail, doctorUID: patient.doctorUID });
+    logger.info('Patient approved successfully', { patientId, patientUID, patientEmail, doctorUID: patient.doctorUID });
 
-    // Send approval email using admin SMTP configuration
-    try {
-      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
-      const loginUrl = `${baseUrl}/login`;
+    // Only send email AFTER successful database update
+    setImmediate(async () => {
+      try {
+        const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+        const loginUrl = `${baseUrl}/login`;
 
-      const emailResponse = await fetch(`${baseUrl}/api/admin/smtp/send`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          to: patientEmail,
-          subject: 'Patient Registration Approved - Siddha Savor',
-          html: `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-              <h2 style="color: #16a34a;">Registration Approved</h2>
-              <p>Dear ${patientName || 'Patient'},</p>
-              <p>Your patient registration has been approved by your doctor.</p>
-              <p>You can now log in to your patient portal using your registered email and password.</p>
-              <p style="margin-top: 30px;">
-                <a href="${loginUrl}" style="background-color: #16a34a; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
-                  Login to Patient Portal
-                </a>
-              </p>
-              <p style="margin-top: 30px; color: #666; font-size: 14px;">
-                If you have any questions, please contact your doctor or our support team.
-              </p>
-            </div>
-          `,
-          text: `Your patient registration has been approved. You can now log in at ${loginUrl}.`
-        })
-      });
+        const emailResponse = await fetch(`${baseUrl}/api/admin/smtp/send`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            to: patientEmail,
+            subject: 'Patient Registration Approved - Siddha Savor',
+            html: `
+              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                <h2 style="color: #16a34a;">Registration Approved</h2>
+                <p>Dear ${patientName || 'Patient'},</p>
+                <p>Your patient registration has been approved by your doctor.</p>
+                <p>You can now log in to your patient portal using your registered email and password.</p>
+                <p style="margin-top: 30px;">
+                  <a href="${loginUrl}" style="background-color: #16a34a; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
+                    Login to Patient Portal
+                  </a>
+                </p>
+                <p style="margin-top: 30px; color: #666; font-size: 14px;">
+                  If you have any questions, please contact your doctor or our support team.
+                </p>
+              </div>
+            `,
+            text: `Your patient registration has been approved. You can now log in at ${loginUrl}.`
+          })
+        });
 
-      if (!emailResponse.ok) {
-        logger.warn('Failed to send approval email', { patientEmail, status: emailResponse.status });
-      } else {
-        logger.info('Approval email sent successfully', { patientEmail });
+        if (emailResponse.ok) {
+          logger.info('Approval email sent successfully', { patientEmail });
+        } else {
+          logger.warn('Failed to send approval email', { patientEmail, status: emailResponse.status });
+        }
+      } catch (emailError) {
+        logger.error('Error sending approval email', emailError, { patientEmail });
       }
-    } catch (emailError) {
-      // Log error but don't fail the approval
-      logger.error('Error sending approval email', emailError, { patientEmail });
-    }
+    });
 
     return NextResponse.json({
       success: true,

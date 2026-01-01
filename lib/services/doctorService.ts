@@ -1,4 +1,4 @@
-import { apiClient, ApiResponse } from './api';
+import { apiClient, ApiResponse, ApiClient } from './api';
 import { Patient, InviteLink } from '@/lib/types';
 import { logger } from '@/lib/utils/logger';
 
@@ -70,7 +70,9 @@ class DoctorService {
   async approvePatient(data: PatientApprovalData): Promise<ApiResponse> {
     try {
       logger.info('Approving patient', data);
-      const response = await apiClient.post(this.ENDPOINTS.PATIENT_APPROVE, data);
+      // Use longer timeout for approval requests (30 seconds)
+      const approvalClient = new ApiClient('', 30000);
+      const response = await approvalClient.post(this.ENDPOINTS.PATIENT_APPROVE, data);
       return response;
     } catch (error) {
       logger.error('Failed to approve patient', error);
@@ -147,6 +149,17 @@ class DoctorService {
       return response;
     } catch (error) {
       logger.error('Failed to fetch patient visits', error);
+      throw error;
+    }
+  }
+
+  async savePatientVitals(vitalsData: any): Promise<ApiResponse> {
+    try {
+      logger.info('Saving patient vitals', { patientId: vitalsData.patientId });
+      const response = await apiClient.post('/api/doctor/vitals', vitalsData);
+      return response;
+    } catch (error) {
+      logger.error('Failed to save patient vitals', error);
       throw error;
     }
   }

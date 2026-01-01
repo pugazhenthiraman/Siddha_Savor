@@ -235,9 +235,9 @@ export function PatientDetails({ patient, onClose }: PatientDetailsProps) {
                             personalInfo.workType === 'hard' ? 'bg-red-100 text-red-800' :
                             'bg-gray-100 text-gray-800'
                           }`}>
-                            {personalInfo.workType === 'soft' ? 'Soft Work (Desk job)' :
-                             personalInfo.workType === 'medium' ? 'Medium Work (Moderate activity)' :
-                             personalInfo.workType === 'hard' ? 'Hard Work (Heavy labor)' :
+                            {personalInfo.workType === 'soft' ? 'Soft Work (Mild Activity)' :
+                             personalInfo.workType === 'medium' ? 'Medium Work (Moderate Activity)' :
+                             personalInfo.workType === 'hard' ? 'Hard Work (Heavy Activity)' :
                              personalInfo.workType}
                           </span>
                         ) : 'Not provided'}

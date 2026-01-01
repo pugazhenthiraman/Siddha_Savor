@@ -53,18 +53,18 @@ export function PatientStats() {
   ];
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
       {statCards.map((stat, index) => (
         <div
           key={index}
-          className={`bg-gradient-to-r ${stat.bgColor} rounded-xl p-6 shadow-lg hover:shadow-xl transition-shadow`}
+          className={`bg-gradient-to-r ${stat.bgColor} rounded-xl p-3 sm:p-4 lg:p-6 shadow-lg hover:shadow-xl transition-shadow`}
         >
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600 mb-1">{stat.title}</p>
-              <p className="text-3xl font-bold text-gray-900">{stat.value}</p>
+          <div className="flex flex-col sm:flex-row items-center sm:justify-between">
+            <div className="text-center sm:text-left mb-2 sm:mb-0">
+              <p className="text-xs sm:text-sm font-medium text-gray-600 mb-1">{stat.title}</p>
+              <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">{stat.value}</p>
             </div>
-            <div className={`w-16 h-16 bg-gradient-to-r ${stat.color} rounded-lg flex items-center justify-center text-white text-2xl`}>
+            <div className={`w-10 h-10 sm:w-12 sm:h-12 lg:w-16 lg:h-16 bg-gradient-to-r ${stat.color} rounded-lg flex items-center justify-center text-white text-lg sm:text-xl lg:text-2xl`}>
               {stat.icon}
             </div>
           </div>
@@ -73,4 +73,3 @@ export function PatientStats() {
     </div>
   );
 }
-

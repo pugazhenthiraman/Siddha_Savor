@@ -13,6 +13,7 @@ export interface DoctorTab {
 export const DOCTOR_TABS: DoctorTab[] = [
   { id: 'overview', label: 'Overview', icon: '📊' },
   { id: 'patients', label: 'Patients', icon: '👥' },
+  { id: 'active-patients', label: 'Active Patients', icon: '🩺' },
   // Appointments, Prescriptions, and Profile tabs will be implemented later
 ];
 

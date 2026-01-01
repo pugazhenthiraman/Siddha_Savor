@@ -21,29 +21,71 @@ model Admin {
 }
 
 model Doctor {
-  id          Int          @id @default(autoincrement())
-  doctorUID   String?      @unique @db.VarChar(8)
-  email       String       @unique
+  id          Int             @id @default(autoincrement())
+  doctorUID   String?         @unique @db.VarChar(8)
+  email       String          @unique
   password    String?
-  status      DoctorStatus @default(PENDING)
+  status      DoctorStatus    @default(PENDING)
   formData    Json
-  inviteToken String?      @unique
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  inviteToken String?         @unique
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
   patients    Patient[]
+  vitals      PatientVitals[] // One-to-many relationship with vitals recorded by this doctor
 }
 
 model Patient {
-  id          Int      @id @default(autoincrement())
-  patientUID  String?  @unique @db.VarChar(8)
+  id          Int             @id @default(autoincrement())
+  patientUID  String?         @unique @db.VarChar(8)
   email       String
   password    String?
   formData    Json
-  inviteToken String?  @unique
+  inviteToken String?         @unique
   doctorUID   String?
-  doctor      Doctor?  @relation(fields: [doctorUID], references: [doctorUID])
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  doctor      Doctor?         @relation(fields: [doctorUID], references: [doctorUID])
+  vitals      PatientVitals[] // One-to-many relationship with vitals
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+}
+
+model PatientVitals {
+  id                     Int      @id @default(autoincrement())
+  patientId              Int
+  patient                Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  doctorUID              String
+  doctor                 Doctor   @relation(fields: [doctorUID], references: [doctorUID])
+  
+  // Vital signs
+  pulseRate              Int?
+  heartRate              Int?
+  temperature            Float?
+  bloodPressureSystolic  Int?
+  bloodPressureDiastolic Int?
+  respiratoryRate        Int?
+  oxygenSaturation       Float?
+  
+  // Physical measurements
+  weight                 Float?
+  height                 Int?
+  bmi                    Float?
+  bmr                    Float?
+  tdee                   Float?
+  
+  // Siddha assessment
+  assessmentType         String? // 'naadi' or 'thegi'
+  
+  // Treatment
+  medicines              Json? // Array of medicines
+  notes                  String?
+  
+  // Metadata
+  recordedAt             DateTime @default(now())
+  recordedBy             String // Doctor who recorded
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+  
+  @@index([patientId])
+  @@index([doctorUID])
 }
 
 model InviteLink {

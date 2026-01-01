@@ -14,33 +14,49 @@ export const GET = withErrorHandler(async (request: NextRequest) => {
   }
 
   try {
-    // Get total patients for this doctor
-    const totalPatients = await prisma.patient.count({
-      where: { doctorUID }
-    });
+    // Get current month start and end dates
+    const now = new Date();
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
 
-    // Get active patients (those with password set and not cured)
-    const activePatients = await prisma.patient.count({
-      where: { 
-        doctorUID,
-        password: { not: null },
-        // Add status filter when status field is available
+    // Get all patients for this doctor
+    const allPatients = await prisma.patient.findMany({
+      where: { doctorUID },
+      select: {
+        id: true,
+        password: true,
+        inviteToken: true,
+        formData: true,
+        createdAt: true,
+        updatedAt: true
       }
     });
 
-    // Get pending approvals (patients without password)
-    const pendingApprovals = await prisma.patient.count({
-      where: { 
-        doctorUID,
-        password: null,
-        inviteToken: { not: null }
-      }
-    });
+    // Calculate stats
+    const totalPatients = allPatients.filter(p => p.inviteToken === null).length; // Only approved patients
+    const pendingApprovals = allPatients.filter(p => p.inviteToken !== null).length; // Waiting for approval
+    
+    // Active patients: approved (no invite token) and not cured
+    const activePatients = allPatients.filter(p => {
+      if (p.inviteToken !== null) return false; // Not approved yet
+      const formData = p.formData as any;
+      const status = formData?.status || formData?.personalInfo?.status;
+      return status !== 'CURED';
+    }).length;
 
-    // Mock data for other stats (implement based on your schema)
-    const curedPatients = Math.floor(totalPatients * 0.25); // 25% cured
-    const thisMonthVisits = Math.floor(totalPatients * 2.5); // Average 2.5 visits per patient
-    const averageRating = 4.8; // Mock rating
+    // Cured patients: approved and marked as cured
+    const curedPatients = allPatients.filter(p => {
+      if (p.inviteToken !== null) return false; // Not approved yet
+      const formData = p.formData as any;
+      const status = formData?.status || formData?.personalInfo?.status;
+      return status === 'CURED';
+    }).length;
+
+    // This month visits - not implemented yet
+    const thisMonthVisits = 0;
+
+    // Average rating - not implemented yet  
+    const averageRating = 0;
 
     const stats = {
       totalPatients,

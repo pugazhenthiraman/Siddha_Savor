@@ -8,6 +8,7 @@ import { DoctorStats } from '@/components/doctor/DoctorStats';
 import { PatientManagement } from '@/components/doctor/PatientManagement';
 import { PatientInviteGenerator } from '@/components/doctor/PatientInviteGenerator';
 import { PatientDetails } from '@/components/doctor/PatientDetails';
+import { ActivePatients } from '@/components/doctor/ActivePatients';
 import { Patient } from '@/lib/types';
 
 interface User {
@@ -181,8 +182,13 @@ export default function DoctorDashboard() {
           </div>
         )}
 
+        {/* Active Patients Tab */}
+        {activeTab === 'active-patients' && (
+          <ActivePatients doctorUID={user.doctorUID || ''} />
+        )}
+
         {/* Other tabs will be implemented later */}
-        {!['overview', 'patients'].includes(activeTab) && (
+        {!['overview', 'patients', 'active-patients'].includes(activeTab) && (
           <div className="text-center py-12 lg:py-16">
             <div className="w-16 h-16 lg:w-24 lg:h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <span className="text-2xl lg:text-4xl">🚧</span>

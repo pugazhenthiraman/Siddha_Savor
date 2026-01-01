@@ -19,6 +19,8 @@ const StatCard = ({ stat, index }: { stat: any; index: number }) => (
           ? 'bg-green-100 text-green-600' 
           : stat.changeType === 'warning'
           ? 'bg-yellow-100 text-yellow-600'
+          : stat.changeType === 'neutral'
+          ? 'bg-gray-100 text-gray-600'
           : 'bg-red-100 text-red-600'
       }`}>
         {stat.change}
@@ -57,15 +59,7 @@ export function DoctorStats() {
     try {
       const user = authService.getCurrentUser();
       if (!user?.doctorUID) {
-        // Use mock data for doctors without UID
-        setStats({
-          totalPatients: 24,
-          activePatients: 18,
-          curedPatients: 6,
-          pendingApprovals: 3,
-          thisMonthVisits: 45,
-          averageRating: 4.8,
-        });
+        error('Doctor UID not found');
         setIsLoading(false);
         return;
       }
@@ -77,15 +71,6 @@ export function DoctorStats() {
     } catch (err) {
       logger.error('Failed to fetch doctor stats', err);
       error('Failed to load statistics');
-      // Use mock data on error
-      setStats({
-        totalPatients: 24,
-        activePatients: 18,
-        curedPatients: 6,
-        pendingApprovals: 3,
-        thisMonthVisits: 45,
-        averageRating: 4.8,
-      });
     } finally {
       setIsLoading(false);
     }
@@ -95,8 +80,8 @@ export function DoctorStats() {
     {
       title: DOCTOR_STATS_LABELS.TOTAL_PATIENTS,
       value: stats.totalPatients,
-      change: '+12%',
-      changeType: 'positive',
+      change: stats.totalPatients > 0 ? 'Real data' : 'No data',
+      changeType: stats.totalPatients > 0 ? 'positive' : 'neutral',
       icon: '👥',
       color: 'bg-blue-500',
       bgColor: 'bg-blue-50',
@@ -105,8 +90,8 @@ export function DoctorStats() {
     {
       title: DOCTOR_STATS_LABELS.ACTIVE_TREATMENTS,
       value: stats.activePatients,
-      change: '+5 this week',
-      changeType: 'positive',
+      change: stats.activePatients > 0 ? 'Real data' : 'No data',
+      changeType: stats.activePatients > 0 ? 'positive' : 'neutral',
       icon: '🩺',
       color: 'bg-green-500',
       bgColor: 'bg-green-50',
@@ -115,8 +100,8 @@ export function DoctorStats() {
     {
       title: DOCTOR_STATS_LABELS.CURED_PATIENTS,
       value: stats.curedPatients,
-      change: '+2 this month',
-      changeType: 'positive',
+      change: stats.curedPatients > 0 ? 'Real data' : 'No data',
+      changeType: stats.curedPatients > 0 ? 'positive' : 'neutral',
       icon: '✅',
       color: 'bg-emerald-500',
       bgColor: 'bg-emerald-50',
@@ -125,39 +110,19 @@ export function DoctorStats() {
     {
       title: DOCTOR_STATS_LABELS.PENDING_APPROVALS,
       value: stats.pendingApprovals,
-      change: 'Needs attention',
-      changeType: 'warning',
+      change: stats.pendingApprovals > 0 ? 'Needs attention' : 'All approved',
+      changeType: stats.pendingApprovals > 0 ? 'warning' : 'positive',
       icon: '⏳',
       color: 'bg-yellow-500',
       bgColor: 'bg-yellow-50',
       textColor: 'text-yellow-600'
-    },
-    {
-      title: DOCTOR_STATS_LABELS.THIS_MONTH_VISITS,
-      value: stats.thisMonthVisits,
-      change: '+18%',
-      changeType: 'positive',
-      icon: '📅',
-      color: 'bg-purple-500',
-      bgColor: 'bg-purple-50',
-      textColor: 'text-purple-600'
-    },
-    {
-      title: DOCTOR_STATS_LABELS.AVERAGE_RATING,
-      value: `${stats.averageRating.toFixed(1)}⭐`,
-      change: '+0.2 this month',
-      changeType: 'positive',
-      icon: '⭐',
-      color: 'bg-indigo-500',
-      bgColor: 'bg-indigo-50',
-      textColor: 'text-indigo-600'
-    },
+    }
   ], [stats]);
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 lg:gap-6">
-        {[...Array(6)].map((_, i) => (
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
+        {[...Array(4)].map((_, i) => (
           <div key={i} className="bg-white rounded-xl shadow-lg p-6 animate-pulse">
             <div className="flex items-center justify-between mb-4">
               <div className="w-12 h-12 bg-gray-200 rounded-lg"></div>
@@ -174,7 +139,7 @@ export function DoctorStats() {
   }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 lg:gap-6">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
       {statCards.map((stat, index) => (
         <StatCard key={index} stat={stat} index={index} />
       ))}

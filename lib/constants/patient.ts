@@ -64,9 +64,9 @@ export const OCCUPATION_OPTIONS = [
 
 // Work Type Options (for Siddha treatment planning)
 export const WORK_TYPE_OPTIONS = [
-  { value: 'soft', label: 'Soft Work (Desk job, minimal physical activity)' },
-  { value: 'medium', label: 'Medium Work (Moderate physical activity)' },
-  { value: 'hard', label: 'Hard Work (Heavy physical labor)' },
+  { value: 'soft', label: 'Soft Work (Mild Activity - Desk job, minimal physical activity)' },
+  { value: 'medium', label: 'Medium Work (Moderate Activity - Regular physical activity)' },
+  { value: 'hard', label: 'Hard Work (Heavy Activity - Intense physical labor)' },
 ] as const;// Validation Rules
 export const PATIENT_VALIDATION = {
   PASSWORD_MIN_LENGTH: 8,

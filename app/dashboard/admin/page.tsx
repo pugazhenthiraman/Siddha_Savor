@@ -7,7 +7,7 @@ import { AdminNavigation } from '@/components/admin/AdminNavigation';
 import { DashboardStats } from '@/components/admin/DashboardStats';
 import { DoctorApprovals } from '@/components/admin/DoctorApprovals';
 import { DoctorManagement } from '@/components/admin/DoctorManagement';
-import { PatientManagement } from '@/components/admin/PatientManagement';
+import { PatientManagementNew } from '@/components/admin/PatientManagementNew';
 import { InviteGenerator } from '@/components/ui/InviteGenerator';
 import { SMTPSettings } from '@/components/admin/SMTPSettings';
 import { logger } from '@/lib/utils/logger';
@@ -214,7 +214,7 @@ export default function AdminDashboard() {
               <h2 className="text-xl lg:text-2xl font-bold text-gray-900 mb-2">Patient Management</h2>
               <p className="text-sm lg:text-base text-gray-600">View and manage all registered patients.</p>
             </div>
-            <PatientManagement />
+            <PatientManagementNew />
           </div>
         )}
 

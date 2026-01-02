@@ -3,10 +3,10 @@ import { prisma } from '@/lib/prisma';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { doctorUID: string } }
+  { params }: { params: Promise<{ doctorUID: string }> }
 ) {
   try {
-    const { doctorUID } = params;
+    const { doctorUID } = await params;
 
     // Get patients assigned to this doctor
     const patients = await prisma.patient.findMany({

@@ -24,10 +24,12 @@ interface InfoRowProps {
 }
 
 function InfoRow({ label, value }: InfoRowProps) {
+  const displayValue = typeof value === 'object' ? JSON.stringify(value) : String(value || 'Not provided');
+  
   return (
     <div className="flex justify-between">
       <span className="text-sm text-gray-600">{label}:</span>
-      <span className="text-sm text-black font-medium">{value || 'Not provided'}</span>
+      <span className="text-sm text-black font-medium">{displayValue}</span>
     </div>
   );
 }

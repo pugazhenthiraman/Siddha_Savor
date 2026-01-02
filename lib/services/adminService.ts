@@ -334,6 +334,36 @@ class AdminService {
       throw error;
     }
   }
+
+  /**
+   * Get patient statistics
+   */
+  async getPatientStats(patientId: number): Promise<ApiResponse<any>> {
+    try {
+      logger.info('Fetching patient statistics', { patientId });
+      const response = await apiClient.get<any>(`/api/admin/patients/${patientId}/stats`);
+      logger.info('Patient statistics fetched successfully', { patientId });
+      return response;
+    } catch (error) {
+      logger.error('Failed to fetch patient statistics', error, { patientId });
+      throw error;
+    }
+  }
+
+  /**
+   * Get patient vitals
+   */
+  async getPatientVitals(patientId: number): Promise<ApiResponse<any[]>> {
+    try {
+      logger.info('Fetching patient vitals', { patientId });
+      const response = await apiClient.get<any[]>(`/api/admin/patients/${patientId}/vitals`);
+      logger.info('Patient vitals fetched successfully', { patientId, count: response.data?.length });
+      return response;
+    } catch (error) {
+      logger.error('Failed to fetch patient vitals', error, { patientId });
+      throw error;
+    }
+  }
 }
 
 export const adminService = new AdminService();

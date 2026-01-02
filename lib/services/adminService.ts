@@ -311,9 +311,27 @@ class AdminService {
   async getDoctorStats(doctorUID: string): Promise<ApiResponse<any>> {
     try {
       logger.info('Fetching doctor statistics', { doctorUID });
-      const response = await apiClient.get<any>(`/api/admin/doctors/${doctorUID}/stats`);
+      
+      // Use longer timeout for stats API (60 seconds)
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 60000);
+      
+      const response = await fetch(`/api/admin/doctors/${doctorUID}/stats`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+        signal: controller.signal
+      });
+      
+      clearTimeout(timeoutId);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+      
+      const result = await response.json();
       logger.info('Doctor statistics fetched successfully', { doctorUID });
-      return response;
+      
+      return result;
     } catch (error) {
       logger.error('Failed to fetch doctor statistics', error, { doctorUID });
       throw error;
@@ -326,9 +344,27 @@ class AdminService {
   async getDoctorPatients(doctorUID: string): Promise<ApiResponse<Patient[]>> {
     try {
       logger.info('Fetching doctor patients', { doctorUID });
-      const response = await apiClient.get<Patient[]>(`/api/admin/doctors/${doctorUID}/patients`);
-      logger.info('Doctor patients fetched successfully', { doctorUID, count: response.data?.length });
-      return response;
+      
+      // Use longer timeout for patients API (60 seconds)
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 60000);
+      
+      const response = await fetch(`/api/admin/doctors/${doctorUID}/patients`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+        signal: controller.signal
+      });
+      
+      clearTimeout(timeoutId);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+      
+      const result = await response.json();
+      logger.info('Doctor patients fetched successfully', { doctorUID, count: result.data?.length });
+      
+      return result;
     } catch (error) {
       logger.error('Failed to fetch doctor patients', error, { doctorUID });
       throw error;
@@ -341,9 +377,27 @@ class AdminService {
   async getPatientStats(patientId: number): Promise<ApiResponse<any>> {
     try {
       logger.info('Fetching patient statistics', { patientId });
-      const response = await apiClient.get<any>(`/api/admin/patients/${patientId}/stats`);
+      
+      // Use longer timeout for stats API (60 seconds)
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 60000);
+      
+      const response = await fetch(`/api/admin/patients/${patientId}/stats`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+        signal: controller.signal
+      });
+      
+      clearTimeout(timeoutId);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+      
+      const result = await response.json();
       logger.info('Patient statistics fetched successfully', { patientId });
-      return response;
+      
+      return result;
     } catch (error) {
       logger.error('Failed to fetch patient statistics', error, { patientId });
       throw error;
@@ -356,9 +410,27 @@ class AdminService {
   async getPatientVitals(patientId: number): Promise<ApiResponse<any[]>> {
     try {
       logger.info('Fetching patient vitals', { patientId });
-      const response = await apiClient.get<any[]>(`/api/admin/patients/${patientId}/vitals`);
-      logger.info('Patient vitals fetched successfully', { patientId, count: response.data?.length });
-      return response;
+      
+      // Use longer timeout for vitals API (60 seconds)
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 60000);
+      
+      const response = await fetch(`/api/admin/patients/${patientId}/vitals`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+        signal: controller.signal
+      });
+      
+      clearTimeout(timeoutId);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+      
+      const result = await response.json();
+      logger.info('Patient vitals fetched successfully', { patientId, count: result.data?.length });
+      
+      return result;
     } catch (error) {
       logger.error('Failed to fetch patient vitals', error, { patientId });
       throw error;

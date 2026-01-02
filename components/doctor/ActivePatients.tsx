@@ -30,7 +30,7 @@ export function ActivePatients({ doctorUID }: ActivePatientsProps) {
       
       if (response.success && response.data) {
         const activePatients = response.data.filter(patient => {
-          if (patient.inviteToken !== null) return false;
+          if (patient.status !== 'APPROVED') return false;
           const formData = patient.formData as any;
           const status = formData?.status || formData?.personalInfo?.status;
           return status !== 'CURED';

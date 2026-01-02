@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { query } from '@/lib/db';
 import { logger } from '@/lib/utils/logger';
 import { ERROR_MESSAGES } from '@/lib/constants/messages';
 import { withErrorHandler } from '@/lib/middleware/api-error-handler';
@@ -16,21 +16,34 @@ export const GET = withErrorHandler(async (request: NextRequest) => {
   }
 
   try {
-    const patients = await prisma.patient.findMany({
-      where: { doctorUID },
-      orderBy: { createdAt: 'desc' },
-      include: {
-        doctor: {
-          select: {
-            doctorUID: true,
-            email: true,
-            formData: true,
-          }
-        }
-      }
-    });
+    // Use direct query to get status field
+    const result = await query(`
+      SELECT p.*, d."doctorUID", d.email as doctor_email, d."formData" as doctor_form_data
+      FROM "Patient" p
+      LEFT JOIN "Doctor" d ON p."doctorUID" = d."doctorUID"
+      WHERE p."doctorUID" = $1
+      ORDER BY p."createdAt" DESC
+    `, [doctorUID]);
 
-    logger.info('Fetched doctor patients', { doctorUID, count: patients.length });
+    const patients = result.rows.map(row => ({
+      id: row.id,
+      patientUID: row.patientUID,
+      email: row.email,
+      password: row.password,
+      status: row.status,  // Include status field
+      formData: row.formData,
+      inviteToken: row.inviteToken,
+      doctorUID: row.doctorUID,
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
+      doctor: {
+        doctorUID: row.doctorUID,
+        email: row.doctor_email,
+        formData: row.doctor_form_data
+      }
+    }));
+
+    logger.info('Fetched doctor patients with status', { doctorUID, count: patients.length });
 
     return NextResponse.json({
       success: true,

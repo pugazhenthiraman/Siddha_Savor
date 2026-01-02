@@ -32,13 +32,13 @@ export const GET = withErrorHandler(async (request: NextRequest) => {
       }
     });
 
-    // Calculate stats
-    const totalPatients = allPatients.filter(p => p.inviteToken === null).length; // Only approved patients
-    const pendingApprovals = allPatients.filter(p => p.inviteToken !== null).length; // Waiting for approval
+    // Calculate stats using database status field
+    const totalPatients = allPatients.filter(p => p.status === 'APPROVED').length;
+    const pendingApprovals = allPatients.filter(p => p.status === 'PENDING').length;
     
-    // Active patients: approved (no invite token) and not cured
+    // Active patients: approved and not cured
     const activePatients = allPatients.filter(p => {
-      if (p.inviteToken !== null) return false; // Not approved yet
+      if (p.status !== 'APPROVED') return false;
       const formData = p.formData as any;
       const status = formData?.status || formData?.personalInfo?.status;
       return status !== 'CURED';
@@ -46,7 +46,7 @@ export const GET = withErrorHandler(async (request: NextRequest) => {
 
     // Cured patients: approved and marked as cured
     const curedPatients = allPatients.filter(p => {
-      if (p.inviteToken !== null) return false; // Not approved yet
+      if (p.status !== 'APPROVED') return false;
       const formData = p.formData as any;
       const status = formData?.status || formData?.personalInfo?.status;
       return status === 'CURED';

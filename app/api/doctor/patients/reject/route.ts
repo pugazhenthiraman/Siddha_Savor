@@ -58,6 +58,7 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
     const updatedPatient = await prisma.patient.update({
       where: { id: patientId },
       data: {
+        status: 'REJECTED',
         inviteToken: rejectionToken,
         formData: updatedFormData,
         updatedAt: new Date(),

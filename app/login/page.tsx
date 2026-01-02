@@ -17,7 +17,7 @@ export default function LoginPage() {
     if (registered === 'true') {
       setMessage({
         type: 'success',
-        text: '✅ Registration successful! Please wait for admin approval before logging in.'
+        text: '🎉 Registration completed successfully! Your account is pending approval. You will receive an email notification once approved.'
       });
     }
     

@@ -39,6 +39,7 @@ model Patient {
   patientUID  String?         @unique @db.VarChar(8)
   email       String
   password    String?
+  status      DoctorStatus    @default(PENDING) // Patients are approved by default
   formData    Json
   inviteToken String?         @unique
   doctorUID   String?
@@ -49,12 +50,12 @@ model Patient {
 }
 
 model PatientVitals {
-  id                     Int      @id @default(autoincrement())
-  patientId              Int
-  patient                Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
-  doctorUID              String
-  doctor                 Doctor   @relation(fields: [doctorUID], references: [doctorUID])
-  
+  id        Int     @id @default(autoincrement())
+  patientId Int
+  patient   Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  doctorUID String
+  doctor    Doctor  @relation(fields: [doctorUID], references: [doctorUID])
+
   // Vital signs
   pulseRate              Int?
   heartRate              Int?
@@ -63,27 +64,27 @@ model PatientVitals {
   bloodPressureDiastolic Int?
   respiratoryRate        Int?
   oxygenSaturation       Float?
-  
+
   // Physical measurements
-  weight                 Float?
-  height                 Int?
-  bmi                    Float?
-  bmr                    Float?
-  tdee                   Float?
-  
+  weight Float?
+  height Int?
+  bmi    Float?
+  bmr    Float?
+  tdee   Float?
+
   // Siddha assessment
-  assessmentType         String? // 'naadi' or 'thegi'
-  
+  assessmentType String? // 'naadi' or 'thegi'
+
   // Treatment
-  medicines              Json? // Array of medicines
-  notes                  String?
-  
+  medicines Json? // Array of medicines
+  notes     String?
+
   // Metadata
-  recordedAt             DateTime @default(now())
-  recordedBy             String // Doctor who recorded
-  createdAt              DateTime @default(now())
-  updatedAt              DateTime @updatedAt
-  
+  recordedAt DateTime @default(now())
+  recordedBy String // Doctor who recorded
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
   @@index([patientId])
   @@index([doctorUID])
 }

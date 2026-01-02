@@ -30,8 +30,8 @@ export class ApiException extends Error {
 
 // Base API Configuration
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '';
-const DEFAULT_TIMEOUT = 10000; // 10 seconds
-const REGISTRATION_TIMEOUT = 30000; // 30 seconds for registration endpoints
+const DEFAULT_TIMEOUT = 30000; // 30 seconds
+const REGISTRATION_TIMEOUT = 60000; // 60 seconds for registration endpoints
 
 // HTTP Client with error handling
 export class ApiClient {

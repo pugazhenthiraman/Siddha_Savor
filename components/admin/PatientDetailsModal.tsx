@@ -29,6 +29,19 @@ export function PatientDetailsModal({
 
   if (!patient) return null;
 
+  // Parse formData to get patient info
+  const parseFormData = (formData: any) => {
+    try {
+      return typeof formData === 'string' ? JSON.parse(formData) : formData;
+    } catch {
+      return {};
+    }
+  };
+
+  const formData = parseFormData(patient.formData);
+  const firstName = formData?.personalInfo?.firstName || 'Unknown';
+  const lastName = formData?.personalInfo?.lastName || 'Patient';
+
   const tabs = [
     { id: 'overview', label: 'Overview', icon: '📊' },
     { id: 'info', label: 'Information', icon: '👤' },
@@ -48,19 +61,19 @@ export function PatientDetailsModal({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={`${patient.formData.firstName} ${patient.formData.lastName}`}
+      title={`${firstName} ${lastName}`}
     >
       <div className="p-4 sm:p-6 lg:p-8">
         {/* Patient Header */}
         <div className="flex flex-col sm:flex-row sm:items-center space-y-4 sm:space-y-0 sm:space-x-6 mb-6 pb-6 border-b border-gray-200">
           <div className="w-16 h-16 sm:w-20 sm:h-20 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
             <span className="text-blue-600 font-semibold text-xl sm:text-2xl">
-              {patient.formData.firstName?.[0]}{patient.formData.lastName?.[0]}
+              {firstName[0]}{lastName[0]}
             </span>
           </div>
           <div className="flex-1 min-w-0">
             <h3 className="text-xl sm:text-2xl font-semibold text-black">
-              {patient.formData.firstName} {patient.formData.lastName}
+              {firstName} {lastName}
             </h3>
             <p className="text-gray-600 text-sm sm:text-base">{patient.email}</p>
             <div className="flex flex-wrap items-center gap-2 mt-2">
@@ -115,7 +128,7 @@ export function PatientDetailsModal({
                       </div>
                       <div className="flex justify-between items-center">
                         <span className="text-sm text-gray-600">Phone:</span>
-                        <span className="text-sm text-black font-medium">{patient.formData.phone || 'Not provided'}</span>
+                        <span className="text-sm text-black font-medium">{formData?.personalInfo?.phone || 'Not provided'}</span>
                       </div>
                       <div className="flex justify-between items-center">
                         <span className="text-sm text-gray-600">Doctor:</span>

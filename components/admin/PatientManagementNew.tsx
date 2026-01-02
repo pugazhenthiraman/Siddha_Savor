@@ -7,6 +7,17 @@ import { PatientDetailsModal } from './PatientDetailsModal';
 import { Patient } from '@/lib/types';
 import { PatientStats } from '@/lib/types/patient';
 
+// Helper function to parse formData
+const parseFormData = (formData: any) => {
+  try {
+    const parsed = typeof formData === 'string' ? JSON.parse(formData) : formData;
+    return parsed || {};
+  } catch (error) {
+    console.error('Error parsing formData:', error);
+    return {};
+  }
+};
+
 export function PatientManagementNew() {
   const { error } = useToast();
   const [patients, setPatients] = useState<Patient[]>([]);
@@ -17,6 +28,8 @@ export function PatientManagementNew() {
   const [isLoadingDetails, setIsLoadingDetails] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(12);
 
   useEffect(() => {
     loadPatients();
@@ -70,17 +83,32 @@ export function PatientManagementNew() {
 
   const filteredPatients = patients.filter(patient => {
     const searchLower = searchTerm.toLowerCase();
-    const fullName = `${patient.formData.firstName || ''} ${patient.formData.lastName || ''}`.toLowerCase();
+    const formData = parseFormData(patient.formData);
+    const firstName = formData?.personalInfo?.firstName || '';
+    const lastName = formData?.personalInfo?.lastName || '';
+    const fullName = `${firstName} ${lastName}`.toLowerCase();
+    const email = patient.email || '';
+    const patientUID = patient.patientUID || '';
+    const doctorUID = patient.doctorUID || '';
+    
     return fullName.includes(searchLower) || 
-           patient.email.toLowerCase().includes(searchLower) ||
-           patient.patientUID?.toLowerCase().includes(searchLower) ||
-           patient.doctorUID?.toLowerCase().includes(searchLower);
+           email.toLowerCase().includes(searchLower) ||
+           patientUID.toLowerCase().includes(searchLower) ||
+           doctorUID.toLowerCase().includes(searchLower);
   });
+
+  const totalPages = Math.ceil(filteredPatients.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedPatients = filteredPatients.slice(startIndex, startIndex + itemsPerPage);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
         <span className="ml-3 text-gray-600">Loading patients...</span>
       </div>
     );
@@ -89,85 +117,171 @@ export function PatientManagementNew() {
   return (
     <>
       <div className="space-y-6">
-        {/* Header */}
-        <div className="bg-white rounded-xl shadow-sm p-6">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
-            <div>
-              <h3 className="text-lg font-semibold text-black">All Patients</h3>
-              <p className="text-sm text-gray-600 mt-1">
-                {filteredPatients.length} patient{filteredPatients.length !== 1 ? 's' : ''} found
-              </p>
+        <div className="bg-white rounded-2xl shadow-sm p-6 border border-green-100">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
+            <div className="flex items-center space-x-4">
+              <div className="w-12 h-12 bg-green-600 rounded-xl flex items-center justify-center shadow-lg">
+                <span className="text-white text-xl">👥</span>
+              </div>
+              <div>
+                <h3 className="text-xl font-bold text-gray-900">Active Patients</h3>
+                <p className="text-sm text-gray-600">
+                  {filteredPatients.length} active patient{filteredPatients.length !== 1 ? 's' : ''} • Page {currentPage} of {totalPages}
+                </p>
+              </div>
             </div>
-            <div className="relative w-full sm:w-80">
-              <input
-                type="text"
-                placeholder="Search patients..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black"
-              />
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center">
-                <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
+            
+            <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4">
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="Search patients..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full sm:w-80 pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 focus:bg-white text-gray-900 transition-all"
+                />
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center">
+                  <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                </div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Patients Grid */}
-        <div className="bg-white rounded-xl shadow-sm">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100">
           {filteredPatients.length === 0 ? (
-            <div className="p-12 text-center">
-              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-2xl">👤</span>
+            <div className="p-16 text-center">
+              <div className="w-24 h-24 bg-gradient-to-br from-gray-100 to-gray-200 rounded-3xl flex items-center justify-center mx-auto mb-6">
+                <span className="text-4xl">👥</span>
               </div>
-              <h3 className="text-lg font-medium text-black mb-2">No Patients Found</h3>
-              <p className="text-gray-600">
-                {searchTerm ? 'No patients match your search criteria.' : 'No patients registered yet.'}
+              <h3 className="text-xl font-semibold text-gray-900 mb-3">No Patients Found</h3>
+              <p className="text-gray-600 max-w-md mx-auto">
+                {searchTerm ? 'No patients match your search criteria. Try adjusting your search terms.' : 'No patients are currently registered in the system.'}
               </p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
-              {filteredPatients.map((patient) => (
-                <div
-                  key={patient.id}
-                  onClick={() => loadPatientDetails(patient)}
-                  className="bg-gray-50 rounded-lg p-6 hover:bg-gray-100 cursor-pointer transition-colors border border-gray-200 hover:border-blue-300"
-                >
-                  <div className="flex items-center space-x-4">
-                    <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                      <span className="text-blue-600 font-semibold">
-                        {patient.formData.firstName?.[0]}{patient.formData.lastName?.[0]}
-                      </span>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h4 className="text-sm font-semibold text-black truncate">
-                        {patient.formData.firstName} {patient.formData.lastName}
-                      </h4>
-                      <p className="text-xs text-gray-600 truncate">{patient.email}</p>
-                      <p className="text-xs text-gray-500 truncate mt-1">
-                        {patient.doctorUID ? `Dr. ${patient.doctorUID}` : 'No doctor assigned'}
-                      </p>
-                    </div>
-                  </div>
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
+                {paginatedPatients.map((patient) => {
+                  const formData = parseFormData(patient.formData);
+                  const firstName = formData?.personalInfo?.firstName || 'Unknown';
+                  const lastName = formData?.personalInfo?.lastName || 'Patient';
+                  const phone = formData?.personalInfo?.phone || 'No phone';
+                  const initials = `${firstName[0] || 'U'}${lastName[0] || 'P'}`;
                   
-                  <div className="mt-4 flex items-center justify-between">
-                    <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
-                      {patient.patientUID}
-                    </span>
-                    <span className="text-xs text-gray-500">
-                      {new Date(patient.createdAt).toLocaleDateString()}
-                    </span>
+                  return (
+                    <div
+                      key={patient.id}
+                      onClick={() => loadPatientDetails(patient)}
+                      className="bg-white rounded-xl p-5 hover:shadow-md cursor-pointer transition-all duration-200 border border-gray-200 hover:border-green-300 hover:bg-gray-50"
+                    >
+                      <div className="flex items-center space-x-4">
+                        <div className="w-14 h-14 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center shadow-sm">
+                          <span className="text-white font-bold text-lg">
+                            {initials}
+                          </span>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h4 className="text-base font-semibold text-gray-900 truncate">
+                            {firstName} {lastName}
+                          </h4>
+                          <p className="text-sm text-gray-600 truncate">{patient.email || 'No email'}</p>
+                          <p className="text-xs text-gray-500 truncate mt-1">
+                            📞 {phone}
+                          </p>
+                        </div>
+                        <div className="flex flex-col items-end space-y-2">
+                          <span className="text-xs bg-green-100 text-green-700 px-3 py-1 rounded-full font-medium">
+                            Active
+                          </span>
+                          <span className="text-xs text-gray-400">
+                            {new Date(patient.createdAt).toLocaleDateString()}
+                          </span>
+                        </div>
+                      </div>
+                      
+                      <div className="mt-4 pt-3 border-t border-gray-100">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs bg-blue-50 text-blue-700 px-2 py-1 rounded-md font-medium">
+                            ID: {patient.patientUID || patient.id}
+                          </span>
+                          {patient.doctorUID && (
+                            <span className="text-xs text-gray-500">
+                              👨‍⚕️ Dr. {patient.doctorUID}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between px-6 py-4 border-t border-gray-100">
+                  <div className="text-sm text-gray-600">
+                    Showing {startIndex + 1}-{Math.min(startIndex + itemsPerPage, filteredPatients.length)} of {filteredPatients.length}
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <button
+                      onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                      disabled={currentPage === 1}
+                      className="px-3 py-1 text-sm border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Previous
+                    </button>
+                    
+                    <div className="flex items-center space-x-1">
+                      {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                        const pageNum = i + 1;
+                        return (
+                          <button
+                            key={pageNum}
+                            onClick={() => setCurrentPage(pageNum)}
+                            className={`px-3 py-1 text-sm rounded-lg ${
+                              currentPage === pageNum
+                                ? 'bg-green-600 text-white'
+                                : 'border border-gray-200 hover:bg-gray-50'
+                            }`}
+                          >
+                            {pageNum}
+                          </button>
+                        );
+                      })}
+                      {totalPages > 5 && (
+                        <>
+                          <span className="text-gray-400">...</span>
+                          <button
+                            onClick={() => setCurrentPage(totalPages)}
+                            className={`px-3 py-1 text-sm rounded-lg ${
+                              currentPage === totalPages
+                                ? 'bg-green-600 text-white'
+                                : 'border border-gray-200 hover:bg-gray-50'
+                            }`}
+                          >
+                            {totalPages}
+                          </button>
+                        </>
+                      )}
+                    </div>
+
+                    <button
+                      onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                      disabled={currentPage === totalPages}
+                      className="px-3 py-1 text-sm border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Next
+                    </button>
                   </div>
                 </div>
-              ))}
-            </div>
+              )}
+            </>
           )}
         </div>
       </div>
 
-      {/* Patient Details Modal */}
       <PatientDetailsModal
         patient={selectedPatient}
         stats={patientStats}

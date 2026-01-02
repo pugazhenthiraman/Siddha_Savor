@@ -7,10 +7,11 @@ export async function GET(request: NextRequest) {
   try {
     logger.info('Admin patients API called');
 
-    const result = await query('SELECT * FROM "Patient" ORDER BY "createdAt" DESC');
+    // Only get APPROVED patients for admin
+    const result = await query('SELECT * FROM "Patient" WHERE status = $1 ORDER BY "createdAt" DESC', ['APPROVED']);
     const patients = result.rows;
 
-    logger.info('Patients retrieved successfully', { count: patients.length });
+    logger.info('Approved patients retrieved successfully', { count: patients.length });
 
     return NextResponse.json({
       success: true,

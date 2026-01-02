@@ -103,6 +103,51 @@ export function PatientRegistrationForm({ token, inviteData }: PatientRegistrati
       error(VALIDATION_MESSAGES.INVALID_PHONE);
       return false;
     }
+
+    if (!formData.dateOfBirth.trim()) {
+      error('Date of birth is required');
+      return false;
+    }
+
+    if (!formData.gender.trim()) {
+      error('Gender is required');
+      return false;
+    }
+
+    if (!formData.address.trim()) {
+      error('Address is required');
+      return false;
+    }
+
+    if (!formData.city.trim()) {
+      error('City is required');
+      return false;
+    }
+
+    if (!formData.state.trim()) {
+      error('State is required');
+      return false;
+    }
+
+    if (!formData.pincode.trim()) {
+      error('Pincode is required');
+      return false;
+    }
+
+    if (!formData.emergencyContact.trim()) {
+      error('Emergency contact name is required');
+      return false;
+    }
+
+    if (!formData.emergencyPhone.trim()) {
+      error('Emergency contact phone is required');
+      return false;
+    }
+
+    if (!PATIENT_VALIDATION.PHONE_REGEX.test(formData.emergencyPhone.replace(/\s/g, ''))) {
+      error('Please enter a valid emergency contact phone number');
+      return false;
+    }
     
     if (!formData.password) {
       error(VALIDATION_MESSAGES.REQUIRED_PASSWORD);
@@ -154,16 +199,18 @@ export function PatientRegistrationForm({ token, inviteData }: PatientRegistrati
         : await authService.registerPatientWithoutToken(formData);
       
       if (response.success) {
-        success(SUCCESS_MESSAGES.REGISTRATION_SUCCESS_PATIENT);
+        success('Registration successful! Redirecting to login...');
         setTimeout(() => {
           router.push('/login?registered=true');
-        }, 2000);
+        }, 1500);
       } else {
         error(response.error || ERROR_MESSAGES.SOMETHING_WENT_WRONG);
       }
-    } catch (err) {
+    } catch (err: any) {
       logger.error('Patient registration failed', err);
-      error(ERROR_MESSAGES.NETWORK_ERROR);
+      // Show the actual error message from API, not generic network error
+      const errorMessage = err.message || ERROR_MESSAGES.NETWORK_ERROR;
+      error(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
@@ -228,20 +275,24 @@ export function PatientRegistrationForm({ token, inviteData }: PatientRegistrati
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">{FORM_LABELS.PHONE_NUMBER} *</label>
                 <Input
+                  type="tel"
                   value={formData.phone}
                   onChange={(e) => handleInputChange('phone', e.target.value)}
                   placeholder={FORM_PLACEHOLDERS.PHONE}
                   disabled={isSubmitting}
                   className="text-sm sm:text-base"
+                  pattern="[0-9]{10}"
+                  maxLength={10}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">{FORM_LABELS.DATE_OF_BIRTH}</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{FORM_LABELS.DATE_OF_BIRTH} *</label>
                 <Input
                   type="date"
                   value={formData.dateOfBirth}
                   onChange={(e) => handleInputChange('dateOfBirth', e.target.value)}
                   disabled={isSubmitting}
+                  required
                   className="text-sm sm:text-base"
                 />
                 {formData.age > 0 && (
@@ -251,12 +302,13 @@ export function PatientRegistrationForm({ token, inviteData }: PatientRegistrati
                 )}
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">{FORM_LABELS.GENDER}</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{FORM_LABELS.GENDER} *</label>
                 <select
                   value={formData.gender}
                   onChange={(e) => handleInputChange('gender', e.target.value)}
                   className="w-full px-3 py-2 sm:px-4 sm:py-3 border border-gray-300 rounded-lg text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent disabled:bg-gray-50 disabled:text-gray-500 disabled:cursor-not-allowed transition-all duration-200 text-sm sm:text-base"
                   disabled={isSubmitting}
+                  required
                 >
                   <option value="">{REGISTRATION_LABELS.SELECT_GENDER}</option>
                   {GENDER_OPTIONS.map((gender) => (
@@ -410,23 +462,28 @@ export function PatientRegistrationForm({ token, inviteData }: PatientRegistrati
             <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">{PATIENT_FORM_SECTIONS.EMERGENCY}</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">{FORM_LABELS.EMERGENCY_CONTACT_NAME}</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{FORM_LABELS.EMERGENCY_CONTACT_NAME} *</label>
                 <Input
                   value={formData.emergencyContact}
                   onChange={(e) => handleInputChange('emergencyContact', e.target.value)}
                   placeholder={FORM_PLACEHOLDERS.EMERGENCY_CONTACT_NAME}
                   disabled={isSubmitting}
+                  required
                   className="text-sm sm:text-base"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">{FORM_LABELS.EMERGENCY_CONTACT_PHONE}</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{FORM_LABELS.EMERGENCY_CONTACT_PHONE} *</label>
                 <Input
+                  type="tel"
                   value={formData.emergencyPhone}
                   onChange={(e) => handleInputChange('emergencyPhone', e.target.value)}
                   placeholder={FORM_PLACEHOLDERS.EMERGENCY_CONTACT_PHONE}
                   disabled={isSubmitting}
+                  required
                   className="text-sm sm:text-base"
+                  pattern="[0-9]{10}"
+                  maxLength={10}
                 />
               </div>
             </div>

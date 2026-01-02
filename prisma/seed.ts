@@ -111,50 +111,6 @@ async function main() {
     console.log("✅ Test doctors seeded");
 
     // =====================
-    // TEST PATIENTS
-    // =====================
-    const testPatients = [
-      {
-        email: "patient1@example.com",
-        password: await bcrypt.hash("Patient@123", 10),
-        doctorUID: "DOC001",
-        formData: {
-          firstName: "Alice",
-          lastName: "Brown",
-          age: 35,
-          phone: "+1-555-0201",
-          address: "123 Main St, City, State",
-          emergencyContact: "Bob Brown - +1-555-0202",
-          medicalHistory: "No significant medical history"
-        }
-      },
-      {
-        email: "patient2@example.com",
-        password: await bcrypt.hash("Patient@123", 10),
-        doctorUID: "DOC001",
-        formData: {
-          firstName: "David",
-          lastName: "Wilson",
-          age: 42,
-          phone: "+1-555-0203",
-          address: "456 Oak Ave, City, State",
-          emergencyContact: "Mary Wilson - +1-555-0204",
-          medicalHistory: "Diabetes Type 2, managed with medication"
-        }
-      }
-    ];
-
-    for (const patientData of testPatients) {
-      await prisma.patient.upsert({
-        where: { email: patientData.email },
-        update: patientData,
-        create: patientData,
-      });
-    }
-
-    console.log("✅ Test patients seeded");
-
-    // =====================
     // TEST INVITE LINKS
     // =====================
     const futureDate = new Date();

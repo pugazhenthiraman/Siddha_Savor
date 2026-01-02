@@ -6,9 +6,11 @@ import { authService } from '@/lib/services/auth';
 import { AdminNavigation } from '@/components/admin/AdminNavigation';
 import { DashboardStats } from '@/components/admin/DashboardStats';
 import { DoctorApprovals } from '@/components/admin/DoctorApprovals';
+import { DoctorManagement } from '@/components/admin/DoctorManagement';
 import { PatientManagement } from '@/components/admin/PatientManagement';
 import { InviteGenerator } from '@/components/ui/InviteGenerator';
 import { SMTPSettings } from '@/components/admin/SMTPSettings';
+import { logger } from '@/lib/utils/logger';
 
 interface User {
   id: number;
@@ -218,12 +220,12 @@ export default function AdminDashboard() {
 
         {/* Placeholder for doctors tab */}
         {activeTab === 'doctors' && (
-          <div className="text-center py-12 lg:py-16">
-            <div className="w-16 h-16 lg:w-24 lg:h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <span className="text-2xl lg:text-4xl">🚧</span>
+          <div className="space-y-4 lg:space-y-6">
+            <div className="text-center lg:text-left">
+              <h2 className="text-xl lg:text-2xl font-bold text-gray-900 mb-2">Doctor Management</h2>
+              <p className="text-sm lg:text-base text-gray-600">View and manage all approved doctors with detailed information and statistics.</p>
             </div>
-            <h3 className="text-base lg:text-lg font-medium text-gray-900 mb-2">Coming Soon</h3>
-            <p className="text-sm lg:text-base text-gray-600">This section is under development.</p>
+            <DoctorManagement />
           </div>
         )}
       </main>

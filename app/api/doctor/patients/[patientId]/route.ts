@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { withRetry } from '@/lib/db-retry';
 import { query } from '@/lib/db';
 import { cookies } from 'next/headers';
 
@@ -21,7 +22,7 @@ export async function GET(
       return NextResponse.json({ success: false, error: 'Invalid patient ID' }, { status: 400 });
     }
 
-    // Get patient data using correct schema
+    // Get patient data using retry wrapper
     const patientQuery = `
       SELECT p.*, 
              p."doctorUID",
@@ -32,7 +33,7 @@ export async function GET(
       LIMIT 1
     `;
 
-    const result = await query(patientQuery, [patientId]);
+    const result = await withRetry(() => query(patientQuery, [patientId]));
 
     if (result.rows.length === 0) {
       return NextResponse.json({ success: false, error: 'Patient not found' }, { status: 404 });

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { db } from '@/lib/db-retry';
 import { withErrorHandler } from '@/lib/middleware/api-error-handler';
 
 export const GET = withErrorHandler(async (request: NextRequest) => {
@@ -14,13 +14,8 @@ export const GET = withErrorHandler(async (request: NextRequest) => {
   }
 
   try {
-    // Get current month start and end dates
-    const now = new Date();
-    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-    const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-
     // Get all patients for this doctor
-    const allPatients = await prisma.patient.findMany({
+    const allPatients = await db.patient.findMany({
       where: { doctorUID },
       select: {
         id: true,
@@ -53,19 +48,13 @@ export const GET = withErrorHandler(async (request: NextRequest) => {
       return status === 'CURED';
     }).length;
 
-    // This month visits - not implemented yet
-    const thisMonthVisits = 0;
-
-    // Average rating - not implemented yet  
-    const averageRating = 0;
-
     const stats = {
       totalPatients,
       activePatients,
       curedPatients,
       pendingApprovals,
-      thisMonthVisits,
-      averageRating,
+      thisMonthVisits: 0,
+      averageRating: 0,
     };
 
     return NextResponse.json({

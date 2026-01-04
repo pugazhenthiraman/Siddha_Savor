@@ -6,8 +6,6 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const { 
-    
-    // Debug log the incoming data
       patientId, 
       doctorUID,
       pulseRate,
@@ -16,40 +14,21 @@ export async function POST(request: NextRequest) {
       bloodPressureSystolic,
       bloodPressureDiastolic,
       randomBloodSugar,
-      respiratoryRate,      oxygenSaturation,
+      respiratoryRate,
+      oxygenSaturation,
       weight,
-      height,
-      bmi,
       bmr,
       tdee,
       naadi,
-      thegi,      assessmentType,
+      thegi,
+      assessmentType,
       medicines,
+      diagnosis,
       notes,
       recordedBy
     } = body;
-    // Debug log the extracted fields
-    console.log('Extracted fields:', {
-      patientId, doctorUID, weight, naadi, thegi, assessmentType
-    });
 
-    console.log('About to create vitals record with data:', {
-      patientId: parseInt(patientId),
-      doctorUID,
-      weight: weight ? parseFloat(weight) : null,
-      naadi,
-      thegi,
-      assessmentType
-    });
-    // Create new vitals record
-    
-    console.log('Creating vitals with data:', {
-      patientId: parseInt(patientId),
-      doctorUID,
-      weight: weight ? parseFloat(weight) : null,
-      naadi,
-      thegi
-    });    const vitals = await prisma.patientVitals.create({
+    const vitals = await prisma.patientVitals.create({
       data: {
         patientId: parseInt(patientId),
         doctorUID,
@@ -62,24 +41,23 @@ export async function POST(request: NextRequest) {
         respiratoryRate: respiratoryRate ? parseInt(respiratoryRate) : null,
         oxygenSaturation: oxygenSaturation ? parseFloat(oxygenSaturation) : null,
         weight: weight ? parseFloat(weight) : null,
-        height: height ? parseInt(height) : null,
-        bmi: bmi ? parseFloat(bmi) : null,
         bmr: bmr ? parseFloat(bmr) : null,
         tdee: tdee ? parseFloat(tdee) : null,
         assessmentType,
         naadi,
         thegi,
         medicines: medicines || [],
+        diagnosis: diagnosis || null,
         notes,
         recordedBy
       }
     });
 
-    logger.info('Patient vitals updated successfully', {
+    logger.info('Patient vitals saved successfully', {
       patientId,
       doctorUID,
       hasVitals: true,
-      hasDiagnosis: !!notes
+      hasDiagnosis: !!diagnosis
     });
 
     return NextResponse.json({ 
@@ -89,9 +67,7 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('DETAILED ERROR:', error);
-    console.error('ERROR TYPE:', typeof error);
-    console.error('ERROR MESSAGE:', error instanceof Error ? error.message : String(error));    logger.error('Error saving patient vitals:', error);
+    logger.error('Error saving patient vitals:', error);
     return NextResponse.json(
       { success: false, error: 'Failed to save vitals' },
       { status: 500 }
@@ -102,10 +78,6 @@ export async function POST(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     const body = await request.json();
-    
-    // Debug log the incoming data
-    console.log('Received vitals data:', JSON.stringify(body, null, 2));
-    
     const { 
       id,
       patientId, 
@@ -117,19 +89,18 @@ export async function PUT(request: NextRequest) {
       bloodPressureDiastolic,
       randomBloodSugar,
       weight,
-      respiratoryRate,      height,
-      bmi,
+      respiratoryRate,
       bmr,
       tdee,
       naadi,
       thegi,
       assessmentType,
       medicines,
+      diagnosis,
       notes,
       recordedBy
     } = body;
 
-    // Update existing vitals record
     const vitals = await prisma.patientVitals.update({
       where: { id: parseInt(id) },
       data: {
@@ -138,16 +109,15 @@ export async function PUT(request: NextRequest) {
         temperature: temperature ? parseFloat(temperature) : null,
         bloodPressureSystolic: bloodPressureSystolic ? parseInt(bloodPressureSystolic) : null,
         bloodPressureDiastolic: bloodPressureDiastolic ? parseInt(bloodPressureDiastolic) : null,
-        // randomBloodSugar: randomBloodSugar ? parseInt(randomBloodSugar) : null,
+        randomBloodSugar: randomBloodSugar ? parseInt(randomBloodSugar) : null,
         weight: weight ? parseFloat(weight) : null,
-        height: height ? parseInt(height) : null,
-        bmi: bmi ? parseFloat(bmi) : null,
         bmr: bmr ? parseFloat(bmr) : null,
         tdee: tdee ? parseFloat(tdee) : null,
         assessmentType,
         naadi,
         thegi,
         medicines: medicines || [],
+        diagnosis: diagnosis || null,
         notes,
         recordedBy
       }
@@ -187,7 +157,6 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Get patient vitals history
     const vitals = await prisma.patientVitals.findMany({
       where: {
         patientId: parseInt(patientId),

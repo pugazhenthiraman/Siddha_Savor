@@ -8,9 +8,7 @@ import { NewVitalsForm } from '@/components/doctor/NewVitalsForm';
 interface PatientStats {
   bmr?: number;
   tdee?: number;
-  bmi?: number;
   lastWeight?: number;
-  lastHeight?: number;
   lastRecordedAt?: string;
 }
 
@@ -68,9 +66,7 @@ export default function PatientDashboardPage() {
         setPatientStats({
           bmr: latest.bmr,
           tdee: latest.tdee,
-          bmi: latest.bmi,
           lastWeight: latest.weight,
-          lastHeight: latest.height,
           lastRecordedAt: latest.recordedAt
         });
       }
@@ -147,9 +143,16 @@ export default function PatientDashboardPage() {
                 <h1 className="text-xl font-semibold text-gray-900">
                   {patient.formData?.personalInfo?.firstName} {patient.formData?.personalInfo?.lastName}
                 </h1>
-                <p className="text-sm text-gray-600">
-                  Age: {calculateAge()} • Phone: {patient.formData?.personalInfo?.phone}
-                </p>
+                <div className="flex items-center space-x-4">
+                  <p className="text-sm text-gray-600">
+                    Age: {calculateAge()} • Phone: {patient.formData?.personalInfo?.phone}
+                  </p>
+                  {latestVitals?.diagnosis && (
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                      {latestVitals.diagnosis}
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
           </div>
@@ -185,7 +188,27 @@ export default function PatientDashboardPage() {
         {activeTab === 'overview' && (
           <div className="space-y-8">
             {/* Current Stats Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+              {/* Current Diagnosis Card */}
+              {latestVitals?.diagnosis && (
+                <div className="bg-gradient-to-br from-red-400 to-pink-500 p-4 sm:p-6 rounded-xl shadow-lg text-white">
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <div className="text-xs sm:text-sm font-semibold mb-1 text-red-100">Current Diagnosis</div>
+                      <div className="text-lg sm:text-xl font-bold">
+                        {latestVitals.diagnosis}
+                      </div>
+                      <div className="text-xs text-red-100">Latest assessment</div>
+                    </div>
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-red-300 rounded-full flex items-center justify-center ml-2">
+                      <svg className="w-5 h-5 sm:w-6 sm:h-6 text-red-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* BMR Card */}
               <div className="bg-gradient-to-br from-green-400 to-emerald-500 p-4 sm:p-6 rounded-xl shadow-lg text-white">
                 <div className="flex items-center justify-between">
@@ -312,18 +335,22 @@ export default function PatientDashboardPage() {
                         <div className="text-xs sm:text-sm text-blue-600 font-medium mb-1">Weight</div>
                         <div className="text-base sm:text-lg font-semibold text-blue-900">{latestVitals.weight || 'N/A'} kg</div>
                       </div>
-                      <div className="bg-green-50 border border-green-200 p-3 sm:p-4 rounded-lg">
-                        <div className="text-xs sm:text-sm text-green-600 font-medium mb-1">Height</div>
-                        <div className="text-base sm:text-lg font-semibold text-green-900">{latestVitals.height || 'N/A'} cm</div>
-                      </div>
-                      <div className="bg-purple-50 border border-purple-200 p-3 sm:p-4 rounded-lg">
-                        <div className="text-xs sm:text-sm text-purple-600 font-medium mb-1">BMI</div>
-                        <div className="text-base sm:text-lg font-semibold text-purple-900">{latestVitals.bmi?.toFixed(1) || 'N/A'}</div>
-                      </div>
                       <div className="bg-orange-50 border border-orange-200 p-3 sm:p-4 rounded-lg">
                         <div className="text-xs sm:text-sm text-orange-600 font-medium mb-1">Temperature</div>
                         <div className="text-base sm:text-lg font-semibold text-orange-900">{latestVitals.temperature || 'N/A'}°F</div>
                       </div>
+                      {latestVitals.diagnosis && (
+                        <div className="bg-red-50 border border-red-200 p-3 sm:p-4 rounded-lg">
+                          <div className="text-xs sm:text-sm text-red-600 font-medium mb-1">Diagnosis</div>
+                          <div className="text-base sm:text-lg font-semibold text-red-900">{latestVitals.diagnosis}</div>
+                        </div>
+                      )}
+                      {latestVitals.randomBloodSugar && (
+                        <div className="bg-purple-50 border border-purple-200 p-3 sm:p-4 rounded-lg">
+                          <div className="text-xs sm:text-sm text-purple-600 font-medium mb-1">Blood Sugar</div>
+                          <div className="text-base sm:text-lg font-semibold text-purple-900">{latestVitals.randomBloodSugar} mg/dL</div>
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -370,6 +397,17 @@ export default function PatientDashboardPage() {
                     </div>
                   </div>
 
+                  {/* Diagnosis */}
+                  {latestVitals.diagnosis && (
+                    <div>
+                      <h5 className="text-md font-medium text-gray-800 mb-3">Current Diagnosis</h5>
+                      <div className="bg-red-50 border border-red-200 p-4 rounded-lg">
+                        <div className="text-lg font-semibold text-red-900">{latestVitals.diagnosis}</div>
+                        <div className="text-sm text-red-600 mt-1">Latest medical assessment</div>
+                      </div>
+                    </div>
+                  )}
+
                   {/* Siddha Assessment */}
                   {(latestVitals.naadi || latestVitals.thegi) && (
                     <div>
@@ -387,6 +425,16 @@ export default function PatientDashboardPage() {
                             <div className="text-base sm:text-lg font-semibold text-teal-900">{latestVitals.thegi}</div>
                           </div>
                         )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Diagnosis */}
+                  {latestVitals.diagnosis && (
+                    <div>
+                      <h5 className="text-md font-medium text-gray-800 mb-3">Diagnosis</h5>
+                      <div className="bg-red-50 border border-red-200 p-4 rounded-lg">
+                        <div className="text-sm font-medium text-red-900">{latestVitals.diagnosis}</div>
                       </div>
                     </div>
                   )}
@@ -591,19 +639,34 @@ export default function PatientDashboardPage() {
                         <div className="text-sm font-semibold text-green-900">{record.weight} kg</div>
                       </div>
                     )}
-                    {record.bmi && (
-                      <div className="bg-purple-50 border border-purple-200 p-3 rounded-lg">
-                        <div className="text-xs text-purple-600 font-medium mb-1">BMI</div>
-                        <div className="text-sm font-semibold text-purple-900">{record.bmi.toFixed(1)}</div>
-                      </div>
-                    )}
                     {record.naadi && (
                       <div className="bg-indigo-50 border border-indigo-200 p-3 rounded-lg">
                         <div className="text-xs text-indigo-600 font-medium mb-1">Naadi</div>
                         <div className="text-sm font-semibold text-indigo-900">{record.naadi}</div>
                       </div>
                     )}
+                    {record.diagnosis && (
+                      <div className="bg-red-50 border border-red-200 p-3 rounded-lg">
+                        <div className="text-xs text-red-600 font-medium mb-1">Diagnosis</div>
+                        <div className="text-sm font-semibold text-red-900">{record.diagnosis}</div>
+                      </div>
+                    )}
                   </div>
+                  
+                  {/* Diagnosis Section - Prominent Display */}
+                  {record.diagnosis && (
+                    <div className="mt-4 p-4 bg-red-50 rounded-lg border-l-4 border-red-400">
+                      <div className="flex items-center">
+                        <svg className="w-5 h-5 text-red-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        <div>
+                          <div className="text-sm font-medium text-red-800">Medical Diagnosis</div>
+                          <div className="text-lg font-semibold text-red-900">{record.diagnosis}</div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                   
                   {record.notes && (
                     <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">

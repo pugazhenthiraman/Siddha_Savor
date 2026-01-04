@@ -68,6 +68,8 @@ model PatientVitals {
 
   // Physical measurements
   weight Float?
+  height Int?
+  bmi    Float?
   bmr    Float?
   tdee   Float?
 
@@ -78,7 +80,6 @@ model PatientVitals {
 
   // Treatment
   medicines Json? // Array of medicines
-  diagnosis String? // Patient diagnosis
   notes     String?
 
   // Metadata

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { authService } from '@/lib/services/auth';
 import { PatientNavigation } from '@/components/patient/PatientNavigation';
 import { PatientStats } from '@/components/patient/PatientStats';
+import { DiagnosisCard } from '@/components/patient/DiagnosisCard';
 import { logger } from '@/lib/utils/logger';
 
 interface User {
@@ -95,6 +96,9 @@ export default function PatientDashboard() {
                 })}
               </p>
             </div>
+
+            {/* Current Diagnosis */}
+            <DiagnosisCard patientId={user.id} />
             
             {/* Stats Cards */}
             <PatientStats />

@@ -19,12 +19,11 @@ interface VitalsRecord {
   bloodPressureDiastolic?: number;
   randomBloodSugar?: number;
   weight?: number;
-  height?: number;
-  bmi?: number;
   bmr?: number;
   tdee?: number;
   naadi?: string;
   thegi?: string;
+  diagnosis?: string;
   notes?: string;
   recordedBy: string;
 }
@@ -124,12 +123,6 @@ export function PatientVitalsView({ patient }: PatientVitalsViewProps) {
                     <div className="text-sm font-medium text-green-900">{record.weight} kg</div>
                   </div>
                 )}
-                {record.bmi && (
-                  <div className="bg-indigo-50 p-3 rounded-lg">
-                    <div className="text-xs text-indigo-600 mb-1">BMI</div>
-                    <div className="text-sm font-medium text-indigo-900">{record.bmi}</div>
-                  </div>
-                )}
                 {record.bmr && (
                   <div className="bg-pink-50 p-3 rounded-lg">
                     <div className="text-xs text-pink-600 mb-1">BMR</div>
@@ -150,6 +143,13 @@ export function PatientVitalsView({ patient }: PatientVitalsViewProps) {
                   <div className="text-sm text-orange-900">
                     {record.naadi ? `Naadi: ${record.naadi}` : `Thegi: ${record.thegi}`}
                   </div>
+                </div>
+              )}
+              
+              {record.diagnosis && (
+                <div className="mt-4 p-3 bg-red-50 rounded-lg">
+                  <div className="text-xs text-red-600 mb-1">Diagnosis</div>
+                  <div className="text-sm text-red-900">{record.diagnosis}</div>
                 </div>
               )}
               

@@ -5,7 +5,7 @@ import { Patient } from '@/lib/types';
 import { useToast } from '@/lib/hooks/useToast';
 import { Button } from '@/components/ui/Button';
 import { authService } from '@/lib/services/auth';
-import { VitalsFormData } from '@/lib/types/vitals';
+import { DIAGNOSIS_OPTIONS } from '@/lib/constants/diagnosis';
 
 interface VitalsFormData {
   pulseRate?: number;
@@ -17,28 +17,9 @@ interface VitalsFormData {
   respiratoryRate?: number;
   oxygenSaturation?: number;
   weight?: number;
-  height?: number;
   naadi?: string;
   thegi?: string;
-  assessmentType?: string;
-  medicines?: string[];
-  notes?: string;
-}
-
-interface VitalsFormData {
-  pulseRate?: number;
-  heartRate?: number;
-  temperature?: number;
-  bloodPressureSystolic?: number;
-  bloodPressureDiastolic?: number;
-  randomBloodSugar?: number;
-  respiratoryRate?: number;
-  oxygenSaturation?: number;
-  weight?: number;
-  height?: number;
-  naadi?: string;
-  thegi?: string;
-  assessmentType?: string;
+  diagnosis?: string;
   medicines?: string[];
   notes?: string;
 }
@@ -53,16 +34,10 @@ export function NewVitalsForm({ patient, onClose, onSuccess }: NewVitalsFormProp
   const { success, error } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState<VitalsFormData>({
-    assessmentType: 'naadi',
     medicines: ['']
   });
 
-  const calculateBMI = (weight: number, height: number): number => {
-    const heightInMeters = height / 100;
-    return weight / (heightInMeters * heightInMeters);
-  };
-
-  const calculateBMR = (weight: number, height: number, age: number, gender: string): number => {
+  const calculateBMR = (weight: number, age: number, gender: string): number => {
     const isMale = gender.toLowerCase() === 'male';
     
     if (age >= 18 && age <= 30) {
@@ -106,15 +81,13 @@ export function NewVitalsForm({ patient, onClose, onSuccess }: NewVitalsFormProp
 
       let calculatedData = { ...formData };
 
-      // Calculate BMI, BMR, TDEE if weight and height are provided
-      if (formData.weight && formData.height) {
-        const bmi = calculateBMI(formData.weight, formData.height);
-        const bmr = calculateBMR(formData.weight, formData.height, age, gender);
+      // Calculate BMR, TDEE if weight is provided
+      if (formData.weight) {
+        const bmr = calculateBMR(formData.weight, age, gender);
         const tdee = calculateTDEE(bmr, workType);
 
         calculatedData = {
           ...calculatedData,
-          bmi: parseFloat(bmi.toFixed(1)),
           bmr: parseFloat(bmr.toFixed(2)),
           tdee: parseFloat(tdee.toFixed(2))
         };
@@ -242,20 +215,40 @@ export function NewVitalsForm({ patient, onClose, onSuccess }: NewVitalsFormProp
                   step="0.1"
                   value={formData.weight || ''}
                   onChange={(e) => updateFormData('weight', parseFloat(e.target.value) || undefined)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm bg-white text-gray-900 placeholder-gray-500"
                   placeholder="e.g., 70.5"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Height (cm)</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Random Blood Sugar (mg/dL)</label>
                 <input
                   type="number"
-                  value={formData.height || ''}
-                  onChange={(e) => updateFormData('height', parseInt(e.target.value) || undefined)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                  placeholder="e.g., 170"
+                  value={formData.randomBloodSugar || ''}
+                  onChange={(e) => updateFormData('randomBloodSugar', parseInt(e.target.value) || undefined)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm bg-white text-gray-900 placeholder-gray-500"
+                  placeholder="e.g., 120"
                 />
               </div>
+            </div>
+          </div>
+
+          {/* Diagnosis */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-medium text-gray-900">Diagnosis</h3>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Patient Diagnosis</label>
+              <select
+                value={formData.diagnosis || ''}
+                onChange={(e) => updateFormData('diagnosis', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm bg-white text-gray-900"
+              >
+                <option value="">Select Diagnosis</option>
+                {DIAGNOSIS_OPTIONS.map((diagnosis) => (
+                  <option key={diagnosis} value={diagnosis}>
+                    {diagnosis}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
 
@@ -264,39 +257,40 @@ export function NewVitalsForm({ patient, onClose, onSuccess }: NewVitalsFormProp
             <h3 className="text-lg font-medium text-gray-900">Siddha Assessment</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Assessment Type</label>
-                <select
-                  value={formData.assessmentType || ''}
-                  onChange={(e) => updateFormData('assessmentType', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                >
-                  <option value="">Select Type</option>
-                  <option value="naadi">Naadi</option>
-                  <option value="thegi">Thegi</option>
-                </select>
-              </div>
-              <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Naadi Assessment</label>
                 <input
                   type="text"
                   value={formData.naadi || ''}
                   onChange={(e) => updateFormData('naadi', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm bg-white text-gray-900 placeholder-gray-500"
                   placeholder="Enter naadi assessment"
                 />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Thegi Assessment</label>
+                <select
+                  value={formData.thegi || ''}
+                  onChange={(e) => updateFormData('thegi', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm bg-white text-gray-900"
+                >
+                  <option value="">Select Thegi Type</option>
+                  <option value="VATHAM">VATHAM</option>
+                  <option value="PITHAM">PITHAM</option>
+                  <option value="KABAM">KABAM</option>
+                </select>
               </div>
             </div>
           </div>
 
           {/* Notes */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Notes & Diagnosis</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Additional Notes</label>
             <textarea
               rows={4}
               value={formData.notes || ''}
               onChange={(e) => updateFormData('notes', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-              placeholder="Add diagnosis, treatment notes, observations..."
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm bg-white text-gray-900 placeholder-gray-500"
+              placeholder="Add treatment notes, observations, recommendations..."
             />
           </div>
 

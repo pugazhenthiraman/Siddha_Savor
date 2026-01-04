@@ -58,13 +58,13 @@ export function DoctorStats() {
   const fetchStats = async () => {
     try {
       const user = authService.getCurrentUser();
-      if (!user?.doctorUID) {
+      if (!(user as any)?.doctorUID) {
         error('Doctor UID not found');
         setIsLoading(false);
         return;
       }
 
-      const response = await doctorService.getStats(user.doctorUID);
+      const response = await doctorService.getStats((user as any).doctorUID);
       if (response.success && response.data) {
         setStats(response.data);
       }

@@ -39,8 +39,8 @@ export function PatientManagementNew() {
     try {
       setIsLoading(true);
       const response = await adminService.getPatients();
-      if (response.success) {
-        setPatients(response.data);
+      if (response.success && response.data) {
+        setPatients(response.data as Patient[]);
       }
     } catch (err) {
       error('Failed to load patients');
@@ -64,7 +64,7 @@ export function PatientManagementNew() {
         setPatientStats(statsResponse.data);
       }
       
-      if (vitalsResponse.success) {
+      if (vitalsResponse.success && vitalsResponse.data) {
         setPatientVitals(vitalsResponse.data);
       }
     } catch (err) {

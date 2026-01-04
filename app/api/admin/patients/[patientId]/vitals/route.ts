@@ -23,12 +23,15 @@ export async function GET(
     });
 
     // Transform vitals to include doctor name
-    const vitalsWithDoctorName = vitals.map(vital => ({
-      ...vital,
-      doctorName: vital.doctor?.formData?.personalInfo 
-        ? `Dr. ${vital.doctor.formData.personalInfo.firstName} ${vital.doctor.formData.personalInfo.lastName}`
-        : vital.recordedBy
-    }));
+    const vitalsWithDoctorName = vitals.map(vital => {
+      const formData = typeof vital.doctor?.formData === 'object' ? vital.doctor.formData as any : null;
+      return {
+        ...vital,
+        doctorName: formData?.personalInfo 
+          ? `Dr. ${formData.personalInfo.firstName} ${formData.personalInfo.lastName}`
+          : vital.recordedBy
+      };
+    });
 
     return NextResponse.json({
       success: true,

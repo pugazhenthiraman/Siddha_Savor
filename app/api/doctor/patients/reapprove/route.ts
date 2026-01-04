@@ -78,7 +78,7 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
     const sendEmailPromise = (async () => {
       try {
         const { getSmtpConfig } = await import('@/lib/db');
-        const smtpConfig = await getSmtpConfig(patient.doctorUID || '');
+        const smtpConfig = await getSmtpConfig();
         
         if (!smtpConfig || !smtpConfig.isConfigured) {
           logger.warn('SMTP not configured, skipping reapproval email', { patientEmail });

@@ -72,7 +72,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     // Send approval email (non-blocking)
     const sendEmailPromise = (async () => {
       try {
-        const smtpConfig = await getSmtpConfig(patient.doctorUID || '');
+        const smtpConfig = await getSmtpConfig();
         
         if (!smtpConfig || !smtpConfig.isConfigured) {
           logger.warn('SMTP not configured, skipping approval email', { patientEmail });

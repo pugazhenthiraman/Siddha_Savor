@@ -7,6 +7,8 @@ import { Patient } from '@/lib/types';
 import { useToast } from '@/lib/hooks/useToast';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
+import { PatientVitalsManager } from './PatientVitalsManagerNew';
+import { VitalsDebug } from './VitalsDebug';
 
 interface PatientManagementProps {
   onPatientSelect?: (patient: Patient) => void;
@@ -22,6 +24,7 @@ export function PatientManagement({ onPatientSelect }: PatientManagementProps) {
   const [actionLoading, setActionLoading] = useState<number | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
+  const [showVitalsManager, setShowVitalsManager] = useState<Patient | null>(null);
 
   useEffect(() => {
     fetchPatients();
@@ -76,7 +79,11 @@ export function PatientManagement({ onPatientSelect }: PatientManagementProps) {
 
     try {
       setActionLoading(selectedPatient.id);
-      const response = await doctorService.rejectPatient(selectedPatient.id, rejectReason);
+      const response = await doctorService.rejectPatient({ 
+        patientId: selectedPatient.id, 
+        action: 'REJECT',
+        reason: rejectReason 
+      });
       
       if (response.success) {
         success('Patient rejected successfully');
@@ -128,9 +135,9 @@ export function PatientManagement({ onPatientSelect }: PatientManagementProps) {
     // Filter by status
     if (statusFilter !== 'ALL') {
       filtered = filtered.filter(patient => {
-        if (statusFilter === 'PENDING') return patient.status === 'PENDING';
-        if (statusFilter === 'REJECTED') return patient.status === 'REJECTED';
-        if (statusFilter === 'ACTIVE') return patient.status === 'APPROVED';
+        if (statusFilter === 'PENDING') return (patient.status as string) === 'PENDING';
+        if (statusFilter === 'REJECTED') return (patient.status as string) === 'REJECTED';
+        if (statusFilter === 'ACTIVE') return (patient.status as string) === 'APPROVED';
         return true;
       });
     }
@@ -273,7 +280,18 @@ export function PatientManagement({ onPatientSelect }: PatientManagementProps) {
                       👁️ View Details
                     </Button>
 
-                    {patient.status === 'PENDING' && (
+                    {(patient.status as string) === 'APPROVED' && (
+                      <Button
+                        onClick={() => setShowVitalsManager(patient)}
+                        variant="outline"
+                        className="w-full border-green-300 text-green-600 hover:bg-green-50"
+                        size="sm"
+                      >
+                        📊 Manage Vitals
+                      </Button>
+                    )}
+
+                    {(patient.status as string) === 'PENDING' && (
                       <div className="grid grid-cols-2 gap-2">
                         <Button
                           onClick={() => {
@@ -302,7 +320,7 @@ export function PatientManagement({ onPatientSelect }: PatientManagementProps) {
                       </div>
                     )}
 
-                    {patient.status === 'REJECTED' && (
+                    {(patient.status as string) === 'REJECTED' && (
                       <Button
                         onClick={() => handleApprovePatient(patient)}
                         disabled={actionLoading === patient.id}
@@ -311,17 +329,6 @@ export function PatientManagement({ onPatientSelect }: PatientManagementProps) {
                         isLoading={actionLoading === patient.id}
                       >
                         🔄 Re-approve
-                      </Button>
-                    )}
-
-                    {patient.status === 'APPROVED' && (
-                      <Button
-                        onClick={() => onPatientSelect?.(patient)}
-                        variant="outline"
-                        className="w-full border-purple-300 text-purple-600 hover:bg-purple-50"
-                        size="sm"
-                      >
-                        📋 Update Diagnosis
                       </Button>
                     )}
                   </div>
@@ -397,6 +404,14 @@ export function PatientManagement({ onPatientSelect }: PatientManagementProps) {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Vitals Manager Modal */}
+      {showVitalsManager && (
+        <PatientVitalsManager
+          patient={showVitalsManager}
+          onClose={() => setShowVitalsManager(null)}
+        />
       )}
     </>
   );

@@ -75,7 +75,7 @@ export function PatientInfo({ patient }: PatientInfoProps) {
       </InfoSection>
 
       <InfoSection title="🏥 Medical Information">
-        <InfoRow label="Patient ID" value={patient.patientUID || patient.id} />
+        <InfoRow label="Patient ID" value={String(patient.patientUID || patient.id)} />
         <InfoRow label="Assigned Doctor" value={patient.doctorUID || 'Not assigned'} />
         <InfoRow label="Registration Date" value={new Date(patient.createdAt).toLocaleDateString()} />
         <InfoRow label="Status" value={patient.status || 'Unknown'} />

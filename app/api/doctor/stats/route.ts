@@ -27,6 +27,7 @@ export const GET = withErrorHandler(async (request: NextRequest) => {
         password: true,
         inviteToken: true,
         formData: true,
+        status: true,
         createdAt: true,
         updatedAt: true
       }

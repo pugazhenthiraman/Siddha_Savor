@@ -49,8 +49,9 @@ export async function GET(
     });
 
     // Extract doctor name from formData
-    const doctorName = patient.doctor?.formData?.personalInfo 
-      ? `Dr. ${patient.doctor.formData.personalInfo.firstName} ${patient.doctor.formData.personalInfo.lastName}`
+    const formData = typeof patient.doctor?.formData === 'object' ? patient.doctor.formData as any : null;
+    const doctorName = formData?.personalInfo 
+      ? `Dr. ${formData.personalInfo.firstName} ${formData.personalInfo.lastName}`
       : null;
 
     const stats = {

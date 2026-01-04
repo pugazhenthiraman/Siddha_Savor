@@ -160,6 +160,31 @@ class DoctorService {
       return response;
     } catch (error) {
       logger.error('Failed to save patient vitals', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to save vitals'
+      };
+    }
+  }
+
+  async updatePatientVitals(vitalsData: any): Promise<ApiResponse> {
+    try {
+      logger.info('Updating patient vitals', { id: vitalsData.id, patientId: vitalsData.patientId });
+      const response = await apiClient.put('/api/doctor/vitals', vitalsData);
+      return response;
+    } catch (error) {
+      logger.error('Failed to update patient vitals', error);
+      throw error;
+    }
+  }
+
+  async getPatientVitals(patientId: number): Promise<ApiResponse> {
+    try {
+      logger.info('Fetching patient vitals', { patientId });
+      const response = await apiClient.get(`/api/doctor/vitals?patientId=${patientId}`);
+      return response;
+    } catch (error) {
+      logger.error('Failed to fetch patient vitals', error);
       throw error;
     }
   }

@@ -77,10 +77,22 @@ export async function POST(request: NextRequest) {
         data: { password: hashedPassword }
       });
     } else if (resetToken.userRole === 'patient') {
-      await prisma.patient.update({
-        where: { email: resetToken.email },
-        data: { password: hashedPassword }
+      // Find patient by email first, then update by id
+      const patient = await prisma.patient.findFirst({
+        where: { 
+          formData: {
+            path: ['personalInfo', 'email'],
+            equals: resetToken.email
+          }
+        }
       });
+      
+      if (patient) {
+        await prisma.patient.update({
+          where: { id: patient.id },
+          data: { password: hashedPassword }
+        });
+      }
     }
 
     // Mark token as used

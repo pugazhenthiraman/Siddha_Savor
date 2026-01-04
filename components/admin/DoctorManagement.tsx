@@ -26,7 +26,7 @@ export function DoctorManagement() {
     try {
       setIsLoading(true);
       const response = await adminService.getDoctors();
-      if (response.success) {
+      if (response.success && response.data) {
         const approvedDoctors = response.data.filter((doctor: Doctor) => doctor.status === 'APPROVED');
         setDoctors(approvedDoctors);
       }
@@ -48,12 +48,12 @@ export function DoctorManagement() {
         adminService.getDoctorPatients(doctor.doctorUID!)
       ]);
 
-      if (statsResponse.success) {
+      if (statsResponse.success && statsResponse.data) {
         setDoctorStats(statsResponse.data);
       }
       
-      if (patientsResponse.success) {
-        setDoctorPatients(patientsResponse.data);
+      if (patientsResponse.success && patientsResponse.data) {
+        setDoctorPatients(patientsResponse.data as Patient[]);
       }
     } catch (err) {
       error('Failed to load doctor details');

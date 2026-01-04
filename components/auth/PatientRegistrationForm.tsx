@@ -54,7 +54,7 @@ export function PatientRegistrationForm({ token, inviteData }: PatientRegistrati
   // Update doctorID when inviteData changes
   useEffect(() => {
     if (inviteData?.doctorUID && formData.doctorID !== inviteData.doctorUID) {
-      setFormData(prev => ({ ...prev, doctorID: inviteData.doctorUID }));
+      setFormData(prev => ({ ...prev, doctorID: inviteData.doctorUID as any }));
     }
   }, [inviteData?.doctorUID]);
 
@@ -174,13 +174,13 @@ export function PatientRegistrationForm({ token, inviteData }: PatientRegistrati
       return false;
     }
     
-    if (isDoctorIDEditable && !formData.doctorID.trim()) {
+    if (isDoctorIDEditable && !String(formData.doctorID).trim()) {
       error(ERROR_MESSAGES.DOCTOR_ID_REQUIRED);
       return false;
     }
     
-    if (token && inviteData?.doctorUID && !formData.doctorID.trim()) {
-      setFormData(prev => ({ ...prev, doctorID: inviteData.doctorUID }));
+    if (token && inviteData?.doctorUID && !String(formData.doctorID).trim()) {
+      setFormData(prev => ({ ...prev, doctorID: inviteData.doctorUID as any }));
     }
     
     return true;
@@ -426,7 +426,7 @@ export function PatientRegistrationForm({ token, inviteData }: PatientRegistrati
                   <div className="relative">
                     <Input
                       id="doctorID"
-                      value={formData.doctorID || inviteData?.doctorUID || ''}
+                      value={String(formData.doctorID || inviteData?.doctorUID || '')}
                       onChange={(e) => {
                         if (isDoctorIDEditable) {
                           handleInputChange('doctorID', e.target.value.toUpperCase());

@@ -19,17 +19,23 @@ export function ErrorPage({
   const [isRetrying, setIsRetrying] = useState(false);
 
   const handleRetry = async () => {
-    if (!onRetry) {
-      window.location.reload();
-      return;
-    }
-
     setIsRetrying(true);
-    try {
-      await onRetry();
-    } finally {
-      setIsRetrying(false);
+    
+    // Clear any cached data that might be causing issues
+    if (typeof window !== 'undefined') {
+      // Clear any error states
+      sessionStorage.removeItem('error');
+      
+      // Try to go back to where they came from, or login
+      const referrer = document.referrer;
+      if (referrer && referrer.includes(window.location.origin)) {
+        window.location.href = referrer;
+      } else {
+        window.location.href = '/login';
+      }
     }
+    
+    setIsRetrying(false);
   };
 
   return (
@@ -80,10 +86,13 @@ export function ErrorPage({
             </Button>
             
             <button
-              onClick={() => window.location.href = '/'}
+              onClick={() => {
+                // Clear any stored data and go to login
+                window.location.href = '/login';
+              }}
               className="w-full text-green-600 hover:text-green-700 font-medium transition-colors"
             >
-              ← Back to Home
+              ← Back to Login
             </button>
           </div>
         )}
@@ -97,9 +106,9 @@ export function ErrorPage({
 
         {/* Help Text */}
         <div className="mt-6 text-sm text-gray-500">
-          <p>Error Code: NET_ERR_CONNECTION_FAILED</p>
+          <p>If you're seeing this page, there might be a temporary connection issue.</p>
           <p className="mt-1">
-            If the problem persists, contact{' '}
+            Need help? Contact{' '}
             <a href="mailto:support@siddhasavor.com" className="text-green-600 hover:text-green-700">
               support@siddhasavor.com
             </a>

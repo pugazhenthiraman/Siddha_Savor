@@ -4,9 +4,12 @@ import { logger } from '@/lib/utils/logger';
 import { withErrorHandler } from '@/lib/middleware/api-error-handler';
 
 export const POST = withErrorHandler(async (request: NextRequest) => {
+  let doctorUID: string | undefined;
+  
   try {
     const body = await request.json();
-    const { doctorUID, recipientEmail, recipientName, role } = body;
+    const { doctorUID: extractedDoctorUID, recipientEmail, recipientName, role } = body;
+    doctorUID = extractedDoctorUID;
 
     if (!doctorUID || !role) {
       return NextResponse.json(

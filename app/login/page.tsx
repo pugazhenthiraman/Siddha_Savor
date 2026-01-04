@@ -1,12 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { LoginForm } from '@/components/auth/LoginForm';
 import { Navbar } from '@/components/ui/Navbar';
 import { Alert } from '@/components/ui/Alert';
 
-export default function LoginPage() {
+function LoginContent() {
   const searchParams = useSearchParams();
   const [message, setMessage] = useState<{ type: 'success' | 'warning' | 'error'; text: string } | null>(null);
 
@@ -141,5 +141,35 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+function LoginFallback() {
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <Navbar showBackButton={true} />
+      <div className="flex items-center justify-center min-h-[calc(100vh-80px)] p-4">
+        <div className="w-full max-w-sm">
+          <div className="text-center mb-8">
+            <div className="w-16 h-16 bg-gradient-to-r from-green-500 to-green-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
+              <span className="text-white font-bold text-2xl">S</span>
+            </div>
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">Welcome Back</h1>
+            <p className="text-gray-600">Sign in to your account</p>
+          </div>
+          <div className="bg-white rounded-2xl shadow-xl p-6 border-2 border-green-500">
+            <LoginForm />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<LoginFallback />}>
+      <LoginContent />
+    </Suspense>
   );
 }

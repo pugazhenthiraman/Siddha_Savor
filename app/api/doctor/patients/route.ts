@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { query } from '@/lib/db';
+import { prisma } from '@/lib/prisma';
 import { logger } from '@/lib/utils/logger';
 import { ERROR_MESSAGES } from '@/lib/constants/messages';
 import { withErrorHandler } from '@/lib/middleware/api-error-handler';

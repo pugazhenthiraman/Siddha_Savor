@@ -127,9 +127,9 @@ export class ApiClient {
 
     } catch (error) {
       if (error instanceof ApiException) {
-        // For server errors, redirect to error page
+        // For server errors, log but don't redirect
         if (error.status >= 500) {
-          this.handleServerError();
+          // this.handleServerError(); // Disabled - no error page redirect
         }
         throw error;
       }
@@ -152,23 +152,13 @@ export class ApiClient {
   }
 
   private handleNetworkError() {
-    logger.warn('Redirecting to error page due to network error');
-    // Only redirect if we're in the browser
-    if (typeof window !== 'undefined') {
-      setTimeout(() => {
-        window.location.href = '/error';
-      }, 1000);
-    }
+    logger.warn('Network error occurred - no redirect');
+    // Disabled error page redirect
   }
 
   private handleServerError() {
-    logger.warn('Redirecting to error page due to server error');
-    // Only redirect if we're in the browser
-    if (typeof window !== 'undefined') {
-      setTimeout(() => {
-        window.location.href = '/error';
-      }, 1000);
-    }
+    logger.warn('Server error occurred - no redirect');
+    // Disabled error page redirect
   }
 
   private getErrorMessage(status: number): string {

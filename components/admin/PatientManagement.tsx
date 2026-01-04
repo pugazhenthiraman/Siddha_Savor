@@ -129,10 +129,10 @@ function PatientViewModal({ patient, isOpen, onClose, onApprove, onReject, isLoa
 
   const getStatusBadge = () => {
     const isRejected = formData?.registrationInfo?.rejected === true || 
-      (patient.inviteToken && patient.inviteToken.startsWith('rejected_'));
+      ((patient as any).inviteToken && (patient as any).inviteToken.startsWith('rejected_'));
     const isDeactivated = formData?.registrationInfo?.deactivated === true ||
-      (patient.inviteToken && patient.inviteToken.startsWith('deactivated_'));
-    const isPending = patient.inviteToken !== null && !isRejected && !isDeactivated;
+      ((patient as any).inviteToken && (patient as any).inviteToken.startsWith('deactivated_'));
+    const isPending = (patient as any).inviteToken !== null && !isRejected && !isDeactivated;
 
     if (isRejected) {
       return <span className="px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800">Rejected</span>;
@@ -186,7 +186,7 @@ function PatientViewModal({ patient, isOpen, onClose, onApprove, onReject, isLoa
           <div className="p-6 space-y-8">
             {/* Personal Information */}
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">{SECTION_TITLES.PERSONAL_INFO}</h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">{SECTION_TITLES.PERSONAL_INFORMATION}</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <p className="text-sm text-gray-600">First Name</p>
@@ -271,7 +271,7 @@ function PatientViewModal({ patient, isOpen, onClose, onApprove, onReject, isLoa
 
           {/* Footer Actions */}
           <div className="border-t border-gray-200 p-6 bg-gray-50">
-            {patient.inviteToken === null && !formData?.registrationInfo?.rejected ? (
+            {(patient as any).inviteToken === null && !formData?.registrationInfo?.rejected ? (
               <div className="flex flex-col sm:flex-row gap-3">
                 <Button onClick={onClose} variant="outline" className="sm:w-auto" disabled={isLoading}>
                   {BUTTON_LABELS.CLOSE}
@@ -417,10 +417,10 @@ export function PatientManagement() {
   const getStatusBadge = (patient: Patient) => {
     const formData = patient.formData as any;
     const isRejected = formData?.registrationInfo?.rejected === true || 
-      (patient.inviteToken && patient.inviteToken.startsWith('rejected_'));
+      ((patient as any).inviteToken && (patient as any).inviteToken.startsWith('rejected_'));
     const isDeactivated = formData?.registrationInfo?.deactivated === true ||
-      (patient.inviteToken && patient.inviteToken.startsWith('deactivated_'));
-    const isPending = patient.inviteToken !== null && !isRejected && !isDeactivated;
+      ((patient as any).inviteToken && (patient as any).inviteToken.startsWith('deactivated_'));
+    const isPending = (patient as any).inviteToken !== null && !isRejected && !isDeactivated;
 
     if (isRejected) {
       return <span className="px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">Rejected</span>;
@@ -439,10 +439,10 @@ export function PatientManagement() {
       filtered = filtered.filter(patient => {
         const formData = patient.formData as any;
         const isRejected = formData?.registrationInfo?.rejected === true || 
-          (patient.inviteToken && patient.inviteToken.startsWith('rejected_'));
+          ((patient as any).inviteToken && (patient as any).inviteToken.startsWith('rejected_'));
         const isDeactivated = formData?.registrationInfo?.deactivated === true ||
-          (patient.inviteToken && patient.inviteToken.startsWith('deactivated_'));
-        const isPending = patient.inviteToken !== null && !isRejected && !isDeactivated;
+          ((patient as any).inviteToken && (patient as any).inviteToken.startsWith('deactivated_'));
+        const isPending = (patient as any).inviteToken !== null && !isRejected && !isDeactivated;
 
         if (statusFilter === 'PENDING') return isPending || isDeactivated;
         if (statusFilter === 'REJECTED') return isRejected;

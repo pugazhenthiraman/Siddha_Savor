@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Patient } from '@/lib/types';
 import { doctorService } from '@/lib/services/doctorService';
-import { PatientVitalsManager } from './PatientVitalsManagerNew';
+import { useRouter } from 'next/navigation';
 import { VitalsDebug } from './VitalsDebug';
 import { useToast } from '@/lib/hooks/useToast';
 import { logger } from '@/lib/utils/logger';
@@ -15,6 +15,7 @@ interface ActivePatientsProps {
 type PatientFilter = 'all' | 'active' | 'updated' | 'pending';
 
 export function ActivePatients({ doctorUID }: ActivePatientsProps) {
+  const router = useRouter();
   const { error } = useToast();
   const [patients, setPatients] = useState<Patient[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -229,7 +230,7 @@ export function ActivePatients({ doctorUID }: ActivePatientsProps) {
                   </div>
 
                   <button
-                    onClick={() => setSelectedPatient(patient)}
+                    onClick={() => router.push(`/dashboard/doctor/patient/${patient.id}`)}
                     className="w-full bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors duration-200 font-medium text-sm"
                   >
                     📊 Manage Vitals
@@ -239,14 +240,6 @@ export function ActivePatients({ doctorUID }: ActivePatientsProps) {
             );
           })}
         </div>
-      )}
-
-      {/* Vitals Manager Modal */}
-      {selectedPatient && (
-        <PatientVitalsManager
-          patient={selectedPatient}
-          onClose={() => setSelectedPatient(null)}
-        />
       )}
     </div>
   );

@@ -7,7 +7,7 @@ import { Patient } from '@/lib/types';
 import { useToast } from '@/lib/hooks/useToast';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { PatientVitalsManager } from './PatientVitalsManagerNew';
+import { useRouter } from 'next/navigation';
 import { VitalsDebug } from './VitalsDebug';
 
 interface PatientManagementProps {
@@ -282,7 +282,7 @@ export function PatientManagement({ onPatientSelect }: PatientManagementProps) {
 
                     {(patient.status as string) === 'APPROVED' && (
                       <Button
-                        onClick={() => setShowVitalsManager(patient)}
+                        onClick={() => router.push(`/dashboard/doctor/patient/${patient.id}`)}
                         variant="outline"
                         className="w-full border-green-300 text-green-600 hover:bg-green-50"
                         size="sm"
@@ -406,13 +406,6 @@ export function PatientManagement({ onPatientSelect }: PatientManagementProps) {
         </div>
       )}
 
-      {/* Vitals Manager Modal */}
-      {showVitalsManager && (
-        <PatientVitalsManager
-          patient={showVitalsManager}
-          onClose={() => setShowVitalsManager(null)}
-        />
-      )}
     </>
   );
 }

@@ -1,0 +1,24 @@
+/* Fix for input text visibility in forms */
+input[type="number"], 
+input[type="text"], 
+input[type="email"], 
+input[type="password"],
+textarea,
+select {
+  color: #1f2937 !important; /* Dark gray text */
+  background-color: #ffffff !important; /* White background */
+}
+
+input[type="number"]::placeholder, 
+input[type="text"]::placeholder, 
+input[type="email"]::placeholder, 
+input[type="password"]::placeholder,
+textarea::placeholder {
+  color: #9ca3af !important; /* Light gray placeholder */
+}
+
+/* Ensure focus states work properly */
+input:focus, textarea:focus, select:focus {
+  color: #1f2937 !important;
+  background-color: #ffffff !important;
+}

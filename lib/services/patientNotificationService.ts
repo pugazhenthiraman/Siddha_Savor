@@ -1,4 +1,6 @@
 import nodemailer from 'nodemailer';
+import { getSmtpConfig } from '@/lib/db';
+import { logger } from '@/lib/utils/logger';
 
 interface PatientUpdateEmailData {
   patientName: string;
@@ -9,35 +11,75 @@ interface PatientUpdateEmailData {
   updatedAt: string;
 }
 
-export class PatientNotificationService {
-  private transporter: nodemailer.Transporter;
+type ActiveSmtpConfig = {
+  host: string;
+  port: number;
+  username: string;
+  password: string;
+  fromEmail: string;
+  fromName: string;
+};
 
-  constructor() {
-    this.transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST || 'smtp.gmail.com',
-      port: parseInt(process.env.SMTP_PORT || '587'),
-      secure: false,
-      auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
-      },
-    });
+export class PatientNotificationService {
+  private transporter: nodemailer.Transporter | null = null;
+  private configSignature: string | null = null;
+
+  private async getActiveConfig(): Promise<ActiveSmtpConfig> {
+    const config = await getSmtpConfig();
+
+    if (!config || !config.isActive) {
+      throw new Error('SMTP not configured or inactive');
+    }
+
+    const { host, port, username, password, fromEmail, fromName } = config;
+
+    if (!host || !port || !username || !password || !fromEmail || !fromName) {
+      throw new Error('SMTP configuration is incomplete');
+    }
+
+    return { host, port, username, password, fromEmail, fromName };
+  }
+
+  private async getTransporter(): Promise<{ transporter: nodemailer.Transporter; config: ActiveSmtpConfig }> {
+    const config = await this.getActiveConfig();
+    const signature = `${config.host}:${config.port}:${config.username}:${config.fromEmail}:${config.fromName}`;
+
+    if (!this.transporter || this.configSignature !== signature) {
+      this.transporter = nodemailer.createTransport({
+        host: config.host,
+        port: config.port,
+        secure: config.port === 465,
+        auth: {
+          user: config.username,
+          pass: config.password,
+        },
+      });
+      this.configSignature = signature;
+    }
+
+    return { transporter: this.transporter, config };
   }
 
   async sendPatientUpdateNotification(data: PatientUpdateEmailData): Promise<boolean> {
     try {
+      const { transporter, config } = await this.getTransporter();
       const emailTemplate = this.generateUpdateEmailTemplate(data);
       
-      await this.transporter.sendMail({
-        from: `"Siddha Savor Healthcare" <${process.env.SMTP_USER}>`,
+      await transporter.sendMail({
+        from: `${config.fromName} <${config.fromEmail}>`,
         to: data.patientEmail,
         subject: 'Health Record Updated - Siddha Savor',
         html: emailTemplate,
       });
 
+      logger.info('Patient notification email sent', {
+        to: data.patientEmail,
+        updateType: data.updateType
+      });
+
       return true;
     } catch (error) {
-      console.error('Failed to send patient notification:', error);
+      logger.error('Failed to send patient notification', error);
       return false;
     }
   }
@@ -48,6 +90,8 @@ export class PatientNotificationService {
       : data.updateType === 'diagnosis'
       ? 'Your diagnosis has been updated'
       : 'Your health records have been updated';
+
+    const dashboardUrl = `${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/login`;
 
     return `
       <!DOCTYPE html>
@@ -63,10 +107,10 @@ export class PatientNotificationService {
         </div>
 
         <div style="background: #f8fafc; padding: 25px; border-radius: 10px; border-left: 4px solid #10b981;">
-          <h2 style="color: #1f2937; margin-top: 0;">Hello ${data.patientName},</h2>
+          <h2 style="color: #1f2937; margin-top: 0;">Hello ${data.patientName || 'Patient'},</h2>
           
           <p style="font-size: 16px; margin-bottom: 20px;">
-            ${updateMessage} by <strong>Dr. ${data.doctorName}</strong>.
+            ${updateMessage} by <strong>Dr. ${data.doctorName || 'Your Doctor'}</strong>.
           </p>
 
           ${data.diagnosis ? `
@@ -85,7 +129,7 @@ export class PatientNotificationService {
           </div>
 
           <div style="text-align: center; margin: 30px 0;">
-            <a href="${process.env.NEXT_PUBLIC_APP_URL}/login" 
+            <a href="${dashboardUrl}" 
                style="background: #10b981; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: 600; display: inline-block;">
               View My Dashboard
             </a>

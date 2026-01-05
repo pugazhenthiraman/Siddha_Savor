@@ -53,6 +53,13 @@ export function DoctorRegistrationForm({ token, inviteData }: DoctorRegistration
   });
 
   const handleInputChange = (field: string, value: string | boolean) => {
+    // Handle number-only fields
+    if (field === 'phone' || field === 'clinicNumber' || field === 'pincode') {
+      if (typeof value === 'string') {
+        // Only allow digits
+        value = value.replace(/\D/g, '');
+      }
+    }
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
@@ -223,10 +230,14 @@ export function DoctorRegistrationForm({ token, inviteData }: DoctorRegistration
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">{FORM_LABELS.PHONE_NUMBER} *</label>
                 <Input
+                  type="tel"
                   value={formData.phone}
                   onChange={(e) => handleInputChange('phone', e.target.value)}
                   placeholder={FORM_PLACEHOLDERS.PHONE}
                   disabled={isSubmitting}
+                  pattern="[0-9]*"
+                  inputMode="numeric"
+                  maxLength={10}
                 />
               </div>
               <div>
@@ -330,10 +341,14 @@ export function DoctorRegistrationForm({ token, inviteData }: DoctorRegistration
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">{FORM_LABELS.CLINIC_PHONE}</label>
                 <Input
+                  type="tel"
                   value={formData.clinicNumber}
                   onChange={(e) => handleInputChange('clinicNumber', e.target.value)}
                   placeholder={FORM_PLACEHOLDERS.CLINIC_PHONE}
                   disabled={isSubmitting}
+                  pattern="[0-9]*"
+                  inputMode="numeric"
+                  maxLength={10}
                 />
               </div>
               <div className="md:col-span-2">
@@ -366,10 +381,14 @@ export function DoctorRegistrationForm({ token, inviteData }: DoctorRegistration
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">{FORM_LABELS.PIN_CODE}</label>
                 <Input
+                  type="tel"
                   value={formData.pincode}
                   onChange={(e) => handleInputChange('pincode', e.target.value)}
                   placeholder={FORM_PLACEHOLDERS.PIN_CODE}
                   disabled={isSubmitting}
+                  pattern="[0-9]*"
+                  inputMode="numeric"
+                  maxLength={6}
                 />
               </div>
             </div>

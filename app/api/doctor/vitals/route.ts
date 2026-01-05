@@ -156,6 +156,36 @@ export async function PUT(request: NextRequest) {
       }
     });
 
+    // Send notification email after successful update
+    const patient = await prisma.patient.findUnique({
+      where: { id: parseInt(patientId) },
+      select: { email: true, formData: true }
+    });
+
+    const doctor = await prisma.doctor.findUnique({
+      where: { doctorUID },
+      select: { formData: true }
+    });
+
+    if (patient && doctor) {
+      const patientData = patient.formData as any;
+      const doctorData = doctor.formData as any;
+      
+      const patientName = `${patientData?.personalInfo?.firstName || ''} ${patientData?.personalInfo?.lastName || ''}`.trim();
+      const doctorName = `${doctorData?.personalInfo?.firstName || ''} ${doctorData?.personalInfo?.lastName || ''}`.trim();
+
+      patientNotificationService.sendPatientUpdateNotification({
+        patientName: patientName || 'Patient',
+        patientEmail: patient.email,
+        doctorName: doctorName || 'Doctor',
+        diagnosis: diagnosis || undefined,
+        updateType: diagnosis ? 'both' : 'vitals',
+        updatedAt: new Date().toISOString()
+      }).catch(error => {
+        logger.error('Failed to send patient notification email:', error);
+      });
+    }
+
     logger.info('Patient vitals updated successfully', {
       id,
       patientId,

@@ -9,6 +9,7 @@ import { PatientManagement } from '@/components/doctor/PatientManagement';
 import { PatientInviteGenerator } from '@/components/doctor/PatientInviteGenerator';
 import { PatientDetails } from '@/components/doctor/PatientDetails';
 import { ActivePatients } from '@/components/doctor/ActivePatients';
+import { ProfileUpdateModal } from '@/components/ProfileUpdateModal';
 import { Patient } from '@/lib/types';
 
 interface User {
@@ -26,6 +27,7 @@ export default function DoctorDashboard() {
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
+  const [showProfileModal, setShowProfileModal] = useState(false);
 
   useEffect(() => {
     const userData = authService.getCurrentUser();
@@ -187,8 +189,58 @@ export default function DoctorDashboard() {
           <ActivePatients doctorUID={user.doctorUID || ''} />
         )}
 
+        {/* Profile Tab */}
+        {activeTab === 'profile' && (
+          <div className="space-y-6 lg:space-y-8">
+            <div className="text-center lg:text-left">
+              <h2 className="text-xl lg:text-2xl font-bold text-gray-900 mb-2">Profile Information</h2>
+              <p className="text-sm lg:text-base text-gray-600">Manage your profile and contact information.</p>
+            </div>
+            
+            <div className="bg-white rounded-xl shadow-lg p-6 lg:p-8">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-lg lg:text-xl font-semibold text-gray-900">Personal Details</h3>
+                <button
+                  onClick={() => setShowProfileModal(true)}
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium text-sm transition-colors"
+                >
+                  ✏️ Edit Profile
+                </button>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                  <p className="text-sm text-gray-900">
+                    {doctorName}
+                  </p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                  <p className="text-sm text-gray-900">{user.email}</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                  <p className="text-sm text-gray-900">
+                    {user.formData?.personalInfo?.phone || 'Not provided'}
+                  </p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Date of Birth</label>
+                  <p className="text-sm text-gray-900">
+                    {user.formData?.personalInfo?.dateOfBirth || 'Not provided'}
+                  </p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Doctor UID</label>
+                  <p className="text-sm text-gray-900">{user.doctorUID || 'Pending'}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Other tabs will be implemented later */}
-        {!['overview', 'patients', 'active-patients'].includes(activeTab) && (
+        {!['overview', 'patients', 'active-patients', 'profile'].includes(activeTab) && (
           <div className="text-center py-12 lg:py-16">
             <div className="w-16 h-16 lg:w-24 lg:h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <span className="text-2xl lg:text-4xl">🚧</span>
@@ -206,6 +258,25 @@ export default function DoctorDashboard() {
         <PatientDetails
           patient={selectedPatient}
           onClose={() => setSelectedPatient(null)}
+        />
+      )}
+
+      {/* Profile Update Modal */}
+      {showProfileModal && user && (
+        <ProfileUpdateModal
+          user={{
+            id: user.id,
+            email: user.email,
+            role: 'doctor',
+            formData: user.formData
+          }}
+          onClose={() => setShowProfileModal(false)}
+          onUpdate={async () => {
+            const userData = authService.getCurrentUser();
+            if (userData) {
+              setUser(userData);
+            }
+          }}
         />
       )}
     </div>

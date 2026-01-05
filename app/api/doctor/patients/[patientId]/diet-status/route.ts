@@ -27,9 +27,21 @@ export async function GET(
       }, { status: 404 });
     }
 
-    // Get diet plan
-    const dietPlan = getDietPlanByDiagnosis(latestVitals.diagnosis);
-    if (!dietPlan) {
+    // Try to get custom diet plan first, fallback to default
+    let dietPlan;
+    const customDietPlan = await prisma.customDietPlan.findUnique({
+      where: { patientId }
+    });
+
+    if (customDietPlan && customDietPlan.planData) {
+      // Use custom diet plan
+      dietPlan = customDietPlan.planData as any;
+    } else {
+      // Fall back to default plan based on diagnosis
+      dietPlan = getDietPlanByDiagnosis(latestVitals.diagnosis);
+    }
+
+    if (!dietPlan || !dietPlan.days || !Array.isArray(dietPlan.days)) {
       return NextResponse.json({
         success: false,
         error: `No diet plan available for ${latestVitals.diagnosis}`

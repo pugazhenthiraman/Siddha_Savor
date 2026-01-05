@@ -187,9 +187,19 @@ export function DietPlanEditor({ patientId, diagnosis, onClose, onSave }: DietPl
   const currentDay = customPlan.days[selectedDay - 1];
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="p-6 border-b border-gray-200">
+    // Full-screen white view (no dark overlay), consistent with Weekly Plan modal
+    <div className="fixed inset-0 bg-white z-50 overflow-y-auto">
+      <div className="min-h-screen max-w-5xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+        {/* Info Banner about preserving completed meals */}
+        <div className="bg-blue-50 border-b border-blue-200 p-3 text-sm text-blue-800 sticky top-0 z-10">
+          <div className="flex items-start">
+            <span className="text-lg mr-2">ℹ️</span>
+            <div>
+              <strong>Note:</strong> Editing the diet plan will update future meals. Already completed meals for past dates will be preserved in the patient's history.
+            </div>
+          </div>
+        </div>
+        <div className="p-6 border-b border-gray-200 bg-white sticky top-[52px] z-10">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-bold text-gray-900">
               Edit Diet Plan - {diagnosis}
@@ -203,7 +213,7 @@ export function DietPlanEditor({ patientId, diagnosis, onClose, onSave }: DietPl
           </div>
         </div>
 
-        <div className="p-6">
+        <div className="p-6 bg-white rounded-b-lg shadow-sm border border-gray-200">
           {/* Day Selector */}
           <div className="mb-6">
             <h3 className="text-lg font-semibold mb-3">Select Day to Edit</h3>

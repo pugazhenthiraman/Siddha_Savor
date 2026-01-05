@@ -68,6 +68,25 @@ export function PatientHealthChart({ patientId }: PatientHealthChartProps) {
     );
   }
 
+  // Prepare data for a compact, modern line chart
+  const maxHealthScore = 100;
+  // Virtual SVG size – actual pixels will scale with container
+  const chartWidth = 100;
+  const chartHeight = 60;
+  const pointCount = healthData.length;
+  const xStep = pointCount > 1 ? chartWidth / (pointCount - 1) : 0;
+
+  const points = healthData.map((day, index) => {
+    const x = xStep * index;
+    // Invert Y so higher scores are visually higher on the chart, keep small top padding
+    const normalized = Math.min(Math.max(day.healthScore, 0), maxHealthScore);
+    const usableHeight = chartHeight - 10; // 10 units top padding
+    const y = 5 + (1 - normalized / maxHealthScore) * usableHeight;
+    return { x, y, ...day };
+  });
+
+  const polylinePoints = points.map(p => `${p.x},${p.y}`).join(' ');
+
   return (
     <div className="space-y-4">
       {summary && (
@@ -87,34 +106,79 @@ export function PatientHealthChart({ patientId }: PatientHealthChartProps) {
         </div>
       )}
 
-      <div className="bg-white p-4 rounded-lg border">
-        <h4 className="text-lg font-medium text-gray-900 mb-4">7-Day Health Progress</h4>
-        <div className="flex items-end justify-between h-32 space-x-2">
-          {healthData.map((day) => (
-            <div key={day.date} className="flex-1 flex flex-col items-center">
-              <div className="w-full bg-gray-200 rounded-t relative" style={{ height: '100px' }}>
-                <div 
-                  className={`w-full rounded-t transition-all duration-500 ${
-                    day.healthScore >= 80 ? 'bg-green-500' :
-                    day.healthScore >= 60 ? 'bg-yellow-500' :
-                    day.healthScore >= 40 ? 'bg-orange-500' : 'bg-red-500'
-                  }`}
-                  style={{ 
-                    height: `${day.healthScore}%`,
-                    position: 'absolute',
-                    bottom: 0
-                  }}
+      <div className="bg-white p-3 sm:p-4 rounded-lg border">
+        <h4 className="text-sm sm:text-base font-medium text-gray-900 mb-2 sm:mb-3">7-Day Health Progress</h4>
+        <div className="h-32 sm:h-36 flex flex-col">
+          <div className="flex-1 relative">
+            <svg
+              viewBox={`0 0 ${chartWidth} ${chartHeight}`}
+              preserveAspectRatio="none"
+              className="w-full h-full"
+            >
+              {/* Background gradient */}
+              <defs>
+                <linearGradient id="health-line-gradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#6ee7b7" stopOpacity="0.4" />
+                  <stop offset="100%" stopColor="#ecfdf5" stopOpacity="0" />
+                </linearGradient>
+              </defs>
+
+              {/* Subtle horizontal grid */}
+              {[25, 50, 75].map((val) => (
+                <line
+                  key={val}
+                  x1={0}
+                  y1={chartHeight - (val / maxHealthScore) * chartHeight}
+                  x2={chartWidth}
+                  y2={chartHeight - (val / maxHealthScore) * chartHeight}
+                  stroke="#E5E7EB"
+                  strokeWidth={0.5}
                 />
-                <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 text-xs font-medium text-gray-700">
-                  {day.healthScore}
-                </div>
-              </div>
-              <div className="mt-2 text-xs text-center">
+              ))}
+
+              {/* Area under the line */}
+              {points.length > 1 && (
+                <polygon
+                  fill="url(#health-line-gradient)"
+                  points={`0,${chartHeight} ${polylinePoints} ${chartWidth},${chartHeight}`}
+                />
+              )}
+
+              {/* Line path */}
+              <polyline
+                fill="none"
+                stroke="#10B981"
+                strokeWidth={2}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                points={polylinePoints}
+              />
+
+              {/* Points */}
+              {points.map((p) => (
+                <circle
+                  key={p.date}
+                  cx={p.x}
+                  cy={p.y}
+                  r={1.8}
+                  fill="#10B981"
+                  stroke="#064E3B"
+                  strokeWidth={0.4}
+                />
+              ))}
+            </svg>
+
+          </div>
+
+          {/* X-axis labels under chart */}
+          <div className="mt-1 sm:mt-2 flex justify-between text-[10px] sm:text-xs">
+            {healthData.map((day) => (
+              <div key={day.date} className="flex-1 text-center">
                 <div className="font-medium text-gray-900">{day.dayName}</div>
                 <div className="text-gray-500">{day.compliance}%</div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </div>
 

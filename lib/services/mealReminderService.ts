@@ -1,4 +1,6 @@
 import nodemailer from 'nodemailer';
+import { getSmtpConfig } from '@/lib/db';
+import { logger } from '@/lib/utils/logger';
 import { getDietPlanByDiagnosis } from '@/lib/dietPlans';
 
 interface MealReminderData {
@@ -10,35 +12,87 @@ interface MealReminderData {
   siddhaNotes?: string;
 }
 
-export class MealReminderService {
-  private transporter: nodemailer.Transporter;
+type ActiveSmtpConfig = {
+  host: string;
+  port: number;
+  username: string;
+  password: string;
+  fromEmail: string;
+  fromName: string;
+};
 
-  constructor() {
-    this.transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST || 'smtp.gmail.com',
-      port: parseInt(process.env.SMTP_PORT || '587'),
-      secure: false,
-      auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
-      },
-    });
+export class MealReminderService {
+  private transporter: nodemailer.Transporter | null = null;
+  private configSignature: string | null = null;
+
+  /**
+   * Load active SMTP config from Admin panel and validate it
+   */
+  private async getActiveConfig(): Promise<ActiveSmtpConfig> {
+    const config = await getSmtpConfig();
+
+    if (!config || !config.isActive) {
+      throw new Error('SMTP not configured or inactive');
+    }
+
+    const { host, port, username, password, fromEmail, fromName } = config;
+
+    if (!host || !port || !username || !password || !fromEmail || !fromName) {
+      throw new Error('SMTP configuration is incomplete');
+    }
+
+    return { host, port, username, password, fromEmail, fromName };
+  }
+
+  /**
+   * Reuse transporter while SMTP config stays the same
+   */
+  private async getTransporter(): Promise<{ transporter: nodemailer.Transporter; config: ActiveSmtpConfig }> {
+    const config = await this.getActiveConfig();
+    const signature = [
+      config.host,
+      config.port,
+      config.username,
+      config.fromEmail,
+      config.fromName
+    ].join('|');
+
+    if (!this.transporter || this.configSignature !== signature) {
+      this.transporter = nodemailer.createTransport({
+        host: config.host,
+        port: config.port,
+        secure: false,
+        auth: {
+          user: config.username,
+          pass: config.password,
+        },
+      });
+      this.configSignature = signature;
+    }
+
+    return { transporter: this.transporter, config };
   }
 
   async sendMealReminder(data: MealReminderData): Promise<boolean> {
     try {
+      const { transporter, config } = await this.getTransporter();
       const emailTemplate = this.generateMealReminderTemplate(data);
       
-      await this.transporter.sendMail({
-        from: `"Siddha Savor Healthcare" <${process.env.SMTP_USER}>`,
+      await transporter.sendMail({
+        from: `${config.fromName} <${config.fromEmail}>`,
         to: data.patientEmail,
         subject: `🍽️ ${this.getMealEmoji(data.mealType)} ${this.capitalize(data.mealType)} Reminder - Siddha Savor`,
         html: emailTemplate,
       });
 
+      logger.info('Meal reminder sent', {
+        to: data.patientEmail,
+        mealType: data.mealType,
+      });
+
       return true;
     } catch (error) {
-      console.error('Failed to send meal reminder:', error);
+      logger.error('Failed to send meal reminder', error);
       return false;
     }
   }

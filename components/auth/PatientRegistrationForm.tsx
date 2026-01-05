@@ -70,6 +70,13 @@ export function PatientRegistrationForm({ token, inviteData }: PatientRegistrati
   const isDoctorIDEditable = !token || token === '' || inviteData?.allowManualDoctorID === true;
 
   const handleInputChange = (field: string, value: string | boolean | number) => {
+    // Handle number-only fields
+    if (field === 'phone' || field === 'emergencyPhone' || field === 'pincode') {
+      if (typeof value === 'string') {
+        // Only allow digits
+        value = value.replace(/\D/g, '');
+      }
+    }
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
@@ -114,25 +121,7 @@ export function PatientRegistrationForm({ token, inviteData }: PatientRegistrati
       return false;
     }
 
-    if (!formData.address.trim()) {
-      error('Address is required');
-      return false;
-    }
-
-    if (!formData.city.trim()) {
-      error('City is required');
-      return false;
-    }
-
-    if (!formData.state.trim()) {
-      error('State is required');
-      return false;
-    }
-
-    if (!formData.pincode.trim()) {
-      error('Pincode is required');
-      return false;
-    }
+    // Address fields are optional
 
     if (!formData.emergencyContact.trim()) {
       error('Emergency contact name is required');
@@ -281,7 +270,8 @@ export function PatientRegistrationForm({ token, inviteData }: PatientRegistrati
                   placeholder={FORM_PLACEHOLDERS.PHONE}
                   disabled={isSubmitting}
                   className="text-sm sm:text-base"
-                  pattern="[0-9]{10}"
+                  pattern="[0-9]*"
+                  inputMode="numeric"
                   maxLength={10}
                 />
               </div>
@@ -372,7 +362,7 @@ export function PatientRegistrationForm({ token, inviteData }: PatientRegistrati
             <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">{PATIENT_FORM_SECTIONS.CONTACT}</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <div className="sm:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-2">{FORM_LABELS.ADDRESS}</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{FORM_LABELS.ADDRESS} (Optional)</label>
                 <Input
                   value={formData.address}
                   onChange={(e) => handleInputChange('address', e.target.value)}
@@ -382,7 +372,7 @@ export function PatientRegistrationForm({ token, inviteData }: PatientRegistrati
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">{FORM_LABELS.CITY}</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{FORM_LABELS.CITY} (Optional)</label>
                 <Input
                   value={formData.city}
                   onChange={(e) => handleInputChange('city', e.target.value)}
@@ -392,7 +382,7 @@ export function PatientRegistrationForm({ token, inviteData }: PatientRegistrati
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">{FORM_LABELS.STATE}</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{FORM_LABELS.STATE} (Optional)</label>
                 <Input
                   value={formData.state}
                   onChange={(e) => handleInputChange('state', e.target.value)}
@@ -402,13 +392,17 @@ export function PatientRegistrationForm({ token, inviteData }: PatientRegistrati
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">{FORM_LABELS.PIN_CODE}</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{FORM_LABELS.PIN_CODE} (Optional)</label>
                 <Input
+                  type="tel"
                   value={formData.pincode}
                   onChange={(e) => handleInputChange('pincode', e.target.value)}
                   placeholder={FORM_PLACEHOLDERS.PIN_CODE}
                   disabled={isSubmitting}
                   className="text-sm sm:text-base"
+                  pattern="[0-9]*"
+                  inputMode="numeric"
+                  maxLength={6}
                 />
               </div>
             </div>
@@ -482,7 +476,8 @@ export function PatientRegistrationForm({ token, inviteData }: PatientRegistrati
                   disabled={isSubmitting}
                   required
                   className="text-sm sm:text-base"
-                  pattern="[0-9]{10}"
+                  pattern="[0-9]*"
+                  inputMode="numeric"
                   maxLength={10}
                 />
               </div>

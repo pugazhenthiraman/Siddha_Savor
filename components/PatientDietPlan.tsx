@@ -57,15 +57,29 @@ export function PatientDietPlan({ diagnosis, patientId }: DietPlanProps) {
     );
   }
 
+  // Ensure dietPlan has required structure
+  if (!dietPlan.days || !Array.isArray(dietPlan.days) || dietPlan.days.length === 0) {
+    return (
+      <div className="text-center py-8">
+        <span className="text-4xl mb-4 block">⚠️</span>
+        <h3 className="text-lg font-medium text-gray-900 mb-2">Invalid Diet Plan</h3>
+        <p className="text-gray-600">The diet plan data is incomplete or invalid.</p>
+      </div>
+    );
+  }
+
   const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
   const currentDayPlan = dietPlan.days[selectedDay - 1];
+  const generalInstructions = dietPlan.generalInstructions || [];
+  const planDescription = dietPlan.description || `Customized diet plan for ${dietPlan.diagnosis || diagnosis}`;
+  const planDiagnosis = dietPlan.diagnosis || diagnosis;
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="bg-green-50 rounded-lg p-6 border border-green-200">
-        <h2 className="text-xl font-bold text-green-900 mb-2">{dietPlan.diagnosis} Diet Plan</h2>
-        <p className="text-green-700">{dietPlan.description}</p>
+        <h2 className="text-xl font-bold text-green-900 mb-2">{planDiagnosis} Diet Plan</h2>
+        {planDescription && <p className="text-green-700">{planDescription}</p>}
         <div className="mt-3 bg-green-200 text-green-800 px-3 py-1 rounded-full text-sm font-medium inline-block">
           Today: {days[selectedDay - 1]} - Day {selectedDay}
         </div>
@@ -93,12 +107,12 @@ export function PatientDietPlan({ diagnosis, patientId }: DietPlanProps) {
       </div>
 
       {/* Today's Meals */}
-      {currentDayPlan && (
+      {currentDayPlan && currentDayPlan.meals && (
         <div className="bg-white rounded-lg border-2 border-green-300 p-6">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-xl font-bold text-gray-900 flex items-center">
               <span className="bg-green-600 text-white px-3 py-1 rounded-full text-sm mr-3">TODAY</span>
-              {days[currentDayPlan.day - 1]}
+              {currentDayPlan.day ? days[currentDayPlan.day - 1] : days[selectedDay - 1]}
             </h3>
           </div>
 
@@ -109,7 +123,7 @@ export function PatientDietPlan({ diagnosis, patientId }: DietPlanProps) {
                 <span className="text-lg mr-2">🌅</span> Breakfast
               </h4>
               <ul className="space-y-2">
-                {currentDayPlan.meals.breakfast.map((item: string, index: number) => (
+                {(currentDayPlan.meals?.breakfast || []).map((item: string, index: number) => (
                   <li key={index} className="text-orange-800 text-sm">{item}</li>
                 ))}
               </ul>
@@ -120,7 +134,7 @@ export function PatientDietPlan({ diagnosis, patientId }: DietPlanProps) {
                 <span className="text-lg mr-2">☀️</span> Lunch
               </h4>
               <ul className="space-y-2">
-                {currentDayPlan.meals.lunch.map((item: string, index: number) => (
+                {(currentDayPlan.meals?.lunch || []).map((item: string, index: number) => (
                   <li key={index} className="text-yellow-800 text-sm">{item}</li>
                 ))}
               </ul>
@@ -131,7 +145,7 @@ export function PatientDietPlan({ diagnosis, patientId }: DietPlanProps) {
                 <span className="text-lg mr-2">🌙</span> Dinner
               </h4>
               <ul className="space-y-2">
-                {currentDayPlan.meals.dinner.map((item: string, index: number) => (
+                {(currentDayPlan.meals?.dinner || []).map((item: string, index: number) => (
                   <li key={index} className="text-purple-800 text-sm">{item}</li>
                 ))}
               </ul>
@@ -151,19 +165,21 @@ export function PatientDietPlan({ diagnosis, patientId }: DietPlanProps) {
       )}
 
       {/* General Guidelines */}
-      <div className="bg-white rounded-lg border p-6">
-        <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center">
-          <span className="text-xl mr-2">📋</span> General Guidelines
-        </h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {dietPlan.generalInstructions.slice(0, 8).map((instruction: string, index: number) => (
-            <div key={index} className="flex items-start space-x-2">
-              <span className="text-green-600 mt-1">•</span>
-              <span className="text-gray-700 text-sm">{instruction}</span>
-            </div>
-          ))}
+      {generalInstructions.length > 0 && (
+        <div className="bg-white rounded-lg border p-6">
+          <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center">
+            <span className="text-xl mr-2">📋</span> General Guidelines
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {generalInstructions.slice(0, 8).map((instruction: string, index: number) => (
+              <div key={index} className="flex items-start space-x-2">
+                <span className="text-green-600 mt-1">•</span>
+                <span className="text-gray-700 text-sm">{instruction}</span>
+              </div>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

@@ -25,26 +25,37 @@ export function MealTracker({ patientId, diagnosis, onMealUpdate }: MealTrackerP
     dinner: null
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [lastPlanUpdate, setLastPlanUpdate] = useState<string>('');
 
-  useEffect(() => {
-    const initializeMealTracker = async () => {
-      // Try to load custom plan first
-      try {
-        const response = await fetch(`/api/doctor/patients/${patientId}/custom-diet-plan`);
-        const data = await response.json();
-        
-        if (data.success && data.data) {
-          setDietPlan({ ...data.data, diagnosis });
-        } else {
-          // Fall back to default plan
-          const plan = getDietPlanByDiagnosis(diagnosis);
-          setDietPlan(plan);
+  const loadDietPlan = async () => {
+    try {
+      const response = await fetch(`/api/doctor/patients/${patientId}/custom-diet-plan`);
+      const data = await response.json();
+      
+      if (data.success && data.data) {
+        setDietPlan({ ...data.data, diagnosis });
+        // Check if plan was updated
+        const planUpdatedAt = data.data.updatedAt || data.data.createdAt;
+        if (planUpdatedAt && planUpdatedAt !== lastPlanUpdate) {
+          setLastPlanUpdate(planUpdatedAt);
+          // Refresh meal status when plan is updated
+          await fetchMealStatus();
         }
-      } catch (error) {
+      } else {
         // Fall back to default plan
         const plan = getDietPlanByDiagnosis(diagnosis);
         setDietPlan(plan);
       }
+    } catch (error) {
+      // Fall back to default plan
+      const plan = getDietPlanByDiagnosis(diagnosis);
+      setDietPlan(plan);
+    }
+  };
+
+  useEffect(() => {
+    const initializeMealTracker = async () => {
+      await loadDietPlan();
       
       // Set current day
       const today = new Date().getDay();
@@ -55,6 +66,23 @@ export function MealTracker({ patientId, diagnosis, onMealUpdate }: MealTrackerP
       await fetchMealStatus();
     };
     initializeMealTracker();
+
+    // Refresh diet plan when window gains focus (user might have received email about update)
+    const handleFocus = () => {
+      loadDietPlan();
+      fetchMealStatus();
+    };
+    window.addEventListener('focus', handleFocus);
+
+    // Also check periodically (every 30 seconds) for updates
+    const interval = setInterval(() => {
+      loadDietPlan();
+    }, 30000);
+
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+      clearInterval(interval);
+    };
   }, [diagnosis, patientId]);
 
   const fetchMealStatus = async () => {

@@ -42,11 +42,17 @@ export default function PatientDashboardPage() {
   const [vitalsHistory, setVitalsHistory] = useState<any[]>([]);
   const [dietEntries, setDietEntries] = useState<DietEntry[]>([]);
   const [dietStats, setDietStats] = useState<DietStats>({ completedMeals: 0, totalMeals: 0, compliancePercentage: 0 });
+  const [mealHistory, setMealHistory] = useState<any[]>([]);
+  const [dietPlanData, setDietPlanData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [showNewVitals, setShowNewVitals] = useState(false);
   const [showDietEditor, setShowDietEditor] = useState(false);
   const [showWeeklyPlan, setShowWeeklyPlan] = useState(false);
   const [weeklyPlanData, setWeeklyPlanData] = useState<any>(null);
+  const [showFullMealHistory, setShowFullMealHistory] = useState(false);
+  const [fullMealHistory, setFullMealHistory] = useState<any[]>([]);
+  const [showCuredConfirm, setShowCuredConfirm] = useState(false);
+  const [isMarkingCured, setIsMarkingCured] = useState(false);
 
   useEffect(() => {
     const loadData = async () => {
@@ -61,16 +67,18 @@ export default function PatientDashboardPage() {
     try {
       setIsLoading(true);
       
-      // Fetch patient details, vitals, and diet data in parallel
-      const [patientResponse, vitalsResponse, dietResponse] = await Promise.all([
+      // Fetch patient details, vitals, diet data, and meal history in parallel
+      const [patientResponse, vitalsResponse, dietResponse, mealHistoryResponse] = await Promise.all([
         fetch(`/api/doctor/patients/${params.patientId}`),
         fetch(`/api/doctor/vitals?patientId=${params.patientId}`),
-        fetch(`/api/doctor/patients/${params.patientId}/diet-status`)
+        fetch(`/api/doctor/patients/${params.patientId}/diet-status`),
+        fetch(`/api/doctor/patients/${params.patientId}/meals`)
       ]);
 
       const patientData = await patientResponse.json();
       const vitalsData = await vitalsResponse.json();
       const dietData = await dietResponse.json();
+      const mealHistoryData = await mealHistoryResponse.json();
 
       if (patientData.success) {
         setPatient(patientData.data);
@@ -102,6 +110,24 @@ export default function PatientDashboardPage() {
         }));
         setDietEntries(transformedEntries);
         setDietStats(dietData.data.stats);
+      }
+
+      // Set meal history
+      if (mealHistoryData.success) {
+        setMealHistory(mealHistoryData.data || []);
+      }
+
+      // Fetch diet plan for meal history display
+      if (latestVitals?.diagnosis) {
+        try {
+          const dietPlanResponse = await fetch(`/api/doctor/patients/${params.patientId}/diet-plan`);
+          const dietPlanResult = await dietPlanResponse.json();
+          if (dietPlanResult.success && dietPlanResult.data?.dietPlan) {
+            setDietPlanData(dietPlanResult.data.dietPlan);
+          }
+        } catch (e) {
+          // Ignore error
+        }
       }
       
     } catch (err) {
@@ -161,6 +187,51 @@ export default function PatientDashboardPage() {
       }
     } catch (err) {
       error('Failed to load weekly plan');
+    }
+  };
+
+  const handleViewFullMealHistory = async () => {
+    try {
+      setIsLoading(true);
+      const response = await fetch(`/api/doctor/patients/${params.patientId}/meal-history`);
+      const data = await response.json();
+      
+      if (data.success) {
+        setFullMealHistory(data.data || []);
+        setShowFullMealHistory(true);
+        success(`Loaded ${data.totalDays || 0} days of meal history`);
+      } else {
+        error(data.error || 'Failed to load meal history');
+      }
+    } catch (err) {
+      error('Failed to load meal history');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleMarkAsCured = async () => {
+    try {
+      setIsMarkingCured(true);
+      const response = await fetch(`/api/doctor/patients/${params.patientId}/mark-cured`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        success('Patient marked as cured successfully');
+        setShowCuredConfirm(false);
+        // Refresh patient data
+        await fetchPatientData();
+      } else {
+        error(data.error || 'Failed to mark patient as cured');
+      }
+    } catch (err) {
+      error('Failed to mark patient as cured');
+    } finally {
+      setIsMarkingCured(false);
     }
   };
 
@@ -365,19 +436,7 @@ export default function PatientDashboardPage() {
               </div>
             </div>
 
-            {/* Health Graph Placeholder */}
-            <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Health Progress</h3>
-              <div className="h-64 bg-gradient-to-br from-blue-50 to-indigo-100 rounded-lg flex items-center justify-center border-2 border-dashed border-blue-300">
-                <div className="text-center">
-                  <svg className="w-16 h-16 text-blue-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                  </svg>
-                  <p className="text-blue-600 font-medium">Health progress charts will be displayed here</p>
-                  <p className="text-sm text-blue-500 mt-2">Based on diet compliance and vital trends</p>
-                </div>
-              </div>
-            </div>
+          {/* (Health Progress graph removed as per requirement) */}
           </div>
         )}
 
@@ -545,7 +604,7 @@ export default function PatientDashboardPage() {
           <div className="space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <h3 className="text-lg sm:text-xl font-semibold text-gray-900">Diet Plan & Tracking</h3>
-              <div className="flex space-x-2">
+              <div className="flex flex-wrap gap-2">
                 <button 
                   onClick={() => setShowDietEditor(true)} 
                   className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium text-sm sm:text-base transition-colors"
@@ -557,6 +616,18 @@ export default function PatientDashboardPage() {
                   className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium text-sm sm:text-base transition-colors"
                 >
                   📅 Weekly Plan
+                </button>
+                <button 
+                  onClick={handleViewFullMealHistory} 
+                  className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg font-medium text-sm sm:text-base transition-colors"
+                >
+                  📊 Full Meal History
+                </button>
+                <button 
+                  onClick={() => setShowCuredConfirm(true)} 
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg font-medium text-sm sm:text-base transition-colors"
+                >
+                  ✅ Mark as Cured
                 </button>
               </div>
             </div>
@@ -809,6 +880,135 @@ export default function PatientDashboardPage() {
                 <p className="text-gray-500">Start by recording the first set of vitals for this patient.</p>
               </div>
             )}
+
+            {/* Meal History Section */}
+            <div className="mt-8">
+              <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-4">🍽️ Meal History (Last 7 Days)</h3>
+              
+              {mealHistory.length > 0 ? (
+                <div className="space-y-4">
+                  {mealHistory.map((dayMeals: any, index: number) => {
+                    const mealDate = new Date(dayMeals.date);
+                    const dayOfWeek = mealDate.getDay() === 0 ? 7 : mealDate.getDay();
+                    
+                    // Get diet plan for this day
+                    const dayPlan = dietPlanData?.days?.[dayOfWeek - 1] || null;
+
+                    const mealTypes = ['breakfast', 'lunch', 'dinner'];
+                    const mealIcons = { breakfast: '🌅', lunch: '☀️', dinner: '🌙' };
+                    const mealColors = {
+                      breakfast: 'orange',
+                      lunch: 'yellow',
+                      dinner: 'purple'
+                    };
+
+                    return (
+                      <div key={index} className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
+                        <div className="flex items-center justify-between mb-4">
+                          <div>
+                            <h4 className="text-lg font-semibold text-gray-900">
+                              {mealDate.toLocaleDateString('en-US', {
+                                weekday: 'long',
+                                year: 'numeric',
+                                month: 'long',
+                                day: 'numeric'
+                              })}
+                            </h4>
+                            <p className="text-sm text-gray-500">
+                              {dayPlan ? `${dayPlan.meals?.breakfast?.length || 0} breakfast items, ${dayPlan.meals?.lunch?.length || 0} lunch items, ${dayPlan.meals?.dinner?.length || 0} dinner items` : 'Diet plan details'}
+                            </p>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            {mealTypes.map((mealType) => {
+                              const status = dayMeals[mealType];
+                              const isCompleted = status === 'completed';
+                              return (
+                                <div
+                                  key={mealType}
+                                  className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                                    isCompleted ? 'bg-green-100' : status === 'pending' ? 'bg-red-100' : 'bg-gray-100'
+                                  }`}
+                                  title={`${mealType}: ${isCompleted ? 'Completed' : status === 'pending' ? 'Pending' : 'Not tracked'}`}
+                                >
+                                  <span className="text-xs">{mealIcons[mealType as keyof typeof mealIcons]}</span>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          {mealTypes.map((mealType) => {
+                            const status = dayMeals[mealType];
+                            const isCompleted = status === 'completed';
+                            const mealItems = dayPlan?.meals?.[mealType as keyof typeof dayPlan.meals] || [];
+                            const colorClass = mealType === 'breakfast' ? 'orange' : mealType === 'lunch' ? 'yellow' : 'purple';
+
+                            return (
+                              <div
+                                key={mealType}
+                                className={`${
+                                  mealType === 'breakfast' ? 'bg-orange-50 border-orange-200' :
+                                  mealType === 'lunch' ? 'bg-yellow-50 border-yellow-200' :
+                                  'bg-purple-50 border-purple-200'
+                                } border-2 rounded-lg p-4 ${
+                                  isCompleted ? 'border-green-300' : status === 'pending' ? 'border-red-300' : 'border-gray-200'
+                                }`}
+                              >
+                                <div className="flex items-center justify-between mb-2">
+                                  <h5 className={`font-semibold flex items-center ${
+                                    mealType === 'breakfast' ? 'text-orange-900' :
+                                    mealType === 'lunch' ? 'text-yellow-900' :
+                                    'text-purple-900'
+                                  }`}>
+                                    <span className="mr-2">{mealIcons[mealType as keyof typeof mealIcons]}</span>
+                                    {mealType.charAt(0).toUpperCase() + mealType.slice(1)}
+                                  </h5>
+                                  <span
+                                    className={`text-xs font-medium px-2 py-1 rounded ${
+                                      isCompleted
+                                        ? 'bg-green-100 text-green-700'
+                                        : status === 'pending'
+                                        ? 'bg-red-100 text-red-700'
+                                        : 'bg-gray-100 text-gray-600'
+                                    }`}
+                                  >
+                                    {isCompleted ? '✓ Completed' : status === 'pending' ? '✗ Pending' : 'Not tracked'}
+                                  </span>
+                                </div>
+                                {mealItems.length > 0 ? (
+                                  <ul className="space-y-1 mt-2">
+                                    {mealItems.map((item: string, idx: number) => (
+                                      <li key={idx} className={`text-sm ${
+                                        mealType === 'breakfast' ? 'text-orange-800' :
+                                        mealType === 'lunch' ? 'text-yellow-800' :
+                                        'text-purple-800'
+                                      }`}>
+                                        • {item}
+                                      </li>
+                                    ))}
+                                  </ul>
+                                ) : (
+                                  <p className="text-sm text-gray-500 mt-2">No items planned</p>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="bg-white border border-gray-200 rounded-xl p-12 text-center shadow-sm">
+                  <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <span className="text-3xl">🍽️</span>
+                  </div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">No meal history</h3>
+                  <p className="text-gray-500">Patient hasn't tracked any meals yet.</p>
+                </div>
+              )}
+            </div>
           </div>
         )}
       </div>
@@ -905,17 +1105,19 @@ export default function PatientDashboardPage() {
                 ))}
 
                 {/* General Instructions */}
-                <div className="bg-gray-50 border border-gray-200 rounded-xl p-6">
-                  <h3 className="text-xl font-bold text-gray-900 mb-4">📋 General Guidelines</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {weeklyPlanData.dietPlan.generalInstructions.map((instruction: string, index: number) => (
-                      <div key={index} className="flex items-start space-x-3">
-                        <span className="text-green-600 mt-1">•</span>
-                        <span className="text-gray-700">{instruction}</span>
-                      </div>
-                    ))}
+                {weeklyPlanData.dietPlan.generalInstructions && weeklyPlanData.dietPlan.generalInstructions.length > 0 && (
+                  <div className="bg-gray-50 border border-gray-200 rounded-xl p-6">
+                    <h3 className="text-xl font-bold text-gray-900 mb-4">📋 General Guidelines</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {weeklyPlanData.dietPlan.generalInstructions.map((instruction: string, index: number) => (
+                        <div key={index} className="flex items-start space-x-3">
+                          <span className="text-green-600 mt-1">•</span>
+                          <span className="text-gray-700">{instruction}</span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
             </div>
           </div>
@@ -978,6 +1180,190 @@ export default function PatientDashboardPage() {
             success('Vitals recorded successfully');
           }}
         />
+      )}
+
+      {/* Full Meal History - Full Screen View (no dark overlay) */}
+      {showFullMealHistory && (
+        <div className="fixed inset-0 bg-white z-50 overflow-y-auto">
+          <div className="min-h-screen">
+            {/* Header */}
+            <div className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-10">
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="flex items-center justify-between h-16">
+                  <div className="flex items-center space-x-4">
+                    <button
+                      onClick={() => setShowFullMealHistory(false)}
+                      className="p-2 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100"
+                    >
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                      </svg>
+                    </button>
+                    <div>
+                      <h1 className="text-xl font-semibold text-gray-900">
+                        📊 Full Meal History
+                      </h1>
+                      <p className="text-sm text-gray-600">
+                        Complete meal tracking history for {patient?.formData?.personalInfo?.firstName || 'Patient'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+              {fullMealHistory.length > 0 ? (
+                <div className="space-y-4">
+                  {fullMealHistory.map((dayMeals: any, index: number) => {
+                    const mealDate = new Date(dayMeals.date);
+                    const dayOfWeek = mealDate.getDay() === 0 ? 7 : mealDate.getDay();
+                    const dayPlan = dietPlanData?.days?.[dayOfWeek - 1] || null;
+                    const mealTypes = ['breakfast', 'lunch', 'dinner'];
+                    const mealIcons = { breakfast: '🌅', lunch: '☀️', dinner: '🌙' };
+
+                    return (
+                      <div key={index} className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
+                        <div className="flex items-center justify-between mb-4">
+                          <div>
+                            <h4 className="text-lg font-semibold text-gray-900">
+                              {mealDate.toLocaleDateString('en-US', {
+                                weekday: 'long',
+                                year: 'numeric',
+                                month: 'long',
+                                day: 'numeric'
+                              })}
+                            </h4>
+                            <p className="text-sm text-gray-500">
+                              {dayPlan ? `${dayPlan.meals?.breakfast?.length || 0} breakfast items, ${dayPlan.meals?.lunch?.length || 0} lunch items, ${dayPlan.meals?.dinner?.length || 0} dinner items` : 'Diet plan details'}
+                            </p>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            {mealTypes.map((mealType) => {
+                              const status = dayMeals[mealType];
+                              const isCompleted = status === 'completed';
+                              return (
+                                <div
+                                  key={mealType}
+                                  className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                                    isCompleted ? 'bg-green-100' : status === 'pending' ? 'bg-red-100' : 'bg-gray-100'
+                                  }`}
+                                  title={`${mealType}: ${isCompleted ? 'Completed' : status === 'pending' ? 'Pending' : 'Not tracked'}`}
+                                >
+                                  <span className="text-xs">{mealIcons[mealType as keyof typeof mealIcons]}</span>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          {mealTypes.map((mealType) => {
+                            const status = dayMeals[mealType];
+                            const isCompleted = status === 'completed';
+                            const mealItems = dayPlan?.meals?.[mealType as keyof typeof dayPlan.meals] || [];
+
+                            return (
+                              <div
+                                key={mealType}
+                                className={`${
+                                  mealType === 'breakfast' ? 'bg-orange-50 border-orange-200' :
+                                  mealType === 'lunch' ? 'bg-yellow-50 border-yellow-200' :
+                                  'bg-purple-50 border-purple-200'
+                                } border-2 rounded-lg p-4 ${
+                                  isCompleted ? 'border-green-300' : status === 'pending' ? 'border-red-300' : 'border-gray-200'
+                                }`}
+                              >
+                                <div className="flex items-center justify-between mb-2">
+                                  <h5 className={`font-semibold flex items-center ${
+                                    mealType === 'breakfast' ? 'text-orange-900' :
+                                    mealType === 'lunch' ? 'text-yellow-900' :
+                                    'text-purple-900'
+                                  }`}>
+                                    <span className="mr-2">{mealIcons[mealType as keyof typeof mealIcons]}</span>
+                                    {mealType.charAt(0).toUpperCase() + mealType.slice(1)}
+                                  </h5>
+                                  <span
+                                    className={`text-xs font-medium px-2 py-1 rounded ${
+                                      isCompleted
+                                        ? 'bg-green-100 text-green-700'
+                                        : status === 'pending'
+                                        ? 'bg-red-100 text-red-700'
+                                        : 'bg-gray-100 text-gray-600'
+                                    }`}
+                                  >
+                                    {isCompleted ? '✓ Completed' : status === 'pending' ? '✗ Pending' : 'Not tracked'}
+                                  </span>
+                                </div>
+                                {mealItems.length > 0 ? (
+                                  <ul className="space-y-1 mt-2">
+                                    {mealItems.map((item: string, idx: number) => (
+                                      <li key={idx} className={`text-sm ${
+                                        mealType === 'breakfast' ? 'text-orange-800' :
+                                        mealType === 'lunch' ? 'text-yellow-800' :
+                                        'text-purple-800'
+                                      }`}>
+                                        • {item}
+                                      </li>
+                                    ))}
+                                  </ul>
+                                ) : (
+                                  <p className="text-sm text-gray-500 mt-2">No items planned</p>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <span className="text-5xl mb-4 block">🍽️</span>
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">No meal history</h3>
+                  <p className="text-gray-500">Patient hasn't tracked any meals yet.</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Mark as Cured - Full Screen View (no dark overlay) */}
+      {showCuredConfirm && (
+        <div className="fixed inset-0 bg-white z-50 overflow-y-auto">
+          <div className="min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8 py-8">
+            <div className="max-w-md w-full bg-white rounded-xl shadow-lg border border-gray-200 p-6 sm:p-8">
+              <div className="flex items-center justify-center w-16 h-16 mx-auto mb-4 bg-emerald-100 rounded-full">
+                <span className="text-3xl">✅</span>
+              </div>
+              <h2 className="text-2xl font-bold text-gray-900 text-center mb-2">Mark Patient as Cured?</h2>
+              <p className="text-gray-600 text-center mb-6">
+                Are you sure you want to mark{' '}
+                <strong>{patient?.formData?.personalInfo?.firstName || 'this patient'}</strong> as cured? This action
+                will update their status in the system.
+              </p>
+              <div className="flex space-x-4">
+                <button
+                  onClick={() => setShowCuredConfirm(false)}
+                  className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-lg font-medium transition-colors"
+                  disabled={isMarkingCured}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleMarkAsCured}
+                  className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={isMarkingCured}
+                >
+                  {isMarkingCured ? 'Marking...' : 'Confirm'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

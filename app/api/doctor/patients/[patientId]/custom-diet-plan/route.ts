@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { mealReminderService } from '@/lib/services/mealReminderService';
+import { getSmtpConfig } from '@/lib/db';
+import nodemailer from 'nodemailer';
+import { logger } from '@/lib/utils/logger';
 
 export async function GET(
   request: NextRequest,
@@ -8,16 +10,37 @@ export async function GET(
 ) {
   try {
     const { patientId: patientIdStr } = await params;
+    const patientId = parseInt(patientIdStr);
     
-    // Always return success with null data to use default plan
-    // This ensures the system works even if custom diet plans aren't set up yet
+    // Try to get custom diet plan from database
+    const customPlan = await prisma.customDietPlan.findUnique({
+      where: { patientId },
+      select: {
+        planData: true,
+        updatedAt: true,
+        createdAt: true
+      }
+    });
+
+    if (customPlan) {
+      return NextResponse.json({
+        success: true,
+        data: {
+          ...customPlan.planData,
+          updatedAt: customPlan.updatedAt.toISOString(),
+          createdAt: customPlan.createdAt.toISOString()
+        }
+      });
+    }
+
+    // Return null if no custom plan exists (will use default plan)
     return NextResponse.json({
       success: true,
       data: null
     });
 
   } catch (error) {
-    console.error('Error fetching custom diet plan:', error);
+    logger.error('Error fetching custom diet plan:', error);
     return NextResponse.json(
       { success: true, data: null },
       { status: 200 }
@@ -34,33 +57,56 @@ export async function POST(
     const patientId = parseInt(patientIdStr);
     const planData = await request.json();
 
-    // Skip saving custom diet plan for now - just send email notification
-    console.log('Custom diet plan feature not fully set up yet, skipping database save');
-
     // Get patient details for email notification
     const patient = await prisma.patient.findUnique({
-      where: { id: patientId }
+      where: { id: patientId },
+      select: { email: true, formData: true }
     });
 
-    if (patient) {
-      const patientData = patient.formData as any;
-      const patientName = `${patientData?.personalInfo?.firstName || ''} ${patientData?.personalInfo?.lastName || ''}`.trim();
-
-      // Send email notification about updated diet plan
-      await sendDietPlanUpdateEmail({
-        patientName: patientName || 'Patient',
-        patientEmail: patient.email,
-        diagnosis: planData.diagnosis
-      });
+    if (!patient) {
+      return NextResponse.json(
+        { success: false, error: 'Patient not found' },
+        { status: 404 }
+      );
     }
+
+    // Save or update custom diet plan in database
+    const customDietPlan = await prisma.customDietPlan.upsert({
+      where: { patientId },
+      update: {
+        planData: planData,
+        updatedAt: new Date()
+      },
+      create: {
+        patientId: patientId,
+        planData: planData,
+        startDate: new Date()
+      }
+    });
+
+    logger.info('Custom diet plan saved successfully', { patientId });
+
+    // Get patient name for email
+    const patientData = patient.formData as any;
+    const patientName = `${patientData?.personalInfo?.firstName || ''} ${patientData?.personalInfo?.lastName || ''}`.trim();
+
+    // Send email notification about updated diet plan in background
+    sendDietPlanUpdateEmail({
+      patientName: patientName || 'Patient',
+      patientEmail: patient.email,
+      diagnosis: planData.diagnosis || 'your condition'
+    }).catch(error => {
+      logger.error('Failed to send diet plan update email:', error);
+    });
 
     return NextResponse.json({
       success: true,
-      message: 'Diet plan changes noted and patient notified'
+      message: 'Diet plan saved successfully and patient notified',
+      data: customDietPlan
     });
 
   } catch (error) {
-    console.error('Error processing diet plan update:', error);
+    logger.error('Error processing diet plan update:', error);
     return NextResponse.json(
       { success: false, error: 'Failed to process diet plan update' },
       { status: 500 }
@@ -74,18 +120,34 @@ async function sendDietPlanUpdateEmail(data: {
   diagnosis: string;
 }) {
   try {
-    // Create a custom email using nodemailer directly
-    const nodemailer = require('nodemailer');
+    // Get SMTP config from admin settings
+    const smtpConfig = await getSmtpConfig();
     
-    const transporter = nodemailer.createTransporter({
-      host: process.env.SMTP_HOST || 'smtp.gmail.com',
-      port: parseInt(process.env.SMTP_PORT || '587'),
+    if (!smtpConfig || !smtpConfig.isActive) {
+      logger.warn('SMTP not configured or inactive, skipping diet plan update email');
+      return;
+    }
+
+    const { host, port, username, password, fromEmail, fromName } = smtpConfig;
+
+    if (!host || !port || !username || !password || !fromEmail || !fromName) {
+      logger.warn('SMTP configuration is incomplete, skipping diet plan update email');
+      return;
+    }
+
+    // Create transporter with admin SMTP config
+    const transporter = nodemailer.createTransport({
+      host: host,
+      port: port,
       secure: false,
       auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
+        user: username,
+        pass: password,
       },
     });
+
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+    const dashboardUrl = `${baseUrl}/dashboard/patient`;
 
     const emailTemplate = `
       <!DOCTYPE html>
@@ -111,7 +173,7 @@ async function sendDietPlanUpdateEmail(data: {
           </p>
 
           <div style="text-align: center; margin: 30px 0;">
-            <a href="${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/dashboard/patient" 
+            <a href="${dashboardUrl}" 
                style="background: #10b981; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: 600; display: inline-block;">
               View Updated Diet Plan
             </a>
@@ -120,23 +182,38 @@ async function sendDietPlanUpdateEmail(data: {
           <div style="border-top: 1px solid #e5e7eb; padding-top: 20px; margin-top: 30px;">
             <p style="color: #6b7280; font-size: 14px; margin: 0;">
               <strong>Diagnosis:</strong> ${data.diagnosis}<br>
-              <strong>Updated on:</strong> ${new Date().toLocaleString()}
+              <strong>Updated on:</strong> ${new Date().toLocaleDateString('en-US', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+              })}
             </p>
           </div>
+        </div>
+
+        <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
+          <p style="color: #6b7280; font-size: 14px; margin: 0;">
+            This is an automated notification from Siddha Savor Healthcare System.<br>
+            For any questions, please contact your healthcare provider.
+          </p>
         </div>
       </body>
       </html>
     `;
 
     await transporter.sendMail({
-      from: `"Siddha Savor Healthcare" <${process.env.SMTP_USER}>`,
+      from: `${fromName} <${fromEmail}>`,
       to: data.patientEmail,
       subject: `📋 Your Diet Plan Has Been Updated - Siddha Savor`,
       html: emailTemplate,
     });
 
-    console.log('Diet plan update email sent successfully');
+    logger.info('Diet plan update email sent successfully', { patientEmail: data.patientEmail });
   } catch (error) {
-    console.error('Failed to send diet plan update email:', error);
+    logger.error('Failed to send diet plan update email:', error);
+    throw error;
   }
 }

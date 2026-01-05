@@ -32,9 +32,30 @@ export async function GET(request: NextRequest) {
 
     const inviteData = result.rows[0];
     
+    console.log('🔍 DEBUG: Original invite data from DB:', {
+      role: inviteData.role,
+      createdBy: inviteData.createdBy,
+      doctorUID: inviteData.doctorUID,
+      token: inviteData.token.substring(0, 8) + '...'
+    });
+    
+    // For admin-generated patient invites, remove doctorUID to prevent prefilling
+    if (inviteData.role === 'PATIENT' && inviteData.createdBy === 'ADMIN') {
+      delete inviteData.doctorUID;
+      console.log('🛠️ DEBUG: Removed doctorUID for admin patient invite');
+    }
+    
+    console.log('📤 DEBUG: Final invite data being sent:', {
+      role: inviteData.role,
+      createdBy: inviteData.createdBy,
+      doctorUID: inviteData.doctorUID,
+      hasDoctorUID: 'doctorUID' in inviteData
+    });
+    
     logger.info('Token validated successfully', { 
       role: inviteData.role,
-      createdBy: inviteData.createdBy 
+      createdBy: inviteData.createdBy,
+      hasDoctorUID: !!inviteData.doctorUID
     });
 
     return NextResponse.json({

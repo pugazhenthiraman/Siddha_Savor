@@ -28,6 +28,14 @@ export function PatientRegistrationForm({ token, inviteData }: PatientRegistrati
   // Initialize formData with inviteData if available
   const initialDoctorID = inviteData?.doctorUID || '';
   
+  console.log('🔍 DEBUG: PatientRegistrationForm received inviteData:', {
+    role: inviteData?.role,
+    createdBy: inviteData?.createdBy,
+    doctorUID: inviteData?.doctorUID,
+    hasDoctorUID: 'doctorUID' in (inviteData || {}),
+    initialDoctorID
+  });
+  
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -53,7 +61,14 @@ export function PatientRegistrationForm({ token, inviteData }: PatientRegistrati
   
   // Update doctorID when inviteData changes
   useEffect(() => {
+    console.log('🔍 DEBUG: useEffect triggered with inviteData:', {
+      doctorUID: inviteData?.doctorUID,
+      currentFormDoctorID: formData.doctorID,
+      hasDoctorUID: 'doctorUID' in (inviteData || {})
+    });
+    
     if (inviteData?.doctorUID && formData.doctorID !== inviteData.doctorUID) {
+      console.log('🛠️ DEBUG: Setting doctorID from inviteData:', inviteData.doctorUID);
       setFormData(prev => ({ ...prev, doctorID: inviteData.doctorUID as any }));
     }
   }, [inviteData?.doctorUID]);
@@ -67,7 +82,16 @@ export function PatientRegistrationForm({ token, inviteData }: PatientRegistrati
   }, [formData.dateOfBirth]);
   
   const showDoctorIDField = true;
-  const isDoctorIDEditable = !token || token === '' || inviteData?.allowManualDoctorID === true;
+  const isDoctorIDEditable = !token || token === '' || inviteData?.allowManualDoctorID === true || 
+    (inviteData?.role === 'PATIENT' && inviteData?.createdBy === 'ADMIN');
+  
+  console.log('🔍 DEBUG: Doctor ID field logic:', {
+    token: !!token,
+    allowManualDoctorID: inviteData?.allowManualDoctorID,
+    isDoctorIDEditable,
+    showDoctorIDField,
+    inviteDataDoctorUID: inviteData?.doctorUID
+  });
 
   const handleInputChange = (field: string, value: string | boolean | number) => {
     // Handle number-only fields
@@ -188,9 +212,9 @@ export function PatientRegistrationForm({ token, inviteData }: PatientRegistrati
         : await authService.registerPatientWithoutToken(formData);
       
       if (response.success) {
-        success('Registration successful! Redirecting to login...');
+        success('Registration successful! Redirecting to home...');
         setTimeout(() => {
-          router.push('/login?registered=true');
+          router.push('/');
         }, 1500);
       } else {
         error(response.error || ERROR_MESSAGES.SOMETHING_WENT_WRONG);

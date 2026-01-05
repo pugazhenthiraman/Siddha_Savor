@@ -34,6 +34,12 @@ function RegisterContent() {
       const result = await response.json();
 
       if (result.success) {
+        console.log('🔍 DEBUG: Register page received inviteData:', {
+          role: result.data.role,
+          createdBy: result.data.createdBy,
+          doctorUID: result.data.doctorUID,
+          hasDoctorUID: 'doctorUID' in result.data
+        });
         setInviteData(result.data);
         logger.info('Token validated successfully', { role: result.data.role });
       } else {

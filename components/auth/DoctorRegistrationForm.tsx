@@ -148,9 +148,9 @@ export function DoctorRegistrationForm({ token, inviteData }: DoctorRegistration
       const response = await authService.registerDoctor(token, formData);
       
       if (response.success) {
-        success('Registration successful! Redirecting to login...');
+        success('Registration successful! Redirecting to home...');
         setTimeout(() => {
-          router.push('/login?registered=true');
+          router.push('/');
         }, 1500);
       } else {
         error(response.error || ERROR_MESSAGES.SOMETHING_WENT_WRONG);

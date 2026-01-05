@@ -80,8 +80,8 @@ export function PatientDashboard({ patient, onClose }: PatientDashboardProps) {
   };
 
   const calculateAge = () => {
-    if (!patient.formData?.personalInfo?.dateOfBirth) return 'N/A';
-    const dob = new Date(patient.formData.personalInfo.dateOfBirth);
+    if (!(patient.formData as any)?.personalInfo?.dateOfBirth) return 'N/A';
+    const dob = new Date((patient.formData as any).personalInfo.dateOfBirth);
     const today = new Date();
     const age = today.getFullYear() - dob.getFullYear();
     return age;
@@ -120,10 +120,10 @@ export function PatientDashboard({ patient, onClose }: PatientDashboardProps) {
               </button>
               <div>
                 <h1 className="text-xl font-semibold text-gray-900">
-                  {patient.formData?.personalInfo?.firstName} {patient.formData?.personalInfo?.lastName}
+                  {(patient.formData as any)?.personalInfo?.firstName} {(patient.formData as any)?.personalInfo?.lastName}
                 </h1>
                 <p className="text-sm text-gray-600">
-                  Age: {calculateAge()} • Phone: {patient.formData?.personalInfo?.phone}
+                  Age: {calculateAge()} • Phone: {(patient.formData as any)?.personalInfo?.phone}
                 </p>
               </div>
             </div>

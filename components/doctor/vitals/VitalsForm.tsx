@@ -45,8 +45,8 @@ export function VitalsForm({ patient }: VitalsFormProps) {
     const loadVitals = async () => {
       try {
         const response = await doctorService.getPatientVitals(patient.id);
-        if (response.success && response.vitals && response.vitals.length > 0) {
-          const latest = response.vitals[0];
+        if (response.success && (response as any).vitals && (response as any).vitals.length > 0) {
+          const latest = (response as any).vitals[0];
           setSavedVitals(latest);
         }
       } catch (error) {
@@ -154,7 +154,7 @@ export function VitalsForm({ patient }: VitalsFormProps) {
       
       if (response && response.success) {
         success(isEditing ? 'Vitals updated successfully' : 'Vitals saved successfully');
-        setSavedVitals(response.vitals?.[0] || response.data || vitalsData);
+        setSavedVitals((response as any).vitals?.[0] || response.data || vitalsData);
         setIsEditing(false);
         setVitals({});
       } else {

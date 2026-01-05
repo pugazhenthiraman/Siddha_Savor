@@ -16,6 +16,7 @@ interface PatientManagementProps {
 
 export function PatientManagement({ onPatientSelect }: PatientManagementProps) {
   const { success, error } = useToast();
+  const router = useRouter();
   const [patients, setPatients] = useState<Patient[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);

@@ -74,24 +74,12 @@ export function NewVitalsForm({ patient, onClose, onSuccess }: NewVitalsFormProp
         return;
       }
 
-      const personalInfo = patient.formData?.personalInfo || {};
+      const personalInfo = (patient.formData as any)?.personalInfo || {};
       const age = personalInfo.age || 25;
       const gender = personalInfo.gender || 'male';
       const workType = personalInfo.workType || 'soft';
 
       let calculatedData = { ...formData };
-
-      // Calculate BMR, TDEE if weight is provided
-      if (formData.weight) {
-        const bmr = calculateBMR(formData.weight, age, gender);
-        const tdee = calculateTDEE(bmr, workType);
-
-        calculatedData = {
-          ...calculatedData,
-          bmr: parseFloat(bmr.toFixed(2)),
-          tdee: parseFloat(tdee.toFixed(2))
-        };
-      }
 
       const payload = {
         ...calculatedData,
@@ -140,7 +128,7 @@ export function NewVitalsForm({ patient, onClose, onSuccess }: NewVitalsFormProp
             <div>
               <h2 className="text-lg sm:text-xl font-semibold text-gray-900">Record New Vitals</h2>
               <p className="text-sm text-gray-500">
-                {patient.formData?.personalInfo?.firstName} {patient.formData?.personalInfo?.lastName}
+                {(patient.formData as any)?.personalInfo?.firstName} {(patient.formData as any)?.personalInfo?.lastName}
               </p>
             </div>
             <button

@@ -8,10 +8,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// =======================
-//       MODELS
-// =======================
-
 model Admin {
   id         Int      @id @default(autoincrement())
   email      String   @unique
@@ -31,7 +27,7 @@ model Doctor {
   createdAt   DateTime        @default(now())
   updatedAt   DateTime        @updatedAt
   patients    Patient[]
-  vitals      PatientVitals[] // One-to-many relationship with vitals recorded by this doctor
+  vitals      PatientVitals[]
 }
 
 model Patient {
@@ -39,68 +35,73 @@ model Patient {
   patientUID  String?         @unique @db.VarChar(8)
   email       String
   password    String?
-  status      DoctorStatus    @default(PENDING) // Patients are approved by default
   formData    Json
   inviteToken String?         @unique
   doctorUID   String?
-  doctor      Doctor?         @relation(fields: [doctorUID], references: [doctorUID])
-  vitals      PatientVitals[] // One-to-many relationship with vitals
   createdAt   DateTime        @default(now())
   updatedAt   DateTime        @updatedAt
+  status      DoctorStatus    @default(PENDING)
+  mealStatus  MealStatus[]
+  doctor      Doctor?         @relation(fields: [doctorUID], references: [doctorUID])
+  vitals      PatientVitals[]
 }
 
 model PatientVitals {
-  id        Int     @id @default(autoincrement())
-  patientId Int
-  patient   Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
-  doctorUID String
-  doctor    Doctor  @relation(fields: [doctorUID], references: [doctorUID])
-
-  // Vital signs
+  id                     Int      @id @default(autoincrement())
+  patientId              Int
+  doctorUID              String
   pulseRate              Int?
   heartRate              Int?
   temperature            Float?
   bloodPressureSystolic  Int?
   bloodPressureDiastolic Int?
-  randomBloodSugar       Int?
   respiratoryRate        Int?
   oxygenSaturation       Float?
-
-  // Physical measurements
-  weight Float?
-  bmr    Float?
-  tdee   Float?
-
-  // Siddha assessment
-  naadi          String? // Naadi assessment
-  thegi          String? // Thegi assessment
-  assessmentType String? // 'naadi' or 'thegi'
-
-  // Treatment
-  medicines Json? // Array of medicines
-  diagnosis String? // Patient diagnosis
-  notes     String?
-
-  // Metadata
-  recordedAt DateTime @default(now())
-  recordedBy String // Doctor who recorded
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  weight                 Float?
+  bmr                    Float?
+  tdee                   Float?
+  assessmentType         String?
+  medicines              Json?
+  notes                  String?
+  recordedAt             DateTime @default(now())
+  recordedBy             String
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+  naadi                  String?
+  randomBloodSugar       Int?
+  thegi                  String?
+  diagnosis              String?
+  doctor                 Doctor   @relation(fields: [doctorUID], references: [doctorUID])
+  patient                Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
 
   @@index([patientId])
   @@index([doctorUID])
+}
+
+model MealStatus {
+  id        Int      @id @default(autoincrement())
+  patientId Int
+  date      DateTime
+  mealType  String
+  status    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  patient   Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
+
+  @@unique([patientId, date, mealType], name: "patientId_date_mealType")
+  @@index([patientId])
 }
 
 model InviteLink {
   id             Int        @id @default(autoincrement())
   token          String     @unique
   role           InviteRole
-  doctorUID      String? // For patient invites: which doctor they'll be assigned to
-  createdBy      String     @default("ADMIN") // "ADMIN" or doctorUID who created it
-  recipientEmail String? // Email address of intended recipient
-  recipientName  String? // Name of intended recipient
-  isUsed         Boolean    @default(false) // Track if link has been used
-  usedAt         DateTime? // When the link was used for registration
+  doctorUID      String?
+  createdBy      String     @default("ADMIN")
+  recipientEmail String?
+  recipientName  String?
+  isUsed         Boolean    @default(false)
+  usedAt         DateTime?
   expiresAt      DateTime
   createdAt      DateTime   @default(now())
 }
@@ -109,9 +110,9 @@ model PasswordReset {
   id        Int      @id @default(autoincrement())
   email     String
   token     String   @unique
-  code      String // 6-digit verification code
-  userRole  String // "admin", "doctor", "patient"
-  data      Json // Flexible JSON for additional fields
+  code      String
+  userRole  String
+  data      Json
   isUsed    Boolean  @default(false)
   expiresAt DateTime
   createdAt DateTime @default(now())

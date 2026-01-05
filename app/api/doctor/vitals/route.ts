@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { logger } from '@/lib/utils/logger';
+import { patientNotificationService } from '@/lib/services/patientNotificationService';
 
 export async function POST(request: NextRequest) {
   try {
@@ -52,6 +53,38 @@ export async function POST(request: NextRequest) {
         recordedBy
       }
     });
+
+    // Get patient and doctor details for email notification
+    const patient = await prisma.patient.findUnique({
+      where: { id: parseInt(patientId) },
+      select: { email: true, formData: true }
+    });
+
+    const doctor = await prisma.doctor.findUnique({
+      where: { doctorUID },
+      select: { formData: true }
+    });
+
+    // Send email notification to patient
+    if (patient && doctor) {
+      const patientData = patient.formData as any;
+      const doctorData = doctor.formData as any;
+      
+      const patientName = `${patientData?.personalInfo?.firstName || ''} ${patientData?.personalInfo?.lastName || ''}`.trim();
+      const doctorName = `${doctorData?.personalInfo?.firstName || ''} ${doctorData?.personalInfo?.lastName || ''}`.trim();
+
+      // Send notification in background (don't wait for it)
+      patientNotificationService.sendPatientUpdateNotification({
+        patientName: patientName || 'Patient',
+        patientEmail: patient.email,
+        doctorName: doctorName || 'Doctor',
+        diagnosis: diagnosis || undefined,
+        updateType: diagnosis ? 'both' : 'vitals',
+        updatedAt: new Date().toISOString()
+      }).catch(error => {
+        logger.error('Failed to send patient notification email:', error);
+      });
+    }
 
     logger.info('Patient vitals saved successfully', {
       patientId,

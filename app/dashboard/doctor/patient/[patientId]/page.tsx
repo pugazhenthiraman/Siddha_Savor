@@ -4,12 +4,20 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useToast } from '@/lib/hooks/useToast';
 import { NewVitalsForm } from '@/components/doctor/NewVitalsForm';
+import { PatientDietPlan } from '@/components/PatientDietPlan';
+import { DietComplianceChart } from '@/components/DietComplianceChart';
 
 interface PatientStats {
   bmr?: number;
   tdee?: number;
   lastWeight?: number;
   lastRecordedAt?: string;
+}
+
+interface DietStats {
+  completedMeals: number;
+  totalMeals: number;
+  compliancePercentage: number;
 }
 
 interface DietEntry {
@@ -32,27 +40,33 @@ export default function PatientDashboardPage() {
   const [latestVitals, setLatestVitals] = useState<any>(null);
   const [vitalsHistory, setVitalsHistory] = useState<any[]>([]);
   const [dietEntries, setDietEntries] = useState<DietEntry[]>([]);
+  const [dietStats, setDietStats] = useState<DietStats>({ completedMeals: 0, totalMeals: 0, compliancePercentage: 0 });
   const [isLoading, setIsLoading] = useState(true);
   const [showNewVitals, setShowNewVitals] = useState(false);
 
   useEffect(() => {
-    if (params.patientId) {
-      fetchPatientData();
-    }
+    const loadData = async () => {
+      if (params.patientId) {
+        await fetchPatientData();
+      }
+    };
+    loadData();
   }, [params.patientId]);
 
   const fetchPatientData = async () => {
     try {
       setIsLoading(true);
       
-      // Fetch patient details and vitals in parallel
-      const [patientResponse, vitalsResponse] = await Promise.all([
+      // Fetch patient details, vitals, and diet data in parallel
+      const [patientResponse, vitalsResponse, dietResponse] = await Promise.all([
         fetch(`/api/doctor/patients/${params.patientId}`),
-        fetch(`/api/doctor/vitals?patientId=${params.patientId}`)
+        fetch(`/api/doctor/vitals?patientId=${params.patientId}`),
+        fetch(`/api/doctor/patients/${params.patientId}/diet-status`)
       ]);
 
       const patientData = await patientResponse.json();
       const vitalsData = await vitalsResponse.json();
+      const dietData = await dietResponse.json();
 
       if (patientData.success) {
         setPatient(patientData.data);
@@ -71,12 +85,20 @@ export default function PatientDashboardPage() {
         });
       }
 
-      // Mock diet data - replace with actual API call
-      setDietEntries([
-        { id: 1, date: '2026-01-04', mealType: 'breakfast', foodItem: 'Oatmeal with fruits', quantity: '1 bowl', calories: 350, completed: true },
-        { id: 2, date: '2026-01-04', mealType: 'lunch', foodItem: 'Grilled chicken salad', quantity: '1 plate', calories: 450, completed: false },
-        { id: 3, date: '2026-01-04', mealType: 'dinner', foodItem: 'Brown rice with vegetables', quantity: '1 cup', calories: 400, completed: false }
-      ]);
+      // Set real diet data
+      if (dietData.success) {
+        const transformedEntries = dietData.data.dietEntries.map((entry: any) => ({
+          id: entry.id,
+          date: entry.date,
+          mealType: entry.mealType,
+          foodItem: entry.foodItems.join(', '),
+          quantity: '1 serving',
+          calories: entry.calories,
+          completed: entry.completed
+        }));
+        setDietEntries(transformedEntries);
+        setDietStats(dietData.data.stats);
+      }
       
     } catch (err) {
       error('Failed to load patient data');
@@ -93,9 +115,53 @@ export default function PatientDashboardPage() {
     return age;
   };
 
+  const handleUpdateDietPlan = async () => {
+    if (!latestVitals?.diagnosis) {
+      error('No diagnosis found. Please record vitals first.');
+      return;
+    }
+    
+    try {
+      const response = await fetch(`/api/doctor/patients/${params.patientId}/diet-plan`);
+      const data = await response.json();
+      
+      if (data.success) {
+        success('Diet plan updated successfully');
+        setActiveTab('diet');
+        // Refresh diet data
+        fetchPatientData();
+      } else {
+        error(data.error || 'Failed to update diet plan');
+      }
+    } catch (err) {
+      error('Failed to update diet plan');
+    }
+  };
+
+  const handleViewWeeklyPlan = async () => {
+    if (!latestVitals?.diagnosis) {
+      error('No diagnosis found. Please record vitals first.');
+      return;
+    }
+    
+    try {
+      const response = await fetch(`/api/doctor/patients/${params.patientId}/diet-plan`);
+      const data = await response.json();
+      
+      if (data.success) {
+        setActiveTab('diet');
+        success('Weekly diet plan loaded');
+      } else {
+        error(data.error || 'Failed to load weekly plan');
+      }
+    } catch (err) {
+      error('Failed to load weekly plan');
+    }
+  };
+
   const todaysDiet = dietEntries.filter(entry => entry.date === new Date().toISOString().split('T')[0]);
-  const completedMeals = todaysDiet.filter(entry => entry.completed).length;
-  const totalMeals = todaysDiet.length;
+  const completedMeals = dietStats.completedMeals;
+  const totalMeals = dietStats.totalMeals;
 
   if (isLoading) {
     return (
@@ -251,7 +317,7 @@ export default function PatientDashboardPage() {
                   <div className="flex-1">
                     <div className="text-xs sm:text-sm font-semibold mb-1 text-orange-100">Diet Today</div>
                     <div className="text-2xl sm:text-3xl font-bold">
-                      {totalMeals > 0 ? Math.round((completedMeals / totalMeals) * 100) : 0}%
+                      {dietStats.compliancePercentage}%
                     </div>
                     <div className="text-xs text-orange-100">
                       {completedMeals}/{totalMeals} meals
@@ -278,7 +344,7 @@ export default function PatientDashboardPage() {
                   <span className="text-sm sm:text-base">Record New Vitals</span>
                 </button>
                 <button 
-                  onClick={() => setActiveTab('diet')} 
+                  onClick={() => handleUpdateDietPlan()} 
                   className="bg-green-600 hover:bg-green-700 text-white flex items-center justify-center space-x-2 py-3 px-4 rounded-lg font-medium transition-colors"
                 >
                   <span>🍽️</span>
@@ -474,41 +540,79 @@ export default function PatientDashboardPage() {
           <div className="space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <h3 className="text-lg sm:text-xl font-semibold text-gray-900">Diet Plan & Tracking</h3>
-              <button className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium text-sm sm:text-base transition-colors">
+              <button 
+                onClick={() => handleViewWeeklyPlan()} 
+                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium text-sm sm:text-base transition-colors"
+              >
                 📅 Weekly Plan
               </button>
             </div>
 
+            {/* Diagnosis-based Diet Plan Info */}
+            {latestVitals?.diagnosis && (
+              <div className="bg-green-50 border border-green-200 rounded-xl p-6">
+                <h4 className="text-lg font-medium text-green-900 mb-2">
+                  Diet Plan for {latestVitals.diagnosis}
+                </h4>
+                <p className="text-green-700 text-sm">
+                  This personalized diet plan is based on the patient's current diagnosis and follows Siddha medicine principles.
+                </p>
+              </div>
+            )}
+
             {/* Today's Diet */}
             <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
-              <h4 className="text-lg font-medium text-gray-900 mb-4">Today's Meals</h4>
-              <div className="space-y-3">
-                {todaysDiet.map((entry) => (
-                  <div key={entry.id} className="flex items-center justify-between p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg border border-gray-200">
-                    <div className="flex items-center space-x-4">
-                      <div className={`w-4 h-4 rounded-full ${entry.completed ? 'bg-green-500' : 'bg-red-400'}`}></div>
-                      <div>
-                        <div className="font-medium text-gray-900 capitalize">{entry.mealType}</div>
-                        <div className="text-sm text-gray-600">{entry.foodItem} - {entry.quantity}</div>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-sm font-medium text-gray-900">{entry.calories} cal</div>
-                      <div className={`text-xs font-medium ${entry.completed ? 'text-green-600' : 'text-red-500'}`}>
-                        {entry.completed ? 'Completed' : 'Pending'}
-                      </div>
-                    </div>
-                  </div>
-                ))}
+              <div className="flex items-center justify-between mb-4">
+                <h4 className="text-lg font-medium text-gray-900">Today's Meals</h4>
+                <div className="text-sm text-gray-600">
+                  Compliance: <span className="font-semibold text-green-600">{dietStats.compliancePercentage}%</span>
+                </div>
               </div>
+              
+              {todaysDiet.length > 0 ? (
+                <div className="space-y-3">
+                  {todaysDiet.map((entry) => (
+                    <div key={entry.id} className="flex items-center justify-between p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg border border-gray-200">
+                      <div className="flex items-center space-x-4">
+                        <div className={`w-4 h-4 rounded-full ${entry.completed ? 'bg-green-500' : 'bg-red-400'}`}></div>
+                        <div>
+                          <div className="font-medium text-gray-900 capitalize">{entry.mealType}</div>
+                          <div className="text-sm text-gray-600">{entry.foodItem} - {entry.quantity}</div>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-sm font-medium text-gray-900">{entry.calories} cal</div>
+                        <div className={`text-xs font-medium ${entry.completed ? 'text-green-600' : 'text-red-500'}`}>
+                          {entry.completed ? 'Completed' : 'Pending'}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+                  <p className="text-gray-600">
+                    {latestVitals?.diagnosis 
+                      ? 'No diet plan available for today. The patient may need to check their meal tracking.'
+                      : 'Please record patient vitals with a diagnosis to generate a diet plan.'
+                    }
+                  </p>
+                </div>
+              )}
             </div>
 
-            {/* Diet Compliance Chart Placeholder */}
+            {/* Diet Plan Component */}
+            {latestVitals?.diagnosis && (
+              <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
+                <h4 className="text-lg font-medium text-gray-900 mb-4">Weekly Diet Plan</h4>
+                <PatientDietPlan diagnosis={latestVitals.diagnosis} />
+              </div>
+            )}
+
+            {/* Diet Compliance Chart */}
             <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
               <h4 className="text-lg font-medium text-gray-900 mb-4">Weekly Diet Compliance</h4>
-              <div className="h-48 bg-gradient-to-br from-green-50 to-emerald-100 rounded-lg flex items-center justify-center border-2 border-dashed border-green-300">
-                <p className="text-green-600 font-medium">Diet compliance chart will be displayed here</p>
-              </div>
+              <DietComplianceChart patientId={params.patientId as string} />
             </div>
           </div>
         )}

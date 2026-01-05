@@ -7,38 +7,6 @@ import { Button } from '@/components/ui/Button';
 import { NewVitalsForm } from './NewVitalsForm';
 import { VitalsRecord, VitalsFilterType, VitalsViewMode } from '@/lib/types/vitals';
 
-interface VitalsRecord {
-  id: number;
-  patientId: number;
-  doctorUID: string;
-  pulseRate?: number;
-  heartRate?: number;
-  temperature?: number;
-  bloodPressureSystolic?: number;
-  bloodPressureDiastolic?: number;
-  randomBloodSugar?: number;
-  respiratoryRate?: number;
-  oxygenSaturation?: number;
-  weight?: number;
-  height?: number;
-  bmi?: number;
-  bmr?: number;
-  tdee?: number;
-  naadi?: string;
-  thegi?: string;
-  assessmentType?: string;
-  medicines?: any[];
-  notes?: string;
-  recordedAt: string;
-  recordedBy: string;
-  createdAt: string;
-  updatedAt: string;
-  doctor?: {
-    doctorUID: string;
-    formData: any;
-  };
-}
-
 interface PatientVitalsManagerProps {
   patient: Patient;
   onClose: () => void;
@@ -212,7 +180,7 @@ export function PatientVitalsManager({ patient, onClose }: PatientVitalsManagerP
                   <label className="block text-sm font-medium text-gray-700 mb-1">Assessment Type</label>
                   <select
                     value={editingRecord.assessmentType || ''}
-                    onChange={(e) => setEditingRecord(prev => ({ ...prev, assessmentType: e.target.value }))}
+                    onChange={(e) => setEditingRecord(prev => ({ ...prev, assessmentType: e.target.value as any }))}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
                     <option value="">Select Type</option>
@@ -257,7 +225,7 @@ export function PatientVitalsManager({ patient, onClose }: PatientVitalsManagerP
             <div className="min-w-0 flex-1">
               <h2 className="text-lg sm:text-xl font-semibold text-gray-900 truncate">Patient Vitals History</h2>
               <p className="text-sm text-gray-500 truncate">
-                {patient.formData?.personalInfo?.firstName} {patient.formData?.personalInfo?.lastName}
+                {(patient.formData as any)?.personalInfo?.firstName} {(patient.formData as any)?.personalInfo?.lastName}
               </p>
             </div>
             <div className="flex space-x-2 flex-shrink-0">

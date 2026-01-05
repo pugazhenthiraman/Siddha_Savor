@@ -242,7 +242,7 @@ export function PatientVitalsHistory({ patient, onClose }: PatientVitalsHistoryP
             <div>
               <h2 className="text-xl font-semibold text-gray-900">Patient Vitals History</h2>
               <p className="text-sm text-gray-500">
-                {patient.formData?.personalInfo?.firstName} {patient.formData?.personalInfo?.lastName}
+                {(patient.formData as any)?.personalInfo?.firstName} {(patient.formData as any)?.personalInfo?.lastName}
               </p>
             </div>
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">

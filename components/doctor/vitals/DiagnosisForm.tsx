@@ -33,8 +33,8 @@ export function DiagnosisForm({ patient }: DiagnosisFormProps) {
     const loadVitals = async () => {
       try {
         const response = await doctorService.getPatientVitals(patient.id);
-        if (response.success && response.vitals && response.vitals.length > 0) {
-          setLatestVitals(response.vitals[0]);
+        if (response.success && (response as any).vitals && (response as any).vitals.length > 0) {
+          setLatestVitals((response as any).vitals[0]);
         }
       } catch (error) {
         console.error('Failed to load vitals:', error);

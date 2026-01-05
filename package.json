@@ -18,7 +18,7 @@
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.1.0",
-    "@prisma/client": "^5.19.1",
+    "@prisma/client": "^5.22.0",
     "@types/nodemailer": "^7.0.4",
     "bcrypt": "^6.0.0",
     "clsx": "^2.1.1",

@@ -42,6 +42,7 @@ model Patient {
   updatedAt   DateTime        @updatedAt
   status      DoctorStatus    @default(PENDING)
   mealStatus  MealStatus[]
+  customDietPlan CustomDietPlan?
   doctor      Doctor?         @relation(fields: [doctorUID], references: [doctorUID])
   vitals      PatientVitals[]
 }
@@ -90,6 +91,16 @@ model MealStatus {
 
   @@unique([patientId, date, mealType], name: "patientId_date_mealType")
   @@index([patientId])
+}
+
+model CustomDietPlan {
+  id        Int      @id @default(autoincrement())
+  patientId Int      @unique
+  planData  Json
+  startDate DateTime @default(now())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  patient   Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
 }
 
 model InviteLink {

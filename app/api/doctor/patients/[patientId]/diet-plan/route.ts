@@ -23,8 +23,15 @@ export async function GET(
       }, { status: 404 });
     }
 
-    // Get diet plan based on diagnosis
-    const dietPlan = getDietPlanByDiagnosis(latestVitals.diagnosis);
+    // Try to get custom diet plan first
+    let dietPlan;
+    try {
+      // For now, since custom plans aren't fully implemented, use default
+      dietPlan = getDietPlanByDiagnosis(latestVitals.diagnosis);
+    } catch (error) {
+      // Fall back to default plan
+      dietPlan = getDietPlanByDiagnosis(latestVitals.diagnosis);
+    }
     
     if (!dietPlan) {
       return NextResponse.json({
@@ -42,7 +49,8 @@ export async function GET(
       data: {
         dietPlan,
         currentDay,
-        diagnosis: latestVitals.diagnosis
+        diagnosis: latestVitals.diagnosis,
+        isCustomPlan: false // Will be true when custom plans are implemented
       }
     });
 

@@ -5,21 +5,47 @@ import { getDietPlanByDiagnosis } from '@/lib/dietPlans';
 
 interface DietPlanProps {
   diagnosis: string;
+  patientId?: number;
 }
 
-export function PatientDietPlan({ diagnosis }: DietPlanProps) {
+export function PatientDietPlan({ diagnosis, patientId }: DietPlanProps) {
   const [selectedDay, setSelectedDay] = useState(1);
   const [dietPlan, setDietPlan] = useState<any>(null);
 
   useEffect(() => {
-    const plan = getDietPlanByDiagnosis(diagnosis);
-    setDietPlan(plan);
-    
-    // Set current day based on today
-    const today = new Date().getDay();
-    const currentDay = today === 0 ? 7 : today;
-    setSelectedDay(currentDay);
-  }, [diagnosis]);
+    const loadDietPlan = async () => {
+      if (patientId) {
+        // Try to load custom plan first
+        try {
+          const response = await fetch(`/api/doctor/patients/${patientId}/custom-diet-plan`);
+          const data = await response.json();
+          
+          if (data.success && data.data) {
+            setDietPlan({ ...data.data, diagnosis });
+          } else {
+            // Fall back to default plan
+            const plan = getDietPlanByDiagnosis(diagnosis);
+            setDietPlan(plan);
+          }
+        } catch (error) {
+          // Fall back to default plan
+          const plan = getDietPlanByDiagnosis(diagnosis);
+          setDietPlan(plan);
+        }
+      } else {
+        // Use default plan
+        const plan = getDietPlanByDiagnosis(diagnosis);
+        setDietPlan(plan);
+      }
+      
+      // Set current day based on today
+      const today = new Date().getDay();
+      const currentDay = today === 0 ? 7 : today;
+      setSelectedDay(currentDay);
+    };
+
+    loadDietPlan();
+  }, [diagnosis, patientId]);
 
   if (!dietPlan) {
     return (

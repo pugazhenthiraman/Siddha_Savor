@@ -17,6 +17,7 @@ interface MealStatus {
 
 export function MealTracker({ patientId, diagnosis, onMealUpdate }: MealTrackerProps) {
   const [selectedDay, setSelectedDay] = useState(1);
+  const [viewMode, setViewMode] = useState<'today' | 'weekly'>('today');
   const [dietPlan, setDietPlan] = useState<any>(null);
   const [mealStatus, setMealStatus] = useState<MealStatus>({
     breakfast: null,
@@ -27,8 +28,23 @@ export function MealTracker({ patientId, diagnosis, onMealUpdate }: MealTrackerP
 
   useEffect(() => {
     const initializeMealTracker = async () => {
-      const plan = getDietPlanByDiagnosis(diagnosis);
-      setDietPlan(plan);
+      // Try to load custom plan first
+      try {
+        const response = await fetch(`/api/doctor/patients/${patientId}/custom-diet-plan`);
+        const data = await response.json();
+        
+        if (data.success && data.data) {
+          setDietPlan({ ...data.data, diagnosis });
+        } else {
+          // Fall back to default plan
+          const plan = getDietPlanByDiagnosis(diagnosis);
+          setDietPlan(plan);
+        }
+      } catch (error) {
+        // Fall back to default plan
+        const plan = getDietPlanByDiagnosis(diagnosis);
+        setDietPlan(plan);
+      }
       
       // Set current day
       const today = new Date().getDay();
@@ -155,11 +171,38 @@ export function MealTracker({ patientId, diagnosis, onMealUpdate }: MealTrackerP
 
   return (
     <div className="space-y-6">
-      {/* Header */}
+      {/* Header with View Toggle */}
       <div className="bg-green-50 rounded-lg p-4 sm:p-6 border border-green-200">
-        <h2 className="text-lg sm:text-xl font-bold text-green-900 mb-2">{dietPlan.diagnosis} Diet Plan</h2>
-        <p className="text-green-700 text-sm sm:text-base">{dietPlan.description}</p>
-        <div className="mt-3 flex items-center space-x-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4">
+          <div>
+            <h2 className="text-lg sm:text-xl font-bold text-green-900 mb-2">{dietPlan.diagnosis} Diet Plan</h2>
+            <p className="text-green-700 text-sm sm:text-base">{dietPlan.description}</p>
+          </div>
+          <div className="flex space-x-2 mt-3 sm:mt-0">
+            <button
+              onClick={() => setViewMode('today')}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                viewMode === 'today'
+                  ? 'bg-green-600 text-white'
+                  : 'bg-white text-green-700 border border-green-300 hover:bg-green-100'
+              }`}
+            >
+              Today's Plan
+            </button>
+            <button
+              onClick={() => setViewMode('weekly')}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                viewMode === 'weekly'
+                  ? 'bg-green-600 text-white'
+                  : 'bg-white text-green-700 border border-green-300 hover:bg-green-100'
+              }`}
+            >
+              Weekly Plan
+            </button>
+          </div>
+        </div>
+        
+        <div className="flex items-center space-x-3">
           <div className="bg-green-200 text-green-800 px-3 py-1 rounded-full text-xs sm:text-sm font-medium">
             Today: {days[selectedDay - 1]} - Day {selectedDay}
           </div>
@@ -170,7 +213,7 @@ export function MealTracker({ patientId, diagnosis, onMealUpdate }: MealTrackerP
       </div>
 
       {/* Today's Meals */}
-      {currentDayPlan && (
+      {viewMode === 'today' && currentDayPlan && (
         <div className="bg-white rounded-lg border-2 border-green-300 p-4 sm:p-6 shadow-lg">
           <div className="flex items-center justify-between mb-4 sm:mb-6">
             <h3 className="text-lg sm:text-xl font-bold text-gray-900 flex items-center">
@@ -230,6 +273,66 @@ export function MealTracker({ patientId, diagnosis, onMealUpdate }: MealTrackerP
               <p className="text-blue-800 text-xs sm:text-sm">{currentDayPlan.meals.notes}</p>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Weekly Plan View */}
+      {viewMode === 'weekly' && (
+        <div className="space-y-4">
+          {dietPlan.days.map((dayPlan: any, index: number) => (
+            <div key={index} className="bg-white rounded-lg border p-4 sm:p-6 shadow-sm">
+              <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center">
+                <span className={`px-3 py-1 rounded-full text-sm mr-3 ${
+                  index + 1 === selectedDay 
+                    ? 'bg-green-600 text-white' 
+                    : 'bg-gray-200 text-gray-700'
+                }`}>
+                  Day {index + 1}
+                </span>
+                {days[index]}
+              </h3>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {/* Breakfast */}
+                <div className="bg-orange-50 rounded-lg p-3 border border-orange-200">
+                  <h4 className="font-semibold text-orange-900 mb-2 text-sm">🌅 Breakfast</h4>
+                  <ul className="space-y-1">
+                    {dayPlan.meals.breakfast.map((item: string, idx: number) => (
+                      <li key={idx} className="text-orange-800 text-xs">{item}</li>
+                    ))}
+                  </ul>
+                </div>
+
+                {/* Lunch */}
+                <div className="bg-yellow-50 rounded-lg p-3 border border-yellow-200">
+                  <h4 className="font-semibold text-yellow-900 mb-2 text-sm">☀️ Lunch</h4>
+                  <ul className="space-y-1">
+                    {dayPlan.meals.lunch.map((item: string, idx: number) => (
+                      <li key={idx} className="text-yellow-800 text-xs">{item}</li>
+                    ))}
+                  </ul>
+                </div>
+
+                {/* Dinner */}
+                <div className="bg-purple-50 rounded-lg p-3 border border-purple-200">
+                  <h4 className="font-semibold text-purple-900 mb-2 text-sm">🌙 Dinner</h4>
+                  <ul className="space-y-1">
+                    {dayPlan.meals.dinner.map((item: string, idx: number) => (
+                      <li key={idx} className="text-purple-800 text-xs">{item}</li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+
+              {/* Notes for this day */}
+              {dayPlan.meals.notes && (
+                <div className="mt-3 bg-blue-50 rounded-lg p-3 border border-blue-200">
+                  <h4 className="font-semibold text-blue-900 mb-1 text-sm">📝 Notes</h4>
+                  <p className="text-blue-800 text-xs">{dayPlan.meals.notes}</p>
+                </div>
+              )}
+            </div>
+          ))}
         </div>
       )}
 

@@ -6,6 +6,7 @@ import { useToast } from '@/lib/hooks/useToast';
 import { NewVitalsForm } from '@/components/doctor/NewVitalsForm';
 import { PatientDietPlan } from '@/components/PatientDietPlan';
 import { DietComplianceChart } from '@/components/DietComplianceChart';
+import { DietPlanEditor } from '@/components/DietPlanEditor';
 
 interface PatientStats {
   bmr?: number;
@@ -43,6 +44,9 @@ export default function PatientDashboardPage() {
   const [dietStats, setDietStats] = useState<DietStats>({ completedMeals: 0, totalMeals: 0, compliancePercentage: 0 });
   const [isLoading, setIsLoading] = useState(true);
   const [showNewVitals, setShowNewVitals] = useState(false);
+  const [showDietEditor, setShowDietEditor] = useState(false);
+  const [showWeeklyPlan, setShowWeeklyPlan] = useState(false);
+  const [weeklyPlanData, setWeeklyPlanData] = useState<any>(null);
 
   useEffect(() => {
     const loadData = async () => {
@@ -149,7 +153,8 @@ export default function PatientDashboardPage() {
       const data = await response.json();
       
       if (data.success) {
-        setActiveTab('diet');
+        setWeeklyPlanData(data.data);
+        setShowWeeklyPlan(true);
         success('Weekly diet plan loaded');
       } else {
         error(data.error || 'Failed to load weekly plan');
@@ -540,12 +545,20 @@ export default function PatientDashboardPage() {
           <div className="space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <h3 className="text-lg sm:text-xl font-semibold text-gray-900">Diet Plan & Tracking</h3>
-              <button 
-                onClick={() => handleViewWeeklyPlan()} 
-                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium text-sm sm:text-base transition-colors"
-              >
-                📅 Weekly Plan
-              </button>
+              <div className="flex space-x-2">
+                <button 
+                  onClick={() => setShowDietEditor(true)} 
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium text-sm sm:text-base transition-colors"
+                >
+                  ✏️ Edit Plan
+                </button>
+                <button 
+                  onClick={() => handleViewWeeklyPlan()} 
+                  className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium text-sm sm:text-base transition-colors"
+                >
+                  📅 Weekly Plan
+                </button>
+              </div>
             </div>
 
             {/* Diagnosis-based Diet Plan Info */}
@@ -605,7 +618,10 @@ export default function PatientDashboardPage() {
             {latestVitals?.diagnosis && (
               <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
                 <h4 className="text-lg font-medium text-gray-900 mb-4">Weekly Diet Plan</h4>
-                <PatientDietPlan diagnosis={latestVitals.diagnosis} />
+                <PatientDietPlan 
+                  diagnosis={latestVitals.diagnosis} 
+                  patientId={parseInt(params.patientId as string)}
+                />
               </div>
             )}
 
@@ -796,6 +812,160 @@ export default function PatientDashboardPage() {
           </div>
         )}
       </div>
+
+      {/* Weekly Plan Full-Screen Modal */}
+      {showWeeklyPlan && weeklyPlanData && (
+        <div className="fixed inset-0 bg-white z-50 overflow-y-auto">
+          <div className="min-h-screen">
+            {/* Header */}
+            <div className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-10">
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="flex items-center justify-between h-16">
+                  <div className="flex items-center space-x-4">
+                    <button
+                      onClick={() => setShowWeeklyPlan(false)}
+                      className="p-2 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100"
+                    >
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                      </svg>
+                    </button>
+                    <div>
+                      <h1 className="text-xl font-semibold text-gray-900">
+                        📅 Weekly Diet Plan - {weeklyPlanData.diagnosis}
+                      </h1>
+                      <p className="text-sm text-gray-600">{weeklyPlanData.dietPlan.description}</p>
+                    </div>
+                  </div>
+                  {weeklyPlanData.isCustomPlan && (
+                    <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
+                      Custom Plan
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+              <div className="space-y-6">
+                {weeklyPlanData.dietPlan.days.map((day: any, index: number) => (
+                  <div key={index} className={`border rounded-xl p-6 shadow-sm ${
+                    index + 1 === weeklyPlanData.currentDay 
+                      ? 'border-green-300 bg-green-50' 
+                      : 'border-gray-200 bg-white'
+                  }`}>
+                    <div className="flex items-center justify-between mb-6">
+                      <h3 className="text-xl font-bold text-gray-900">
+                        Day {day.day} - {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'][index]}
+                      </h3>
+                      {index + 1 === weeklyPlanData.currentDay && (
+                        <span className="bg-green-600 text-white px-3 py-1 rounded-full text-sm font-medium">
+                          Today
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+                      <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+                        <h4 className="font-semibold text-orange-900 mb-3 text-lg">🌅 Breakfast</h4>
+                        <ul className="space-y-2">
+                          {day.meals.breakfast.map((item: string, idx: number) => (
+                            <li key={idx} className="text-orange-800">{item}</li>
+                          ))}
+                        </ul>
+                      </div>
+
+                      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                        <h4 className="font-semibold text-yellow-900 mb-3 text-lg">☀️ Lunch</h4>
+                        <ul className="space-y-2">
+                          {day.meals.lunch.map((item: string, idx: number) => (
+                            <li key={idx} className="text-yellow-800">{item}</li>
+                          ))}
+                        </ul>
+                      </div>
+
+                      <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                        <h4 className="font-semibold text-purple-900 mb-3 text-lg">🌙 Dinner</h4>
+                        <ul className="space-y-2">
+                          {day.meals.dinner.map((item: string, idx: number) => (
+                            <li key={idx} className="text-purple-800">{item}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+
+                    {day.meals.notes && (
+                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <h4 className="font-semibold text-blue-900 mb-2 text-lg">📝 Siddha Medicine Notes</h4>
+                        <p className="text-blue-800">{day.meals.notes}</p>
+                      </div>
+                    )}
+                  </div>
+                ))}
+
+                {/* General Instructions */}
+                <div className="bg-gray-50 border border-gray-200 rounded-xl p-6">
+                  <h3 className="text-xl font-bold text-gray-900 mb-4">📋 General Guidelines</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {weeklyPlanData.dietPlan.generalInstructions.map((instruction: string, index: number) => (
+                      <div key={index} className="flex items-start space-x-3">
+                        <span className="text-green-600 mt-1">•</span>
+                        <span className="text-gray-700">{instruction}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Diet Plan Editor Full-Screen Modal */}
+      {showDietEditor && patient && latestVitals?.diagnosis && (
+        <div className="fixed inset-0 bg-white z-50 overflow-y-auto">
+          <div className="min-h-screen">
+            {/* Header */}
+            <div className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-10">
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="flex items-center justify-between h-16">
+                  <div className="flex items-center space-x-4">
+                    <button
+                      onClick={() => setShowDietEditor(false)}
+                      className="p-2 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100"
+                    >
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                      </svg>
+                    </button>
+                    <div>
+                      <h1 className="text-xl font-semibold text-gray-900">
+                        ✏️ Edit Diet Plan - {latestVitals.diagnosis}
+                      </h1>
+                      <p className="text-sm text-gray-600">Customize the meal plan for this patient</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+              <DietPlanEditor
+                patientId={parseInt(params.patientId as string)}
+                diagnosis={latestVitals.diagnosis}
+                onClose={() => setShowDietEditor(false)}
+                onSave={() => {
+                  fetchPatientData();
+                  setShowDietEditor(false);
+                  success('Diet plan updated and patient notified');
+                }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* New Vitals Form Modal */}
       {showNewVitals && patient && (

@@ -22,6 +22,8 @@ interface VitalsFormData {
   diagnosis?: string;
   medicines?: string[];
   notes?: string;
+  bmr?: number;
+  tdee?: number;
 }
 
 interface NewVitalsFormProps {
@@ -39,7 +41,7 @@ export function NewVitalsForm({ patient, onClose, onSuccess }: NewVitalsFormProp
 
   const calculateBMR = (weight: number, age: number, gender: string): number => {
     const isMale = gender.toLowerCase() === 'male';
-    
+
     if (age >= 18 && age <= 30) {
       return isMale ? (0.0669 * weight + 2.28) : (0.0546 * weight + 2.33);
     } else if (age > 30 && age <= 60) {
@@ -57,18 +59,18 @@ export function NewVitalsForm({ patient, onClose, onSuccess }: NewVitalsFormProp
       medium: 1.76,
       heavy: 2.10
     };
-    
+
     const factor = activityFactors[workType as keyof typeof activityFactors] || 1.55;
     return bmr * factor;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     try {
       setIsLoading(true);
       const user = authService.getCurrentUser() as any;
-      
+
       if (!user?.doctorUID) {
         error('Doctor information not found');
         return;
@@ -79,7 +81,25 @@ export function NewVitalsForm({ patient, onClose, onSuccess }: NewVitalsFormProp
       const gender = personalInfo.gender || 'male';
       const workType = personalInfo.workType || 'soft';
 
+      console.log('--- Debugging Vitals Submission ---');
+      console.log('Initial Form Data:', formData);
+      console.log('Patient Info:', { age, gender, workType });
+
       let calculatedData = { ...formData };
+
+      // Calculate BMR and TDEE if weight is present
+      if (calculatedData.weight) {
+        const bmr = parseFloat(calculateBMR(calculatedData.weight, age, gender).toFixed(2));
+        const tdee = parseFloat(calculateTDEE(bmr, workType).toFixed(2));
+
+        console.log('Calculated BMR:', bmr);
+        console.log('Calculated TDEE:', tdee);
+
+        calculatedData.bmr = bmr;
+        calculatedData.tdee = tdee;
+      } else {
+        console.log('Weight missing, skipping BMR/TDEE calculation');
+      }
 
       const payload = {
         ...calculatedData,
@@ -88,6 +108,8 @@ export function NewVitalsForm({ patient, onClose, onSuccess }: NewVitalsFormProp
         recordedBy: `${personalInfo.firstName || 'Doctor'} ${personalInfo.lastName || ''}`
       };
 
+      console.log('Final Payload being sent:', payload);
+
       const response = await fetch('/api/doctor/vitals', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -95,7 +117,7 @@ export function NewVitalsForm({ patient, onClose, onSuccess }: NewVitalsFormProp
       });
 
       const data = await response.json();
-      
+
       if (data.success) {
         success('Vitals recorded successfully');
         onSuccess();
@@ -115,11 +137,11 @@ export function NewVitalsForm({ patient, onClose, onSuccess }: NewVitalsFormProp
   };
 
   return (
-    <div 
+    <div
       className="fixed inset-0 bg-gray-500/30 backdrop-blur-sm flex items-center justify-center z-[110] p-4"
       onClick={onClose}
     >
-      <div 
+      <div
         className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto border border-gray-200"
         onClick={(e) => e.stopPropagation()}
       >

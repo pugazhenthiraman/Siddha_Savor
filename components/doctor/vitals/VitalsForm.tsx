@@ -53,14 +53,14 @@ export function VitalsForm({ patient }: VitalsFormProps) {
         console.error('Failed to load vitals:', error);
       }
     };
-    
+
     loadVitals();
   }, [patient.id]);
 
   // BMR Calculation
-  const calculateBMR = (weight: number, height: number, age: number, gender: string): number => {
+  const calculateBMR = (weight: number, age: number, gender: string): number => {
     const isMale = gender.toLowerCase() === 'male';
-    
+
     if (age >= 18 && age <= 30) {
       return isMale ? (0.0669 * weight + 2.28) : (0.0546 * weight + 2.33);
     } else if (age > 30 && age <= 60) {
@@ -78,7 +78,7 @@ export function VitalsForm({ patient }: VitalsFormProps) {
       medium: isMale ? 1.76 : 1.64,
       heavy: isMale ? 2.10 : 1.82
     };
-    
+
     const factor = factors[workType as keyof typeof factors] || factors.medium;
     return bmr * factor;
   };
@@ -86,18 +86,23 @@ export function VitalsForm({ patient }: VitalsFormProps) {
   const handleInputChange = (field: keyof VitalsData, value: any) => {
     setVitals(prev => {
       const updated = { ...prev, [field]: value };
-      
-      // Auto-calculate BMI, BMR, TDEE when weight/height changes
-      if ((field === 'weight' || field === 'height') && updated.weight && updated.height) {
-        const bmi = parseFloat((updated.weight / Math.pow(updated.height / 100, 2)).toFixed(1));
-        const bmr = parseFloat(calculateBMR(updated.weight, updated.height, patientAge, patientGender).toFixed(2));
+
+      // Auto-calculate values when inputs change
+      if (updated.weight) {
+        // Calculate BMR & TDEE (Only depends on Weight, Age, Gender)
+        const bmr = parseFloat(calculateBMR(updated.weight, patientAge, patientGender).toFixed(2));
         const tdee = parseFloat(calculateTDEE(bmr, patientWorkType, patientGender).toFixed(2));
-        
-        updated.bmi = bmi;
+
         updated.bmr = bmr;
         updated.tdee = tdee;
+
+        // Calculate BMI (Requires Height)
+        if (updated.height) {
+          const bmi = parseFloat((updated.weight / Math.pow(updated.height / 100, 2)).toFixed(1));
+          updated.bmi = bmi;
+        }
       }
-      
+
       return updated;
     });
   };
@@ -105,7 +110,7 @@ export function VitalsForm({ patient }: VitalsFormProps) {
   const handleSubmit = async () => {
     try {
       setIsLoading(true);
-      
+
       if (!vitals.weight) {
         error('Weight is required');
         return;
@@ -148,10 +153,10 @@ export function VitalsForm({ patient }: VitalsFormProps) {
         recordedBy: `${personalInfo.firstName} ${personalInfo.lastName}`.trim() || user.email
       };
 
-      const response = isEditing 
+      const response = isEditing
         ? await doctorService.updatePatientVitals(vitalsData)
         : await doctorService.savePatientVitals(vitalsData);
-      
+
       if (response && response.success) {
         success(isEditing ? 'Vitals updated successfully' : 'Vitals saved successfully');
         setSavedVitals((response as any).vitals?.[0] || response.data || vitalsData);
@@ -185,7 +190,7 @@ export function VitalsForm({ patient }: VitalsFormProps) {
               Edit
             </Button>
           </div>
-          
+
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <div className="text-center">
               <div className="text-xl font-bold">{savedVitals.pulseRate}</div>
@@ -220,7 +225,7 @@ export function VitalsForm({ patient }: VitalsFormProps) {
               <div className="text-xs text-gray-500">BMR (MJ/day)</div>
             </div>
           </div>
-          
+
           <div className="mt-4 grid grid-cols-2 gap-4">
             <div className="bg-white p-3 rounded border">
               <div className="text-sm font-medium text-gray-700 mb-1">Naadi Assessment</div>
@@ -238,7 +243,7 @@ export function VitalsForm({ patient }: VitalsFormProps) {
       {(!savedVitals || isEditing) && (
         <div className="bg-white rounded-lg border border-gray-200 p-6">
           <h2 className="text-lg font-medium mb-4">Patient Vitals</h2>
-          
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
             <div>
               <label className="block text-sm font-medium mb-2">Pulse Rate (bpm)</label>
@@ -290,7 +295,7 @@ export function VitalsForm({ patient }: VitalsFormProps) {
                 placeholder="80"
               />
             </div>
-            
+
             <div>
               <label className="block text-sm font-medium mb-2">Weight (kg) *</label>
               <Input
@@ -301,7 +306,7 @@ export function VitalsForm({ patient }: VitalsFormProps) {
                 required
               />
             </div>
-            
+
             <div>
               <label className="block text-sm font-medium mb-2">Height (cm)</label>
               <Input
@@ -311,7 +316,7 @@ export function VitalsForm({ patient }: VitalsFormProps) {
                 placeholder="170"
               />
             </div>
-            
+
             <div>
               <label className="block text-sm font-medium mb-2">Naadi Assessment *</label>
               <select
@@ -353,12 +358,12 @@ export function VitalsForm({ patient }: VitalsFormProps) {
                   <div className="text-2xl font-bold text-blue-900">{vitals.bmi}</div>
                   <div className="text-sm font-medium text-blue-700 mb-1">BMI</div>
                   <div className="text-xs text-blue-600">
-                    {vitals.bmi < 18.5 ? 'Underweight' : 
-                     vitals.bmi < 25 ? 'Normal' : 
-                     vitals.bmi < 30 ? 'Overweight' : 'Obese'}
+                    {vitals.bmi < 18.5 ? 'Underweight' :
+                      vitals.bmi < 25 ? 'Normal' :
+                        vitals.bmi < 30 ? 'Overweight' : 'Obese'}
                   </div>
                 </div>
-                
+
                 <div className="bg-green-50 p-4 rounded-lg text-center">
                   <div className="text-2xl font-bold text-green-900">{vitals.bmr}</div>
                   <div className="text-sm font-medium text-green-700 mb-1">BMR (MJ/day)</div>
@@ -366,7 +371,7 @@ export function VitalsForm({ patient }: VitalsFormProps) {
                     Age: {patientAge <= 30 ? '18-30' : patientAge <= 60 ? '30-60' : '60+'} years
                   </div>
                 </div>
-                
+
                 <div className="bg-purple-50 p-4 rounded-lg text-center">
                   <div className="text-2xl font-bold text-purple-900">{vitals.tdee}</div>
                   <div className="text-sm font-medium text-purple-700 mb-1">TDEE (MJ/day)</div>

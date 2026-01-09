@@ -6,6 +6,30 @@ import { useToast } from '@/lib/hooks/useToast';
 import { NewVitalsForm } from './NewVitalsForm';
 import { PatientVitalsHistory } from './PatientVitalsHistory';
 
+// Helper functions for BMR/TDEE calculation
+const calculateBMR = (weight: number, age: number, gender: string): number => {
+  const isMale = gender.toLowerCase() === 'male';
+
+  if (age >= 18 && age <= 30) {
+    return isMale ? (0.0669 * weight + 2.28) : (0.0546 * weight + 2.33);
+  } else if (age > 30 && age <= 60) {
+    return isMale ? (0.0592 * weight + 2.48) : (0.0407 * weight + 2.90);
+  } else {
+    return isMale ? (0.0563 * weight + 2.15) : (0.0424 * weight + 2.38);
+  }
+};
+
+const calculateTDEE = (bmr: number, workType: string, gender: string): number => {
+  const factors = {
+    soft: gender.toLowerCase() === 'male' ? 1.55 : 1.56,
+    medium: gender.toLowerCase() === 'male' ? 1.76 : 1.64,
+    heavy: gender.toLowerCase() === 'male' ? 2.10 : 1.82
+  };
+
+  const factor = factors[workType as keyof typeof factors] || factors.medium;
+  return bmr * factor;
+};
+
 interface PatientStats {
   bmr?: number;
   tdee?: number;
@@ -47,17 +71,40 @@ export function PatientDashboard({ patient, onClose }: PatientDashboardProps) {
   const fetchPatientData = async () => {
     try {
       setIsLoading(true);
-      
+
       // Fetch latest vitals for stats
       const vitalsResponse = await fetch(`/api/doctor/vitals?patientId=${patient.id}&limit=1`);
       const vitalsData = await vitalsResponse.json();
-      
+
       if (vitalsData.success && vitalsData.vitals?.length > 0) {
         const latest = vitalsData.vitals[0];
+
+        // Calculate missing BMR/TDEE
+        let bmr = latest.bmr;
+        let tdee = latest.tdee;
+
+        if ((!bmr || !tdee) && latest.weight) {
+          const personalInfo = (patient.formData as any)?.personalInfo || {};
+          const age = personalInfo.age || 25; // Default age if missing
+          const gender = personalInfo.gender || 'male';
+          const workType = personalInfo.workType || 'medium';
+
+          if (!bmr) {
+            bmr = calculateBMR(latest.weight, age, gender);
+          }
+          if (!tdee && bmr) {
+            tdee = calculateTDEE(bmr, workType, gender);
+          }
+        }
+
+        // Update latest object with calculated values for display
+        latest.bmr = bmr;
+        latest.tdee = tdee;
+
         setLatestVitals(latest);
         setPatientStats({
-          bmr: latest.bmr,
-          tdee: latest.tdee,
+          bmr: bmr,
+          tdee: tdee,
           bmi: latest.bmi,
           lastWeight: latest.weight,
           lastHeight: latest.height,
@@ -71,7 +118,7 @@ export function PatientDashboard({ patient, onClose }: PatientDashboardProps) {
         { id: 2, date: '2026-01-04', mealType: 'lunch', foodItem: 'Grilled chicken salad', quantity: '1 plate', calories: 450, completed: false },
         { id: 3, date: '2026-01-04', mealType: 'dinner', foodItem: 'Brown rice with vegetables', quantity: '1 cup', calories: 400, completed: false }
       ]);
-      
+
     } catch (err) {
       error('Failed to load patient data');
     } finally {
@@ -146,11 +193,10 @@ export function PatientDashboard({ patient, onClose }: PatientDashboardProps) {
                     setActiveTab(tab.id as any);
                   }
                 }}
-                className={`flex items-center space-x-1 sm:space-x-2 px-3 sm:px-6 py-2 sm:py-3 rounded-md text-xs sm:text-sm font-medium transition-colors flex-1 sm:flex-none justify-center ${
-                  activeTab === tab.id
+                className={`flex items-center space-x-1 sm:space-x-2 px-3 sm:px-6 py-2 sm:py-3 rounded-md text-xs sm:text-sm font-medium transition-colors flex-1 sm:flex-none justify-center ${activeTab === tab.id
                     ? 'bg-blue-600 text-white shadow-sm'
                     : 'text-gray-700 hover:text-gray-900 hover:bg-white'
-                }`}
+                  }`}
               >
                 <span className="text-sm sm:text-base">{tab.icon}</span>
                 <span className="hidden xs:inline sm:inline">{tab.label}</span>
@@ -235,22 +281,22 @@ export function PatientDashboard({ patient, onClose }: PatientDashboardProps) {
                 <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
                   <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-                    <button 
-                      onClick={() => setShowNewVitals(true)} 
+                    <button
+                      onClick={() => setShowNewVitals(true)}
                       className="bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center space-x-2 py-3 px-4 rounded-lg font-medium transition-colors"
                     >
                       <span>🩺</span>
                       <span className="text-sm sm:text-base">Record New Vitals</span>
                     </button>
-                    <button 
-                      onClick={() => setActiveTab('diet')} 
+                    <button
+                      onClick={() => setActiveTab('diet')}
                       className="bg-green-600 hover:bg-green-700 text-white flex items-center justify-center space-x-2 py-3 px-4 rounded-lg font-medium transition-colors"
                     >
                       <span>🍽️</span>
                       <span className="text-sm sm:text-base">Update Diet Plan</span>
                     </button>
-                    <button 
-                      onClick={() => setShowVitalsHistory(true)} 
+                    <button
+                      onClick={() => setShowVitalsHistory(true)}
                       className="bg-purple-600 hover:bg-purple-700 text-white flex items-center justify-center space-x-2 py-3 px-4 rounded-lg font-medium transition-colors"
                     >
                       <span>📋</span>
@@ -280,14 +326,14 @@ export function PatientDashboard({ patient, onClose }: PatientDashboardProps) {
               <div className="space-y-6">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <h3 className="text-lg sm:text-xl font-semibold text-gray-900">Vitals Management</h3>
-                  <button 
-                    onClick={() => setShowNewVitals(true)} 
+                  <button
+                    onClick={() => setShowNewVitals(true)}
                     className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium text-sm sm:text-base transition-colors"
                   >
                     + Record New Vitals
                   </button>
                 </div>
-                
+
                 <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
                   <h4 className="text-lg font-medium text-gray-900 mb-4">Latest Vitals</h4>
                   {latestVitals ? (
@@ -330,8 +376,8 @@ export function PatientDashboard({ patient, onClose }: PatientDashboardProps) {
                           <div className="bg-rose-50 border border-rose-200 p-3 sm:p-4 rounded-lg">
                             <div className="text-xs sm:text-sm text-rose-600 font-medium mb-1">Blood Pressure</div>
                             <div className="text-base sm:text-lg font-semibold text-rose-900">
-                              {latestVitals.bloodPressureSystolic && latestVitals.bloodPressureDiastolic 
-                                ? `${latestVitals.bloodPressureSystolic}/${latestVitals.bloodPressureDiastolic}` 
+                              {latestVitals.bloodPressureSystolic && latestVitals.bloodPressureDiastolic
+                                ? `${latestVitals.bloodPressureSystolic}/${latestVitals.bloodPressureDiastolic}`
                                 : 'N/A'
                               } mmHg
                             </div>

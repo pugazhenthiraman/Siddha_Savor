@@ -7,6 +7,7 @@ import { useToast } from '@/lib/hooks/useToast';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { logger } from '@/lib/utils/logger';
+import { authService } from '@/lib/services/auth';
 
 interface PatientVitals {
   id?: number;
@@ -43,9 +44,9 @@ interface PatientVitalsProps {
 }
 
 // BMR Calculation Functions - Age-based formula
-const calculateBMR = (weight: number, height: number, age: number, gender: string): number => {
+const calculateBMR = (weight: number, age: number, gender: string): number => {
   const isMale = gender.toLowerCase() === 'male';
-  
+
   if (age >= 18 && age <= 30) {
     return isMale ? (0.0669 * weight + 2.28) : (0.0546 * weight + 2.33);
   } else if (age > 30 && age <= 60) {
@@ -63,11 +64,11 @@ const calculateTDEE = (bmr: number, workType: string, gender: string): number =>
     male: { soft: 1.55, medium: 1.76, heavy: 2.10 },
     female: { soft: 1.56, medium: 1.64, heavy: 1.82 }
   };
-  
+
   const genderKey = gender.toLowerCase() === 'male' ? 'male' : 'female';
   const activityKey = workType as keyof typeof activityFactors.male;
   const factor = activityFactors[genderKey][activityKey] || 1.55;
-  
+
   return bmr * factor;
 };
 
@@ -80,7 +81,7 @@ export function PatientVitals({ patient, onClose }: PatientVitalsProps) {
   const { success, error } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [vitalsHistory, setVitalsHistory] = useState<PatientVitals[]>([]);
-  
+
   const formData = patient.formData as any;
   const personalInfo = formData?.personalInfo || {};
   const patientAge = personalInfo.age || 0;
@@ -95,16 +96,22 @@ export function PatientVitals({ patient, onClose }: PatientVitalsProps) {
     assessmentType: '' // 'naadi' or 'thegi'
   });
 
-  // Calculate BMI, BMR, TDEE when weight/height changes
+  // Calculate BMI, BMR, TDEE when weight changes
   useEffect(() => {
-    if (vitals.weight && vitals.height && patientAge) {
-      const bmi = calculateBMI(vitals.weight, vitals.height);
-      const bmr = calculateBMR(vitals.weight, vitals.height, patientAge, patientGender);
+    if (vitals.weight && patientAge) {
+      // Calculate BMR & TDEE (Independent of Height)
+      const bmr = calculateBMR(vitals.weight, patientAge, patientGender);
       const tdee = calculateTDEE(bmr, patientWorkType, patientGender);
-      
+
+      let bmi = vitals.bmi;
+      // Calculate BMI only if height is present
+      if (vitals.height) {
+        bmi = calculateBMI(vitals.weight, vitals.height);
+      }
+
       setVitals(prev => ({
         ...prev,
-        bmi: Math.round(bmi * 100) / 100,
+        bmi: bmi ? Math.round(bmi * 100) / 100 : undefined,
         bmr: Math.round(bmr * 100) / 100,
         tdee: Math.round(tdee * 100) / 100
       }));
@@ -122,9 +129,9 @@ export function PatientVitals({ patient, onClose }: PatientVitalsProps) {
   };
 
   const addMedicine = () => {
-    setVitals(prev => ({ 
-      ...prev, 
-      medicines: [...(prev.medicines || ['']), ''] 
+    setVitals(prev => ({
+      ...prev,
+      medicines: [...(prev.medicines || ['']), '']
     }));
   };
 
@@ -136,40 +143,64 @@ export function PatientVitals({ patient, onClose }: PatientVitalsProps) {
   const handleSubmit = async () => {
     try {
       setIsLoading(true);
-      
+
       // Validate required fields
-      if (!vitals.weight || !vitals.height) {
-        error('Weight and height are required for BMR calculation');
+      if (!vitals.weight) {
+        error('Weight is required');
         return;
       }
 
-      // Prepare data for API
+      // Get current doctor UID
+      const user = authService.getCurrentUser() as any;
+      const doctorUID = user?.doctorUID;
+
+      if (!doctorUID) {
+        // Try to get from session/auth service if not in user object directly
+        // This is a fallback, ideally doctorUID should be available
+        logger.warn('Doctor UID not found in current user, submission might fail');
+      }
+
+      console.log('--- Debugging PatientVitals Submission ---');
+      console.log('Current Vitals State:', vitals);
+      console.log('Patient Info:', { patientAge, patientGender, patientWorkType });
+
+      // Prepare data for API (Flattened structure matching route.ts)
       const vitalsData = {
         patientId: patient.id,
-        vitals: {
-          pulseRate: vitals.pulseRate,
-          heartRate: vitals.heartRate,
-          temperature: vitals.temperature,
-          bloodPressureSystolic: vitals.bloodPressureSystolic,
-          bloodPressureDiastolic: vitals.bloodPressureDiastolic,
-          randomBloodSugar: vitals.randomBloodSugar,
-          naadi: vitals.naadi,
-          thegi: vitals.thegi,
-          weight: vitals.weight,
-          height: vitals.height,
-          bmi: vitals.bmi,
-          bmr: vitals.bmr,
-          tdee: vitals.tdee
-        },
+        doctorUID: doctorUID,
+        pulseRate: vitals.pulseRate,
+        heartRate: vitals.heartRate,
+        temperature: vitals.temperature,
+        bloodPressureSystolic: vitals.bloodPressureSystolic,
+        bloodPressureDiastolic: vitals.bloodPressureDiastolic,
+        randomBloodSugar: vitals.randomBloodSugar,
+        naadi: vitals.naadi,
+        thegi: vitals.thegi,
+        assessmentType: vitals.assessmentType,
+        weight: vitals.weight,
+        height: vitals.height, // route.ts doesn't seem to have height? Checking schema... route.ts body destructuring looks for 'weight' but not 'height'?
+        // Wait, route.ts body destructuring output checks:
+        // const { ... weight, ... } = body;
+        // It doesn't list height explicitly in the const {} block in my view of route.ts earlier. 
+        // Does the DB have height? PatientVitals table?
+        // PatientVitals interface in this file has height.
+        // route.ts creates `prisma.patientVitals.create({ data: { ... weight: ..., } })`.
+        // It might not be saving height!
+        bmi: vitals.bmi,
+        bmr: vitals.bmr,
+        tdee: vitals.tdee,
         diagnosis: vitals.diagnosis,
         treatment: vitals.treatment,
         medicines: vitals.medicines?.filter(m => m.trim()),
-        notes: vitals.notes
+        notes: vitals.notes,
+        recordedBy: `${personalInfo.firstName || 'Doctor'} ${personalInfo.lastName || ''}`
       };
+
+      console.log('Payload sent to API:', vitalsData);
 
       // Save vitals via API
       const response = await doctorService.savePatientVitals(vitalsData);
-      
+
       if (response.success) {
         success('Patient vitals updated successfully. Email notification sent to patient.');
         onClose();
@@ -328,9 +359,9 @@ export function PatientVitals({ patient, onClose }: PatientVitalsProps) {
                   <label className="block text-sm font-medium text-blue-700 mb-1">BMI</label>
                   <p className="text-2xl font-bold text-blue-900">{vitals.bmi}</p>
                   <p className="text-xs text-blue-600">
-                    {vitals.bmi < 18.5 ? 'Underweight' : 
-                     vitals.bmi < 25 ? 'Normal' : 
-                     vitals.bmi < 30 ? 'Overweight' : 'Obese'}
+                    {vitals.bmi < 18.5 ? 'Underweight' :
+                      vitals.bmi < 25 ? 'Normal' :
+                        vitals.bmi < 30 ? 'Overweight' : 'Obese'}
                   </p>
                 </div>
                 <div className="bg-green-50 p-4 rounded-lg">

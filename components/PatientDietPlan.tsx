@@ -12,40 +12,68 @@ export function PatientDietPlan({ diagnosis, patientId }: DietPlanProps) {
   const [selectedDay, setSelectedDay] = useState(1);
   const [dietPlan, setDietPlan] = useState<any>(null);
 
-  useEffect(() => {
-    const loadDietPlan = async () => {
-      if (patientId) {
-        // Try to load custom plan first
-        try {
-          const response = await fetch(`/api/doctor/patients/${patientId}/custom-diet-plan`);
-          const data = await response.json();
-          
-          if (data.success && data.data) {
-            setDietPlan({ ...data.data, diagnosis });
-          } else {
-            // Fall back to default plan
-            const plan = getDietPlanByDiagnosis(diagnosis);
-            setDietPlan(plan);
-          }
-        } catch (error) {
+  const [isResetting, setIsResetting] = useState(false);
+
+  const loadDietPlan = async () => {
+    if (patientId) {
+      // Try to load custom plan first
+      try {
+        const response = await fetch(`/api/doctor/patients/${patientId}/custom-diet-plan`);
+        const data = await response.json();
+
+        if (data.success && data.data) {
+          setDietPlan({ ...data.data, diagnosis, isCustom: true });
+        } else {
           // Fall back to default plan
           const plan = getDietPlanByDiagnosis(diagnosis);
-          setDietPlan(plan);
+          setDietPlan({ ...plan, isCustom: false });
         }
-      } else {
-        // Use default plan
+      } catch (error) {
+        // Fall back to default plan
         const plan = getDietPlanByDiagnosis(diagnosis);
-        setDietPlan(plan);
+        setDietPlan({ ...plan, isCustom: false });
       }
-      
-      // Set current day based on today
+    } else {
+      // Use default plan
+      const plan = getDietPlanByDiagnosis(diagnosis);
+      setDietPlan({ ...plan, isCustom: false });
+    }
+
+    // Set current day based on today (only set if not already set)
+    if (selectedDay === 1) {
       const today = new Date().getDay();
       const currentDay = today === 0 ? 7 : today;
       setSelectedDay(currentDay);
-    };
+    }
+  };
 
+  useEffect(() => {
     loadDietPlan();
   }, [diagnosis, patientId]);
+
+  const handleResetPlan = async () => {
+    if (!patientId || !confirm('Are you sure you want to reset to the default diet plan? This will delete the custom customizations.')) return;
+
+    try {
+      setIsResetting(true);
+      const response = await fetch(`/api/doctor/patients/${patientId}/custom-diet-plan`, {
+        method: 'DELETE'
+      });
+      const data = await response.json();
+
+      if (data.success) {
+        await loadDietPlan(); // Reload to get the default plan
+        // You might want to show a toast here, but we'll stick to simple reload for now
+      } else {
+        alert('Failed to reset diet plan');
+      }
+    } catch (error) {
+      console.error('Reset failed', error);
+      alert('Failed to reset diet plan');
+    } finally {
+      setIsResetting(false);
+    }
+  };
 
   if (!dietPlan) {
     return (
@@ -78,10 +106,26 @@ export function PatientDietPlan({ diagnosis, patientId }: DietPlanProps) {
     <div className="space-y-6">
       {/* Header */}
       <div className="bg-green-50 rounded-lg p-6 border border-green-200">
-        <h2 className="text-xl font-bold text-green-900 mb-2">{planDiagnosis} Diet Plan</h2>
-        {planDescription && <p className="text-green-700">{planDescription}</p>}
-        <div className="mt-3 bg-green-200 text-green-800 px-3 py-1 rounded-full text-sm font-medium inline-block">
-          Today: {days[selectedDay - 1]} - Day {selectedDay}
+        <div className="flex justify-between items-start">
+          <div>
+            <h2 className="text-xl font-bold text-green-900 mb-2">{planDiagnosis} Diet Plan</h2>
+            {planDescription && <p className="text-green-700">{planDescription}</p>}
+            <div className="mt-3 bg-green-200 text-green-800 px-3 py-1 rounded-full text-sm font-medium inline-block flex items-center gap-2 w-fit">
+              <span>Today: {days[selectedDay - 1]} - Day {selectedDay}</span>
+              {dietPlan.isCustom && <span className="bg-blue-100 text-blue-800 text-xs px-2 py-0.5 rounded border border-blue-200">Custom Plan</span>}
+            </div>
+          </div>
+
+          {dietPlan.isCustom && (
+            <button
+              onClick={handleResetPlan}
+              disabled={isResetting}
+              className="text-sm bg-white border border-red-200 text-red-600 px-3 py-1.5 rounded hover:bg-red-50 transition-colors flex items-center gap-1"
+              title="Revert to standard plan based on diagnosis"
+            >
+              {isResetting ? 'Resetting...' : '↺ Reset to Default'}
+            </button>
+          )}
         </div>
       </div>
 
@@ -93,11 +137,10 @@ export function PatientDietPlan({ diagnosis, patientId }: DietPlanProps) {
             <button
               key={day}
               onClick={() => setSelectedDay(day)}
-              className={`p-3 rounded-lg text-sm font-medium transition-colors ${
-                selectedDay === day
+              className={`p-3 rounded-lg text-sm font-medium transition-colors ${selectedDay === day
                   ? 'bg-green-600 text-white'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
+                }`}
             >
               <div className="text-xs">{days[day - 1]}</div>
               <div>Day {day}</div>

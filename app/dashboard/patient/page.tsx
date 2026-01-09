@@ -6,6 +6,7 @@ import { authService } from '@/lib/services/auth';
 import { MealTracker } from '@/components/MealTracker';
 import { ThegiCard } from '@/components/ThegiCard';
 import { ProfileUpdateModal } from '@/components/ProfileUpdateModal';
+import { DietComplianceChart } from '@/components/DietComplianceChart';
 
 interface User {
   id: number;
@@ -65,11 +66,11 @@ export default function PatientDashboard() {
         fetch(`/api/patient/meals?patientId=${patientId}&date=${new Date().toISOString().split('T')[0]}`),
         fetch(`/api/doctor/patients/${patientId}/meal-history`)
       ]);
-      
+
       const statsData = await statsResponse.json();
       const mealsData = await mealsResponse.json();
       const mealHistoryData = await mealHistoryResponse.json();
-      
+
       if (statsData.success) {
         setStats(statsData.stats);
         // Load diet plan if diagnosis is available
@@ -85,18 +86,18 @@ export default function PatientDashboard() {
           }
         }
       }
-      
+
       if (mealsData.success) {
         const mealStatus: TodayMealStatus = {
           breakfast: null,
           lunch: null,
           dinner: null
         };
-        
+
         mealsData.data.forEach((meal: any) => {
           mealStatus[meal.mealType as keyof TodayMealStatus] = meal.status;
         });
-        
+
         setTodayMeals(mealStatus);
       }
 
@@ -125,7 +126,7 @@ export default function PatientDashboard() {
 
   if (!user) return null;
 
-  const patientName = user.formData?.personalInfo?.firstName 
+  const patientName = user.formData?.personalInfo?.firstName
     ? `${user.formData.personalInfo.firstName} ${user.formData.personalInfo.lastName || ''}`
     : 'Patient';
 
@@ -166,11 +167,10 @@ export default function PatientDashboard() {
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center space-x-2 py-4 px-1 border-b-2 font-medium text-sm ${
-                    activeTab === tab.id
+                  className={`flex items-center space-x-2 py-4 px-1 border-b-2 font-medium text-sm ${activeTab === tab.id
                       ? 'border-green-500 text-green-600'
                       : 'border-transparent text-gray-500 hover:text-gray-700'
-                  }`}
+                    }`}
                 >
                   <span>{tab.icon}</span>
                   <span>{tab.label}</span>
@@ -295,58 +295,52 @@ export default function PatientDashboard() {
             <div className="bg-white rounded-lg shadow p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Today's Meal Status</h3>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className={`text-center p-4 rounded-lg ${
-                  todayMeals.breakfast === 'completed' ? 'bg-green-50 border-2 border-green-200' : 
-                  todayMeals.breakfast === 'pending' ? 'bg-red-50 border-2 border-red-200' : 
-                  'bg-orange-50 border border-orange-200'
-                }`}>
+                <div className={`text-center p-4 rounded-lg ${todayMeals.breakfast === 'completed' ? 'bg-green-50 border-2 border-green-200' :
+                    todayMeals.breakfast === 'pending' ? 'bg-red-50 border-2 border-red-200' :
+                      'bg-orange-50 border border-orange-200'
+                  }`}>
                   <div className="text-2xl mb-2">🌅</div>
                   <div className="text-sm font-medium text-gray-700">Breakfast</div>
                   <div className="text-xs text-gray-500 mt-1">8:00 AM</div>
-                  <div className={`text-xs font-medium mt-2 ${
-                    todayMeals.breakfast === 'completed' ? 'text-green-600' :
-                    todayMeals.breakfast === 'pending' ? 'text-red-600' :
-                    'text-orange-600'
-                  }`}>
+                  <div className={`text-xs font-medium mt-2 ${todayMeals.breakfast === 'completed' ? 'text-green-600' :
+                      todayMeals.breakfast === 'pending' ? 'text-red-600' :
+                        'text-orange-600'
+                    }`}>
                     {todayMeals.breakfast === 'completed' ? '✓ Completed' :
-                     todayMeals.breakfast === 'pending' ? '✗ Not Eaten' :
-                     'Not Tracked'}
+                      todayMeals.breakfast === 'pending' ? '✗ Not Eaten' :
+                        'Not Tracked'}
                   </div>
                 </div>
-                <div className={`text-center p-4 rounded-lg ${
-                  todayMeals.lunch === 'completed' ? 'bg-green-50 border-2 border-green-200' : 
-                  todayMeals.lunch === 'pending' ? 'bg-red-50 border-2 border-red-200' : 
-                  'bg-yellow-50 border border-yellow-200'
-                }`}>
+                <div className={`text-center p-4 rounded-lg ${todayMeals.lunch === 'completed' ? 'bg-green-50 border-2 border-green-200' :
+                    todayMeals.lunch === 'pending' ? 'bg-red-50 border-2 border-red-200' :
+                      'bg-yellow-50 border border-yellow-200'
+                  }`}>
                   <div className="text-2xl mb-2">☀️</div>
                   <div className="text-sm font-medium text-gray-700">Lunch</div>
                   <div className="text-xs text-gray-500 mt-1">12:30 PM</div>
-                  <div className={`text-xs font-medium mt-2 ${
-                    todayMeals.lunch === 'completed' ? 'text-green-600' :
-                    todayMeals.lunch === 'pending' ? 'text-red-600' :
-                    'text-yellow-600'
-                  }`}>
+                  <div className={`text-xs font-medium mt-2 ${todayMeals.lunch === 'completed' ? 'text-green-600' :
+                      todayMeals.lunch === 'pending' ? 'text-red-600' :
+                        'text-yellow-600'
+                    }`}>
                     {todayMeals.lunch === 'completed' ? '✓ Completed' :
-                     todayMeals.lunch === 'pending' ? '✗ Not Eaten' :
-                     'Not Tracked'}
+                      todayMeals.lunch === 'pending' ? '✗ Not Eaten' :
+                        'Not Tracked'}
                   </div>
                 </div>
-                <div className={`text-center p-4 rounded-lg ${
-                  todayMeals.dinner === 'completed' ? 'bg-green-50 border-2 border-green-200' : 
-                  todayMeals.dinner === 'pending' ? 'bg-red-50 border-2 border-red-200' : 
-                  'bg-purple-50 border border-purple-200'
-                }`}>
+                <div className={`text-center p-4 rounded-lg ${todayMeals.dinner === 'completed' ? 'bg-green-50 border-2 border-green-200' :
+                    todayMeals.dinner === 'pending' ? 'bg-red-50 border-2 border-red-200' :
+                      'bg-purple-50 border border-purple-200'
+                  }`}>
                   <div className="text-2xl mb-2">🌙</div>
                   <div className="text-sm font-medium text-gray-700">Dinner</div>
                   <div className="text-xs text-gray-500 mt-1">8:00 PM</div>
-                  <div className={`text-xs font-medium mt-2 ${
-                    todayMeals.dinner === 'completed' ? 'text-green-600' :
-                    todayMeals.dinner === 'pending' ? 'text-red-600' :
-                    'text-purple-600'
-                  }`}>
+                  <div className={`text-xs font-medium mt-2 ${todayMeals.dinner === 'completed' ? 'text-green-600' :
+                      todayMeals.dinner === 'pending' ? 'text-red-600' :
+                        'text-purple-600'
+                    }`}>
                     {todayMeals.dinner === 'completed' ? '✓ Completed' :
-                     todayMeals.dinner === 'pending' ? '✗ Not Eaten' :
-                     'Not Tracked'}
+                      todayMeals.dinner === 'pending' ? '✗ Not Eaten' :
+                        'Not Tracked'}
                   </div>
                 </div>
               </div>
@@ -357,15 +351,19 @@ export default function PatientDashboard() {
               </div>
             </div>
 
-          {/* (Health Progress chart removed as requested) */}
+            {/* Diet Compliance Chart */}
+            <div className="bg-white rounded-lg shadow p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Weekly Diet Compliance</h3>
+              <DietComplianceChart patientId={user.id.toString()} />
+            </div>
           </div>
         )}
 
         {activeTab === 'diet' && (
           <div className="space-y-6">
             {stats?.diagnosis ? (
-              <MealTracker 
-                patientId={user.id} 
+              <MealTracker
+                patientId={user.id}
                 diagnosis={stats.diagnosis}
                 onMealUpdate={() => fetchPatientStats(user.id)}
               />
@@ -386,7 +384,7 @@ export default function PatientDashboard() {
         {activeTab === 'history' && (
           <div className="space-y-6">
             <h3 className="text-lg sm:text-xl font-semibold text-gray-900">🍽️ Meal History</h3>
-            
+
             {mealHistory.length > 0 ? (
               <div className="space-y-4">
                 {mealHistory.map((dayMeals: any, index: number) => {
@@ -419,9 +417,8 @@ export default function PatientDashboard() {
                             return (
                               <div
                                 key={mealType}
-                                className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                                  isCompleted ? 'bg-green-100' : status === 'pending' ? 'bg-red-100' : 'bg-gray-100'
-                                }`}
+                                className={`w-8 h-8 rounded-full flex items-center justify-center ${isCompleted ? 'bg-green-100' : status === 'pending' ? 'bg-red-100' : 'bg-gray-100'
+                                  }`}
                                 title={`${mealType}: ${isCompleted ? 'Completed' : status === 'pending' ? 'Pending' : 'Not tracked'}`}
                               >
                                 <span className="text-xs">{mealIcons[mealType as keyof typeof mealIcons]}</span>
@@ -440,31 +437,27 @@ export default function PatientDashboard() {
                           return (
                             <div
                               key={mealType}
-                              className={`${
-                                mealType === 'breakfast' ? 'bg-orange-50 border-orange-200' :
-                                mealType === 'lunch' ? 'bg-yellow-50 border-yellow-200' :
-                                'bg-purple-50 border-purple-200'
-                              } border-2 rounded-lg p-4 ${
-                                isCompleted ? 'border-green-300' : status === 'pending' ? 'border-red-300' : 'border-gray-200'
-                              }`}
+                              className={`${mealType === 'breakfast' ? 'bg-orange-50 border-orange-200' :
+                                  mealType === 'lunch' ? 'bg-yellow-50 border-yellow-200' :
+                                    'bg-purple-50 border-purple-200'
+                                } border-2 rounded-lg p-4 ${isCompleted ? 'border-green-300' : status === 'pending' ? 'border-red-300' : 'border-gray-200'
+                                }`}
                             >
                               <div className="flex items-center justify-between mb-2">
-                                <h5 className={`font-semibold flex items-center ${
-                                  mealType === 'breakfast' ? 'text-orange-900' :
-                                  mealType === 'lunch' ? 'text-yellow-900' :
-                                  'text-purple-900'
-                                }`}>
+                                <h5 className={`font-semibold flex items-center ${mealType === 'breakfast' ? 'text-orange-900' :
+                                    mealType === 'lunch' ? 'text-yellow-900' :
+                                      'text-purple-900'
+                                  }`}>
                                   <span className="mr-2">{mealIcons[mealType as keyof typeof mealIcons]}</span>
                                   {mealType.charAt(0).toUpperCase() + mealType.slice(1)}
                                 </h5>
                                 <span
-                                  className={`text-xs font-medium px-2 py-1 rounded ${
-                                    isCompleted
+                                  className={`text-xs font-medium px-2 py-1 rounded ${isCompleted
                                       ? 'bg-green-100 text-green-700'
                                       : status === 'pending'
-                                      ? 'bg-red-100 text-red-700'
-                                      : 'bg-gray-100 text-gray-600'
-                                  }`}
+                                        ? 'bg-red-100 text-red-700'
+                                        : 'bg-gray-100 text-gray-600'
+                                    }`}
                                 >
                                   {isCompleted ? '✓ Completed' : status === 'pending' ? '✗ Pending' : 'Not tracked'}
                                 </span>
@@ -472,11 +465,10 @@ export default function PatientDashboard() {
                               {mealItems.length > 0 ? (
                                 <ul className="space-y-1 mt-2">
                                   {mealItems.map((item: string, idx: number) => (
-                                    <li key={idx} className={`text-sm ${
-                                      mealType === 'breakfast' ? 'text-orange-800' :
-                                      mealType === 'lunch' ? 'text-yellow-800' :
-                                      'text-purple-800'
-                                    }`}>
+                                    <li key={idx} className={`text-sm ${mealType === 'breakfast' ? 'text-orange-800' :
+                                        mealType === 'lunch' ? 'text-yellow-800' :
+                                          'text-purple-800'
+                                      }`}>
                                       • {item}
                                     </li>
                                   ))}

@@ -34,13 +34,19 @@ export function DiagnosisForm({ patient }: DiagnosisFormProps) {
       try {
         const response = await doctorService.getPatientVitals(patient.id);
         if (response.success && (response as any).vitals && (response as any).vitals.length > 0) {
-          setLatestVitals((response as any).vitals[0]);
+          const vitals = (response as any).vitals[0];
+          console.log('[DiagnosisForm Debug] Loaded latest vitals:', vitals);
+          setLatestVitals(vitals);
+          if (vitals.diagnosis) {
+            console.log('[DiagnosisForm Debug] Pre-filling diagnosis:', vitals.diagnosis);
+            setDiagnosis(prev => ({ ...prev, diagnosis: vitals.diagnosis }));
+          }
         }
       } catch (error) {
         console.error('Failed to load vitals:', error);
       }
     };
-    
+
     loadVitals();
   }, [patient.id]);
 
@@ -67,17 +73,44 @@ export function DiagnosisForm({ patient }: DiagnosisFormProps) {
   const handleSubmit = async () => {
     try {
       setIsLoading(true);
-      
+
       if (!diagnosis.diagnosis.trim()) {
         error('Diagnosis is required');
         return;
       }
 
-      // Mock API call - replace with actual service
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      success('Diagnosis saved successfully');
+      if (!latestVitals || !latestVitals.id) {
+        error('No vitals record found to update diagnosis');
+        return;
+      }
+
+      const user = (window as any).currentUser; // Fallback or use auth service if available
+      // Ideally use authService.getCurrentUser() but it might need import.
+      // Based on VitalsForm, we can use doctorService.updatePatientVitals
+
+      const payload = {
+        ...latestVitals,
+        diagnosis: diagnosis.diagnosis,
+        treatment: diagnosis.treatment,
+        medicines: diagnosis.medicines.filter(m => m.trim()),
+        notes: diagnosis.notes ?
+          (latestVitals.notes ? latestVitals.notes + '\n\n' + diagnosis.notes : diagnosis.notes)
+          : latestVitals.notes
+      };
+
+      console.log('[DiagnosisForm Debug] Submitting update payload:', payload);
+
+      const response = await doctorService.updatePatientVitals(payload);
+
+      if (response && response.success) {
+        success('Diagnosis updated successfully');
+        // Update local state to reflect changes
+        setLatestVitals((prev: any) => ({ ...prev, ...payload }));
+      } else {
+        error(response?.error || 'Failed to update diagnosis');
+      }
     } catch (err) {
+      console.error(err);
       error('Failed to save diagnosis');
     } finally {
       setIsLoading(false);
@@ -90,32 +123,32 @@ export function DiagnosisForm({ patient }: DiagnosisFormProps) {
       {latestVitals && (
         <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200 p-4">
           <h2 className="text-lg font-medium text-blue-900 mb-4">Patient Vitals Summary</h2>
-          
+
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <div className="bg-white p-3 rounded border text-center">
               <div className="text-xl font-bold text-blue-900">{latestVitals.bmi || 'N/A'}</div>
               <div className="text-xs text-gray-500">BMI</div>
               {latestVitals.bmi && (
                 <div className="text-xs text-blue-600 mt-1">
-                  {latestVitals.bmi < 18.5 ? 'Underweight' : 
-                   latestVitals.bmi < 25 ? 'Normal' : 
-                   latestVitals.bmi < 30 ? 'Overweight' : 'Obese'}
+                  {latestVitals.bmi < 18.5 ? 'Underweight' :
+                    latestVitals.bmi < 25 ? 'Normal' :
+                      latestVitals.bmi < 30 ? 'Overweight' : 'Obese'}
                 </div>
               )}
             </div>
-            
+
             <div className="bg-white p-3 rounded border text-center">
               <div className="text-xl font-bold text-green-900">{latestVitals.bmr || 'N/A'}</div>
               <div className="text-xs text-gray-500">BMR (MJ/day)</div>
               <div className="text-xs text-green-600 mt-1">Basal Metabolic Rate</div>
             </div>
-            
+
             <div className="bg-white p-3 rounded border text-center">
               <div className="text-xl font-bold text-purple-900">{latestVitals.tdee || 'N/A'}</div>
               <div className="text-xs text-gray-500">TDEE (MJ/day)</div>
               <div className="text-xs text-purple-600 mt-1">Total Daily Energy</div>
             </div>
-            
+
             <div className="bg-white p-3 rounded border text-center">
               <div className="text-lg font-bold text-indigo-900">{latestVitals.naadi || latestVitals.thegi || 'N/A'}</div>
               <div className="text-xs text-gray-500">Siddha Assessment</div>
@@ -128,7 +161,7 @@ export function DiagnosisForm({ patient }: DiagnosisFormProps) {
       {/* Diagnosis Form */}
       <div className="bg-white rounded-lg border border-gray-200 p-6">
         <h2 className="text-lg font-medium text-gray-900 mb-4">Diagnosis & Treatment</h2>
-        
+
         <div className="space-y-4">
           {/* Diagnosis */}
           <div>

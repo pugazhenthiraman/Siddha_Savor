@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Patient } from '@/lib/types';
 import { useToast } from '@/lib/hooks/useToast';
 import { Button } from '@/components/ui/Button';
@@ -38,6 +38,32 @@ export function NewVitalsForm({ patient, onClose, onSuccess }: NewVitalsFormProp
   const [formData, setFormData] = useState<VitalsFormData>({
     medicines: ['']
   });
+  const [isDiagnosisFixed, setIsDiagnosisFixed] = useState(false);
+
+  // Load latest diagnosis if available
+  useEffect(() => {
+    const fetchLatestDiagnosis = async () => {
+      try {
+        const response = await fetch(`/api/doctor/vitals?patientId=${patient.id}&limit=1`);
+        const data = await response.json();
+
+        if (data.success && data.vitals && data.vitals.length > 0) {
+          const latest = data.vitals[0];
+          if (latest.diagnosis) {
+            setFormData(prev => ({
+              ...prev,
+              diagnosis: latest.diagnosis
+            }));
+            setIsDiagnosisFixed(true);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to fetch latest diagnosis', err);
+      }
+    };
+
+    fetchLatestDiagnosis();
+  }, [patient.id]);
 
   const calculateBMR = (weight: number, age: number, gender: string): number => {
     const isMale = gender.toLowerCase() === 'male';
@@ -245,12 +271,18 @@ export function NewVitalsForm({ patient, onClose, onSuccess }: NewVitalsFormProp
           {/* Diagnosis */}
           <div className="space-y-4">
             <h3 className="text-lg font-medium text-gray-900">Diagnosis</h3>
+            {isDiagnosisFixed && (
+              <p className="text-xs text-blue-600 bg-blue-50 p-2 rounded mb-2">
+                Diagnosis is fixed based on previous records.
+              </p>
+            )}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Patient Diagnosis</label>
               <select
                 value={formData.diagnosis || ''}
                 onChange={(e) => updateFormData('diagnosis', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm bg-white text-gray-900"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm bg-white text-gray-900 disabled:bg-gray-100 disabled:text-gray-500"
+                disabled={isDiagnosisFixed}
               >
                 <option value="">Select Diagnosis</option>
                 {DIAGNOSIS_OPTIONS.map((diagnosis) => (

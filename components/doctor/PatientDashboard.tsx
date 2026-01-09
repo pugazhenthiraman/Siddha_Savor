@@ -5,6 +5,7 @@ import { Patient } from '@/lib/types';
 import { useToast } from '@/lib/hooks/useToast';
 import { NewVitalsForm } from './NewVitalsForm';
 import { PatientVitalsHistory } from './PatientVitalsHistory';
+import { DietComplianceChart } from '@/components/DietComplianceChart';
 
 // Helper functions for BMR/TDEE calculation
 const calculateBMR = (weight: number, age: number, gender: string): number => {
@@ -194,8 +195,8 @@ export function PatientDashboard({ patient, onClose }: PatientDashboardProps) {
                   }
                 }}
                 className={`flex items-center space-x-1 sm:space-x-2 px-3 sm:px-6 py-2 sm:py-3 rounded-md text-xs sm:text-sm font-medium transition-colors flex-1 sm:flex-none justify-center ${activeTab === tab.id
-                    ? 'bg-blue-600 text-white shadow-sm'
-                    : 'text-gray-700 hover:text-gray-900 hover:bg-white'
+                  ? 'bg-blue-600 text-white shadow-sm'
+                  : 'text-gray-700 hover:text-gray-900 hover:bg-white'
                   }`}
               >
                 <span className="text-sm sm:text-base">{tab.icon}</span>
@@ -492,9 +493,7 @@ export function PatientDashboard({ patient, onClose }: PatientDashboardProps) {
                 {/* Diet Compliance Chart Placeholder */}
                 <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
                   <h4 className="text-lg font-medium text-gray-900 mb-4">Weekly Diet Compliance</h4>
-                  <div className="h-48 bg-gradient-to-br from-green-50 to-emerald-100 rounded-lg flex items-center justify-center border-2 border-dashed border-green-300">
-                    <p className="text-green-600 font-medium">Diet compliance chart will be displayed here</p>
-                  </div>
+                  <DietComplianceChart patientId={patient.id.toString()} />
                 </div>
               </div>
             )}
@@ -503,17 +502,19 @@ export function PatientDashboard({ patient, onClose }: PatientDashboardProps) {
       </div>
 
       {/* New Vitals Form Modal */}
-      {showNewVitals && (
-        <NewVitalsForm
-          patient={patient}
-          onClose={() => setShowNewVitals(false)}
-          onSuccess={() => {
-            fetchPatientData();
-            setShowNewVitals(false);
-            success('Vitals recorded successfully');
-          }}
-        />
-      )}
-    </div>
+      {
+        showNewVitals && (
+          <NewVitalsForm
+            patient={patient}
+            onClose={() => setShowNewVitals(false)}
+            onSuccess={() => {
+              fetchPatientData();
+              setShowNewVitals(false);
+              success('Vitals recorded successfully');
+            }}
+          />
+        )
+      }
+    </div >
   );
 }

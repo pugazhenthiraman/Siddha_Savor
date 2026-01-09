@@ -11,7 +11,7 @@ export async function GET(
   try {
     const { patientId: patientIdStr } = await params;
     const patientId = parseInt(patientIdStr);
-    
+
     // Try to get custom diet plan from database
     const customPlan = await prisma.customDietPlan.findUnique({
       where: { patientId },
@@ -26,7 +26,7 @@ export async function GET(
       return NextResponse.json({
         success: true,
         data: {
-          ...customPlan.planData,
+          ...(customPlan.planData as object),
           updatedAt: customPlan.updatedAt.toISOString(),
           createdAt: customPlan.createdAt.toISOString()
         }
@@ -114,6 +114,34 @@ export async function POST(
   }
 }
 
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ patientId: string }> }
+) {
+  try {
+    const { patientId: patientIdStr } = await params;
+    const patientId = parseInt(patientIdStr);
+
+    await prisma.customDietPlan.delete({
+      where: { patientId }
+    });
+
+    logger.info('Custom diet plan deleted successfully', { patientId });
+
+    return NextResponse.json({
+      success: true,
+      message: 'Custom diet plan reset to default'
+    });
+
+  } catch (error) {
+    logger.error('Error deleting custom diet plan:', error);
+    return NextResponse.json(
+      { success: false, error: 'Failed to reset diet plan' },
+      { status: 500 }
+    );
+  }
+}
+
 async function sendDietPlanUpdateEmail(data: {
   patientName: string;
   patientEmail: string;
@@ -122,7 +150,7 @@ async function sendDietPlanUpdateEmail(data: {
   try {
     // Get SMTP config from admin settings
     const smtpConfig = await getSmtpConfig();
-    
+
     if (!smtpConfig || !smtpConfig.isActive) {
       logger.warn('SMTP not configured or inactive, skipping diet plan update email');
       return;
@@ -183,13 +211,13 @@ async function sendDietPlanUpdateEmail(data: {
             <p style="color: #6b7280; font-size: 14px; margin: 0;">
               <strong>Diagnosis:</strong> ${data.diagnosis}<br>
               <strong>Updated on:</strong> ${new Date().toLocaleDateString('en-US', {
-                weekday: 'long',
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
-              })}
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    })}
             </p>
           </div>
         </div>

@@ -16,6 +16,9 @@ export async function GET(
       orderBy: { recordedAt: 'desc' }
     });
 
+    console.log(`[DietPlan Debug] Patient ID: ${patientId}`);
+    console.log(`[DietPlan Debug] Latest Vitals Diagnosis: ${latestVitals?.diagnosis}`);
+
     if (!latestVitals?.diagnosis) {
       return NextResponse.json({
         success: false,
@@ -26,7 +29,7 @@ export async function GET(
     // Try to get custom diet plan first
     let dietPlan;
     let isCustomPlan = false;
-    
+
     const customDietPlan = await prisma.customDietPlan.findUnique({
       where: { patientId }
     });
@@ -38,7 +41,9 @@ export async function GET(
     } else {
       // Fall back to default plan based on diagnosis
       try {
+        console.log(`[DietPlan Debug] Searching for plan with diagnosis key: "${latestVitals.diagnosis}"`);
         dietPlan = getDietPlanByDiagnosis(latestVitals.diagnosis);
+        console.log(`[DietPlan Debug] Plan found: ${dietPlan ? 'Yes' : 'No'}`);
       } catch (error) {
         // If default plan not found, return error
         return NextResponse.json({
@@ -47,7 +52,7 @@ export async function GET(
         }, { status: 404 });
       }
     }
-    
+
     if (!dietPlan) {
       return NextResponse.json({
         success: false,

@@ -25,23 +25,10 @@ export default function Home() {
                 <span className="text-green-600 block">Our Priority</span>
               </h1>
               <p className="text-xl text-gray-600 mb-8 leading-relaxed">
-                Experience personalized healthcare with our expert doctors. Book appointments, 
-                manage your health records, and get the care you deserve.
+                Discover a healthier you with Siddha Savor. Get personalized diet plans,
+                track your daily vitals, and achieve your wellness goals with our expert guidance.
               </p>
-              <div className="flex flex-col sm:flex-row gap-4">
-                <button 
-                  onClick={() => window.location.href = '/login'}
-                  className="bg-green-600 text-white px-8 py-4 rounded-full text-lg font-semibold hover:bg-green-700 transition-all transform hover:scale-105 shadow-lg"
-                >
-                  Book Appointment
-                </button>
-                <button 
-                  onClick={() => window.location.href = '/login'}
-                  className="border-2 border-green-600 text-green-600 px-8 py-4 rounded-full text-lg font-semibold hover:bg-green-50 transition-all"
-                >
-                  Learn More
-                </button>
-              </div>
+              {/* Buttons removed as per request */}
             </div>
             <div className={`transform transition-all duration-1000 delay-300 ${isVisible ? 'translate-x-0 opacity-100' : 'translate-x-10 opacity-0'}`}>
               <div className="relative">
@@ -72,7 +59,7 @@ export default function Home() {
               Comprehensive healthcare solutions tailored to your needs
             </p>
           </div>
-          
+
           <div className="grid md:grid-cols-3 gap-8">
             {[
               {
@@ -81,17 +68,17 @@ export default function Home() {
                 description: "Expert medical advice from certified doctors"
               },
               {
-                icon: "💊",
-                title: "Prescription Management",
-                description: "Digital prescriptions and medication tracking"
+                icon: "🥗",
+                title: "Personalized Diet Plans",
+                description: "Custom nutrition plans tailored to your health goals"
               },
               {
-                icon: "📱",
-                title: "Telemedicine",
-                description: "Virtual consultations from the comfort of your home"
+                icon: "📊",
+                title: "Health Vitals Tracking",
+                description: "Monitor your vital signs and health progress over time"
               }
             ].map((service, index) => (
-              <div key={index} className={`bg-green-50 p-8 rounded-2xl hover:shadow-lg transition-all duration-300 transform hover:-translate-y-2 ${isVisible ? 'animate-fade-in' : ''}`} style={{animationDelay: `${index * 200}ms`}}>
+              <div key={index} className={`bg-green-50 p-8 rounded-2xl hover:shadow-lg transition-all duration-300 transform hover:-translate-y-2 ${isVisible ? 'animate-fade-in' : ''}`} style={{ animationDelay: `${index * 200}ms` }}>
                 <div className="text-4xl mb-4">{service.icon}</div>
                 <h3 className="text-2xl font-bold text-green-800 mb-4">{service.title}</h3>
                 <p className="text-gray-600">{service.description}</p>
@@ -129,7 +116,7 @@ export default function Home() {
           <p className="text-xl text-gray-600 mb-8">
             Join thousands of patients who trust Siddha Savor for their healthcare needs
           </p>
-          <button 
+          <button
             onClick={() => window.location.href = '/register'}
             className="bg-green-600 text-white px-12 py-4 rounded-full text-xl font-semibold hover:bg-green-700 transition-all transform hover:scale-105 shadow-lg"
           >

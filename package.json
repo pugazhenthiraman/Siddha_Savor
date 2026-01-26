@@ -29,7 +29,7 @@
     "prisma": "^5.19.1",
     "react": "19.2.1",
     "react-dom": "19.2.1",
-    "recharts": "^3.6.0",
+    "recharts": "^3.7.0",
     "tailwind-merge": "^2.5.4",
     "zod": "^3.24.1"
   },
@@ -44,6 +44,7 @@
     "dotenv-cli": "^11.0.0",
     "eslint": "^9",
     "eslint-config-next": "15.1.9",
+    "lightningcss": "^1.31.1",
     "tailwindcss": "^4",
     "ts-node": "^10.9.2",
     "tsx": "^4.21.0",

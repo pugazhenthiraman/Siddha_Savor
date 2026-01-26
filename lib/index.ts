@@ -68,12 +68,11 @@ export {
 } from './constants/doctor';
 
 export {
-  PATIENT_FORM_FIELDS,
+  GENDER_OPTIONS as PATIENT_GENDER_OPTIONS,
+  OCCUPATION_OPTIONS,
+  WORK_TYPE_OPTIONS,
   PATIENT_VALIDATION,
-  PATIENT_STATUS,
-  PATIENT_STATUS_OPTIONS,
   PATIENT_FORM_SECTIONS,
-  PATIENT_LABELS,
 } from './constants/patient';
 
 // Utilities
@@ -115,4 +114,3 @@ export type { AuthContext } from './middleware/auth';
 export { useToast } from './hooks/useToast';
 export { useErrorHandler } from './hooks/useErrorHandler';
 export { useInviteLink } from './hooks/useInviteLink';
-

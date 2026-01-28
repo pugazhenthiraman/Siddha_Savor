@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
       date.setDate(date.getDate() - i);
       const dateStr = date.toISOString().split('T')[0];
       const dayName = date.toLocaleDateString('en-US', { weekday: 'short' });
-      
+
       healthData[dateStr] = {
         date: dateStr,
         dayName,
@@ -46,7 +46,12 @@ export async function GET(request: NextRequest) {
     }
 
     // Fill in actual data
-    mealStatuses.forEach(meal => {
+    interface MealStatusItem {
+      date: Date;
+      status: string;
+    }
+
+    (mealStatuses as unknown as MealStatusItem[]).forEach(meal => {
       const dateStr = meal.date.toISOString().split('T')[0];
       if (healthData[dateStr] && meal.status === 'completed') {
         healthData[dateStr].completedMeals++;
@@ -57,24 +62,24 @@ export async function GET(request: NextRequest) {
     Object.keys(healthData).forEach(dateStr => {
       const data = healthData[dateStr];
       data.compliance = Math.round((data.completedMeals / data.totalMeals) * 100);
-      
+
       // Health score calculation based on compliance and consistency
       let healthScore = data.compliance;
-      
+
       // Bonus for perfect compliance
       if (data.compliance === 100) {
         healthScore = Math.min(100, healthScore + 10);
       }
-      
+
       // Penalty for very low compliance
       if (data.compliance < 50) {
         healthScore = Math.max(0, healthScore - 10);
       }
-      
+
       data.healthScore = Math.round(healthScore);
     });
 
-    const weeklyData = Object.values(healthData).sort((a: any, b: any) => 
+    const weeklyData = Object.values(healthData).sort((a: any, b: any) =>
       new Date(a.date).getTime() - new Date(b.date).getTime()
     );
 
@@ -83,7 +88,7 @@ export async function GET(request: NextRequest) {
     const totalCompletedMeals = weeklyData.reduce((sum: number, day: any) => sum + day.completedMeals, 0);
     const overallCompliance = Math.round((totalCompletedMeals / totalPossibleMeals) * 100);
     const averageHealthScore = Math.round(weeklyData.reduce((sum: number, day: any) => sum + day.healthScore, 0) / weeklyData.length);
-    
+
     // Calculate current streak (consecutive days with >80% compliance)
     let currentStreak = 0;
     for (let i = weeklyData.length - 1; i >= 0; i--) {

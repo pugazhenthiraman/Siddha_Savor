@@ -31,7 +31,17 @@ export async function GET(
     });
 
     // Transform the data to include vitals count
-    const patientsWithStats = patients.map(patient => ({
+    interface PatientWithVitals {
+      id: number;
+      patientUID: string | null;
+      email: string;
+      formData: any;
+      createdAt: Date;
+      updatedAt: Date;
+      vitals: { id: number }[];
+    }
+
+    const patientsWithStats = (patients as unknown as PatientWithVitals[]).map(patient => ({
       ...patient,
       vitalsCount: patient.vitals.length,
       vitals: undefined // Remove the vitals array from response

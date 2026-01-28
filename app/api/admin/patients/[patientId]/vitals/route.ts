@@ -23,11 +23,24 @@ export async function GET(
     });
 
     // Transform vitals to include doctor name
-    const vitalsWithDoctorName = vitals.map(vital => {
+    interface VitalWithDoctor {
+      id: number;
+      patientId: number;
+      doctorUID: string;
+      recordedBy: string;
+      recordedAt: Date;
+      doctor: {
+        formData: any;
+      };
+      // Keep other fields if needed, but for mapping these are enough
+      [key: string]: any;
+    }
+
+    const vitalsWithDoctorName = (vitals as unknown as VitalWithDoctor[]).map(vital => {
       const formData = typeof vital.doctor?.formData === 'object' ? vital.doctor.formData as any : null;
       return {
         ...vital,
-        doctorName: formData?.personalInfo 
+        doctorName: formData?.personalInfo
           ? `Dr. ${formData.personalInfo.firstName} ${formData.personalInfo.lastName}`
           : vital.recordedBy
       };

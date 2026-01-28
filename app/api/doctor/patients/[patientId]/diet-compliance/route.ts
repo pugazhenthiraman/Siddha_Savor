@@ -25,14 +25,14 @@ export async function GET(
 
     // Group by date and calculate compliance
     const complianceData: Record<string, any> = {};
-    
+
     // Initialize last 7 days
     for (let i = 6; i >= 0; i--) {
       const date = new Date();
       date.setDate(date.getDate() - i);
       const dateStr = date.toISOString().split('T')[0];
       const dayName = date.toLocaleDateString('en-US', { weekday: 'short' });
-      
+
       complianceData[dateStr] = {
         date: dateStr,
         dayName,
@@ -48,7 +48,13 @@ export async function GET(
     }
 
     // Fill in actual data
-    mealStatuses.forEach(meal => {
+    interface MealStatusItem {
+      date: Date;
+      mealType: string;
+      status: string;
+    }
+
+    (mealStatuses as unknown as MealStatusItem[]).forEach(meal => {
       const dateStr = meal.date.toISOString().split('T')[0];
       if (complianceData[dateStr] && meal.mealType in complianceData[dateStr].meals) {
         if (meal.status === 'completed') {
@@ -64,7 +70,7 @@ export async function GET(
       data.compliance = Math.round((data.completedMeals / data.totalMeals) * 100);
     });
 
-    const weeklyData = Object.values(complianceData).sort((a: any, b: any) => 
+    const weeklyData = Object.values(complianceData).sort((a: any, b: any) =>
       new Date(a.date).getTime() - new Date(b.date).getTime()
     );
 

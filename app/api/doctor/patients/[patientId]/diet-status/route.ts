@@ -71,10 +71,16 @@ export async function GET(
     }> = [];
     const mealTypes = ['breakfast', 'lunch', 'dinner'];
 
+    interface MealStatusItem {
+      mealType: string;
+      status: string;
+      [key: string]: any;
+    }
+
     mealTypes.forEach((mealType) => {
-      const mealStatus = mealStatuses.find(m => m.mealType === mealType);
+      const mealStatus = (mealStatuses as unknown as MealStatusItem[]).find(m => m.mealType === mealType);
       const mealItems = dayPlan?.meals[mealType as keyof typeof dayPlan.meals] || [];
-      
+
       if (Array.isArray(mealItems) && mealItems.length > 0) {
         dietEntries.push({
           id: dietEntries.length + 1,

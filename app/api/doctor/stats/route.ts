@@ -14,8 +14,15 @@ export const GET = withErrorHandler(async (request: NextRequest) => {
   }
 
   try {
+    interface PatientStatsItem {
+      id: number;
+      status: string;
+      formData: any;
+      [key: string]: any;
+    }
+
     // Get all patients for this doctor
-    const allPatients = await db.patient.findMany({
+    const allPatients = (await db.patient.findMany({
       where: { doctorUID },
       select: {
         id: true,
@@ -26,12 +33,12 @@ export const GET = withErrorHandler(async (request: NextRequest) => {
         createdAt: true,
         updatedAt: true
       }
-    });
+    })) as unknown as PatientStatsItem[];
 
     // Calculate stats using database status field
     const totalPatients = allPatients.filter(p => p.status === 'APPROVED').length;
     const pendingApprovals = allPatients.filter(p => p.status === 'PENDING').length;
-    
+
     // Active patients: approved and not cured
     const activePatients = allPatients.filter(p => {
       if (p.status !== 'APPROVED') return false;

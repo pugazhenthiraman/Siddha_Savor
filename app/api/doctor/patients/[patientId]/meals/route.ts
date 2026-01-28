@@ -28,8 +28,14 @@ export async function GET(
 
     // Group by date
     const groupedByDate: Record<string, any> = {};
-    
-    mealStatuses.forEach(meal => {
+
+    interface MealStatusItem {
+      date: Date;
+      mealType: string;
+      status: string;
+    }
+
+    (mealStatuses as unknown as MealStatusItem[]).forEach(meal => {
       const dateKey = meal.date.toISOString().split('T')[0];
       if (!groupedByDate[dateKey]) {
         groupedByDate[dateKey] = {
@@ -39,10 +45,10 @@ export async function GET(
           dinner: null
         };
       }
-      groupedByDate[dateKey][meal.mealType] = meal.status;
+      groupedByDate[dateKey][meal.mealType as 'breakfast' | 'lunch' | 'dinner'] = meal.status;
     });
 
-    const mealHistory = Object.values(groupedByDate).sort((a: any, b: any) => 
+    const mealHistory = Object.values(groupedByDate).sort((a: any, b: any) =>
       new Date(b.date).getTime() - new Date(a.date).getTime()
     );
 

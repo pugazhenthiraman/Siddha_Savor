@@ -26,7 +26,7 @@ export const GET = withErrorHandler(async (request: NextRequest) => {
       ORDER BY p."createdAt" DESC
     `, [doctorUID]);
 
-    const patients = result.rows.map(row => ({
+    const patients = (result.rows as any[]).map(row => ({
       id: row.id,
       patientUID: row.patientUID,
       email: row.email,
@@ -85,7 +85,7 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
     // Note: This POST endpoint is deprecated in favor of separate /approve and /reject endpoints
     // Redirect to use the proper endpoints that handle email notifications
     logger.warn('Using deprecated POST /api/doctor/patients endpoint', { action, patientId });
-    
+
     if (action === 'APPROVE') {
       // Redirect to approve endpoint
       const approveResponse = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/doctor/patients/approve`, {
@@ -101,7 +101,7 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
           { status: 400 }
         );
       }
-      
+
       // Redirect to reject endpoint
       const rejectResponse = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/doctor/patients/reject`, {
         method: 'POST',
@@ -116,9 +116,9 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
       );
     }
   } catch (error) {
-    logger.error('Error processing patient action', error, { 
+    logger.error('Error processing patient action', error, {
       url: request.url,
-      method: request.method 
+      method: request.method
     });
     return NextResponse.json(
       { success: false, error: ERROR_MESSAGES.SERVER_ERROR },

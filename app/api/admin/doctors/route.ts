@@ -4,7 +4,7 @@ import { query } from '@/lib/db';
 import { ERROR_MESSAGES } from '@/lib/constants/messages';
 import { logger } from '@/lib/utils/logger';
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     logger.info('Admin doctors API called');
 

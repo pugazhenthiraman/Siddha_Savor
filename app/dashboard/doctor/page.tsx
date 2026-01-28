@@ -98,22 +98,22 @@ export default function DoctorDashboard() {
                 Welcome back, Dr. {doctorName.split(' ')[0]}!
               </h2>
               <p className="text-sm lg:text-base text-gray-600">
-                Here's your practice overview for today, {new Date().toLocaleDateString('en-US', { 
-                  weekday: 'long', 
-                  year: 'numeric', 
-                  month: 'long', 
-                  day: 'numeric' 
+                Here&apos;s your practice overview for today, {new Date().toLocaleDateString('en-US', {
+                  weekday: 'long',
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric'
                 })}
               </p>
             </div>
-            
+
             <DoctorStats />
 
             {/* Quick Actions */}
             <div className="bg-white rounded-xl shadow-lg p-6 lg:p-8">
               <h3 className="text-lg lg:text-xl font-semibold text-gray-900 mb-6">Quick Actions</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:gap-6">
-                <button 
+                <button
                   onClick={() => setActiveTab('patients')}
                   className="bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl p-6 hover:from-blue-100 hover:to-blue-200 transition-all transform hover:scale-105 text-left"
                 >
@@ -128,7 +128,7 @@ export default function DoctorDashboard() {
                   </div>
                 </button>
 
-                <button 
+                <button
                   onClick={() => setActiveTab('patients')}
                   className="bg-gradient-to-r from-green-50 to-green-100 rounded-xl p-6 hover:from-green-100 hover:to-green-200 transition-all transform hover:scale-105 text-left"
                 >
@@ -154,7 +154,7 @@ export default function DoctorDashboard() {
               <h2 className="text-xl lg:text-2xl font-bold text-gray-900 mb-2">Patient Management</h2>
               <p className="text-sm lg:text-base text-gray-600">Manage your patients, approvals, and treatments.</p>
             </div>
-            
+
             <PatientInviteGenerator />
             <PatientManagement onPatientSelect={handlePatientSelect} />
           </div>
@@ -172,7 +172,7 @@ export default function DoctorDashboard() {
               <h2 className="text-xl lg:text-2xl font-bold text-gray-900 mb-2">Profile Information</h2>
               <p className="text-sm lg:text-base text-gray-600">Manage your profile and contact information.</p>
             </div>
-            
+
             <div className="bg-white rounded-xl shadow-lg p-6 lg:p-8">
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-lg lg:text-xl font-semibold text-gray-900">Personal Details</h3>

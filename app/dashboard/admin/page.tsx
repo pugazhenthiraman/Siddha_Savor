@@ -81,14 +81,14 @@ export default function AdminDashboard() {
           <div className="space-y-6 lg:space-y-8">
             <div className="text-center lg:text-left">
               <h2 className="text-xl lg:text-2xl font-bold text-gray-900 mb-2">Dashboard Overview</h2>
-              <p className="text-sm lg:text-base text-gray-600">Monitor your healthcare platform's key metrics and activities.</p>
+              <p className="text-sm lg:text-base text-gray-600">Monitor your healthcare platform&apos;s key metrics and activities.</p>
             </div>
-            
+
             <DashboardStats />
 
             {/* Quick Actions Grid */}
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 lg:gap-6 xl:gap-8">
-              <button 
+              <button
                 onClick={() => setActiveTab('approvals')}
                 className="bg-white rounded-xl shadow-lg p-4 hover:shadow-xl transition-all transform hover:scale-105 text-left lg:rounded-2xl lg:p-6"
               >
@@ -103,7 +103,7 @@ export default function AdminDashboard() {
                 </div>
               </button>
 
-              <button 
+              <button
                 onClick={() => setActiveTab('invites')}
                 className="bg-white rounded-xl shadow-lg p-4 hover:shadow-xl transition-all transform hover:scale-105 text-left lg:rounded-2xl lg:p-6"
               >
@@ -118,7 +118,7 @@ export default function AdminDashboard() {
                 </div>
               </button>
 
-              <button 
+              <button
                 onClick={() => setActiveTab('doctors')}
                 className="bg-white rounded-xl shadow-lg p-4 hover:shadow-xl transition-all transform hover:scale-105 text-left lg:rounded-2xl lg:p-6"
               >
@@ -133,7 +133,7 @@ export default function AdminDashboard() {
                 </div>
               </button>
 
-              <button 
+              <button
                 onClick={() => setActiveTab('patients')}
                 className="bg-white rounded-xl shadow-lg p-4 hover:shadow-xl transition-all transform hover:scale-105 text-left lg:rounded-2xl lg:p-6"
               >

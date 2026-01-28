@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
 
     logger.info('Database view request', { table });
 
-    let result: any = {};
+    const result: any = {};
 
     if (table === 'all' || table === 'Admin') {
       const adminResult = await query('SELECT id, email, "createdAt", "smtpConfig" FROM "Admin" ORDER BY id');

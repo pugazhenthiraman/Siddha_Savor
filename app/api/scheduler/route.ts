@@ -1,5 +1,5 @@
 export const dynamic = 'force-dynamic';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
 // Simple scheduler endpoint that can be called by external cron services
 export async function GET() {

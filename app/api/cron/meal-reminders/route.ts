@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+export const dynamic = 'force-dynamic';
 import { prisma } from '@/lib/prisma';
 import { mealReminderService } from '@/lib/services/mealReminderService';
 import { getDietPlanByDiagnosis } from '@/lib/dietPlans';
@@ -41,7 +42,7 @@ export async function POST(request: NextRequest) {
       const today = new Date().getDay(); // 0-6
       const currentDay = today === 0 ? 7 : today; // Convert Sunday (0) to 7
       const dayPlan = dietPlan.days[currentDay - 1]; // Array is 0-indexed
-      
+
       if (!dayPlan) continue;
 
       const patientData = patient.formData as any;

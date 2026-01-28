@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+export const dynamic = 'force-dynamic';
 import { query, getSmtpConfig } from '@/lib/db';
 import nodemailer from 'nodemailer';
 import { ERROR_MESSAGES } from '@/lib/constants/messages';
@@ -12,7 +13,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     const body = await request.json();
     // Accept both 'remark' and 'reason' for backward compatibility
     const remark = body.remark || body.reason || '';
-    
+
     if (isNaN(doctorId)) {
       return NextResponse.json(
         { success: false, error: 'Invalid doctor ID' },
@@ -50,15 +51,15 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     // Create an invite link for re-registration (with recipientEmail to identify the original doctor)
     let inviteToken = null;
     let inviteUrl = null;
-    
+
     try {
       // Generate unique token for re-registration
       inviteToken = crypto.randomBytes(32).toString('hex');
-      
+
       // Set expiration to 7 days from now (longer for re-registration)
       const expiresAt = new Date();
       expiresAt.setDate(expiresAt.getDate() + 7);
-      
+
       // Create invite link with recipientEmail to identify the original doctor
       const inviteResult = await query(
         `INSERT INTO "InviteLink" 
@@ -74,14 +75,14 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
           expiresAt
         ]
       );
-      
+
       inviteUrl = `${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/register?token=${inviteToken}`;
-      
-      logger.info('Re-registration invite link created', { 
-        doctorId, 
+
+      logger.info('Re-registration invite link created', {
+        doctorId,
         email: doctor.email,
         token: inviteToken.substring(0, 8) + '...',
-        expiresAt 
+        expiresAt
       });
     } catch (inviteError) {
       logger.error('Failed to create invite link for re-registration', inviteError, { doctorId });
@@ -91,7 +92,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     // Send rejection email if SMTP is configured
     try {
       const smtpConfig = await getSmtpConfig();
-      
+
       if (smtpConfig && smtpConfig.isActive) {
         const transporter = nodemailer.createTransport({
           host: smtpConfig.host,
@@ -160,10 +161,10 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
           html: emailHtml
         });
 
-        logger.info('Rejection email sent successfully', { 
-          doctorId, 
+        logger.info('Rejection email sent successfully', {
+          doctorId,
           email: doctor.email,
-          hasInviteLink: !!inviteUrl 
+          hasInviteLink: !!inviteUrl
         });
       }
     } catch (emailError) {

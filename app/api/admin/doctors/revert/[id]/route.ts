@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+export const dynamic = 'force-dynamic';
 import { query, getSmtpConfig } from '@/lib/db';
 import nodemailer from 'nodemailer';
 import { ERROR_MESSAGES } from '@/lib/constants/messages';
@@ -10,7 +11,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     const doctorId = parseInt(id);
     const body = await request.json();
     const { newStatus, reason } = body;
-    
+
     if (isNaN(doctorId)) {
       return NextResponse.json(
         { success: false, error: 'Invalid doctor ID' },
@@ -63,7 +64,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     // Send notification email if SMTP is configured
     try {
       const smtpConfig = await getSmtpConfig();
-      
+
       if (smtpConfig && smtpConfig.isActive) {
         const transporter = nodemailer.createTransport({
           host: smtpConfig.host,

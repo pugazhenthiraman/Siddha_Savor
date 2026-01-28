@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+export const dynamic = 'force-dynamic';
 import { prisma } from '@/lib/prisma';
 import { logger } from '@/lib/utils/logger';
 import { ERROR_MESSAGES, SUCCESS_MESSAGES } from '@/lib/constants/messages';
@@ -8,7 +9,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   try {
     const { id } = await params;
     const patientId = parseInt(id);
-    
+
     if (isNaN(patientId)) {
       return NextResponse.json(
         { success: false, error: 'Invalid patient ID' },
@@ -37,7 +38,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     const patientFormData = patient.formData as any;
     const patientEmail = patient.email;
-    const patientName = patientFormData?.personalInfo 
+    const patientName = patientFormData?.personalInfo
       ? `${patientFormData.personalInfo.firstName || ''} ${patientFormData.personalInfo.lastName || ''}`.trim()
       : patientEmail;
 
@@ -73,7 +74,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     const sendEmailPromise = (async () => {
       try {
         const smtpConfig = await getSmtpConfig();
-        
+
         if (!smtpConfig || !smtpConfig.isConfigured) {
           logger.warn('SMTP not configured, skipping approval email', { patientEmail });
           return;
@@ -122,16 +123,16 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       }
     })();
 
-    sendEmailPromise.catch(() => {});
+    sendEmailPromise.catch(() => { });
 
     return NextResponse.json({
       success: true,
       message: 'Patient approved successfully',
     });
   } catch (error) {
-    logger.error('Error approving patient', error, { 
+    logger.error('Error approving patient', error, {
       url: request.url,
-      method: request.method 
+      method: request.method
     });
     return NextResponse.json(
       { success: false, error: ERROR_MESSAGES.SERVER_ERROR },

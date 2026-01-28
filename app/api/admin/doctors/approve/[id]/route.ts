@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+export const dynamic = 'force-dynamic';
 import { query, getSmtpConfig } from '@/lib/db';
 import nodemailer from 'nodemailer';
 import { ERROR_MESSAGES } from '@/lib/constants/messages';
@@ -8,7 +9,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   try {
     const { id } = await params;
     const doctorId = parseInt(id);
-    
+
     if (isNaN(doctorId)) {
       return NextResponse.json(
         { success: false, error: 'Invalid doctor ID' },
@@ -50,7 +51,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     // Send welcome email if SMTP is configured
     try {
       const smtpConfig = await getSmtpConfig();
-      
+
       if (smtpConfig && smtpConfig.isActive) {
         const transporter = nodemailer.createTransport({
           host: smtpConfig.host,
@@ -67,7 +68,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
           'BACHELORS': 'Bachelor\'s (BSMS)',
           'MASTERS': 'Master\'s (MD/MS/M.Phil)'
         };
-        const qualificationLabel = professionalInfo.qualification 
+        const qualificationLabel = professionalInfo.qualification
           ? (qualificationLabels[professionalInfo.qualification] || professionalInfo.qualification)
           : 'Not specified';
 

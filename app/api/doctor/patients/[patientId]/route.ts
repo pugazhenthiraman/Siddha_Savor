@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+export const dynamic = 'force-dynamic';
 import { withRetry } from '@/lib/db-retry';
 import { query } from '@/lib/db';
 import { cookies } from 'next/headers';
@@ -13,7 +14,7 @@ export async function GET(
     const authHeader = request.headers.get('authorization');
     let isAuthenticated = false;
     let userRole = '';
-    
+
     if (authHeader && authHeader.startsWith('Bearer ')) {
       try {
         const tokenData = JSON.parse(atob(authHeader.substring(7)));
@@ -23,7 +24,7 @@ export async function GET(
         logger.warn('Failed to parse Authorization header', e);
       }
     }
-    
+
     // Fallback to cookie-based auth if header auth fails
     if (!isAuthenticated) {
       const cookieStore = await cookies();
@@ -32,7 +33,7 @@ export async function GET(
         isAuthenticated = true;
       }
     }
-    
+
     if (!isAuthenticated) {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }

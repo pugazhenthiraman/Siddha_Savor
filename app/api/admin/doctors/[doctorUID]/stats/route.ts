@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+export const dynamic = 'force-dynamic';
 import { prisma } from '@/lib/prisma';
 
 export async function GET(
@@ -14,23 +15,23 @@ export async function GET(
       prisma.patient.count({
         where: { doctorUID }
       }),
-      
+
       // Active patients (assuming patients without status or with ACTIVE status are active)
       prisma.patient.count({
-        where: { 
+        where: {
           doctorUID,
           // Add status filter when available in schema
         }
       }),
-      
+
       // Cured patients (this would need a status field in Patient model)
       prisma.patient.count({
-        where: { 
+        where: {
           doctorUID,
           // Add status: 'CURED' when available
         }
       }),
-      
+
       // Total vitals recorded by this doctor
       prisma.patientVitals.count({
         where: { doctorUID }

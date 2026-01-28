@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+export const dynamic = 'force-dynamic';
 import { prisma } from '@/lib/prisma';
 
 export async function GET(
@@ -34,7 +35,7 @@ export async function GET(
       prisma.patientVitals.count({
         where: { patientId }
       }),
-      
+
       // Total appointments (using vitals as proxy for appointments)
       prisma.patientVitals.count({
         where: { patientId }
@@ -50,7 +51,7 @@ export async function GET(
 
     // Extract doctor name from formData
     const formData = typeof patient.doctor?.formData === 'object' ? patient.doctor.formData as any : null;
-    const doctorName = formData?.personalInfo 
+    const doctorName = formData?.personalInfo
       ? `Dr. ${formData.personalInfo.firstName} ${formData.personalInfo.lastName}`
       : null;
 

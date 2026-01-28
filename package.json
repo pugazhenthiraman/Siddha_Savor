@@ -42,7 +42,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "dotenv-cli": "^11.0.0",
-    "eslint": "^9",
+    "eslint": "^8.57.0",
     "eslint-config-next": "15.1.9",
     "lightningcss": "^1.31.1",
     "tailwindcss": "^4",

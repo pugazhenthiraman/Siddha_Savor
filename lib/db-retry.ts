@@ -49,9 +49,9 @@ export const db = {
     update: (args: any) => withRetry(() => prisma.patient.update(args)),
     delete: (args: any) => withRetry(() => prisma.patient.delete(args)),
   },
-  vitals: {
-    findMany: (args?: any) => withRetry(() => prisma.vitals.findMany(args)),
-    create: (args: any) => withRetry(() => prisma.vitals.create(args)),
+  patientVitals: {
+    findMany: (args?: any) => withRetry(() => prisma.patientVitals.findMany(args)),
+    create: (args: any) => withRetry(() => prisma.patientVitals.create(args)),
   },
   doctor: {
     findUnique: (args: any) => withRetry(() => prisma.doctor.findUnique(args)),

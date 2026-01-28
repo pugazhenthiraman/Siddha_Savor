@@ -7,6 +7,7 @@ import { NewVitalsForm } from '@/components/doctor/NewVitalsForm';
 import { PatientDietPlan } from '@/components/PatientDietPlan';
 import { DietComplianceChart } from '@/components/DietComplianceChart';
 import { DietPlanEditor } from '@/components/DietPlanEditor';
+import { TDEEChart } from '@/components/doctor/TDEEChart';
 
 interface PatientStats {
   bmr?: number;
@@ -54,6 +55,25 @@ export default function PatientDashboardPage() {
   const [showCuredConfirm, setShowCuredConfirm] = useState(false);
   const [isMarkingCured, setIsMarkingCured] = useState(false);
 
+  // Helper function to add auth headers to fetch requests
+  const getAuthHeaders = (): HeadersInit => {
+    let authHeader = '';
+    try {
+      const userDataStr = localStorage.getItem('siddha_user');
+      if (userDataStr) {
+        const userData = JSON.parse(userDataStr);
+        authHeader = `Bearer ${btoa(JSON.stringify({ id: userData.id, role: userData.role }))}`;
+      }
+    } catch (e) {
+      console.error('Failed to get auth header:', e);
+    }
+    
+    return {
+      'Content-Type': 'application/json',
+      ...(authHeader && { 'Authorization': authHeader })
+    };
+  };
+
   useEffect(() => {
     const loadData = async () => {
       if (params.patientId) {
@@ -66,13 +86,14 @@ export default function PatientDashboardPage() {
   const fetchPatientData = async () => {
     try {
       setIsLoading(true);
+      const headers = getAuthHeaders();
       
       // Fetch patient details, vitals, diet data, and meal history in parallel
       const [patientResponse, vitalsResponse, dietResponse, mealHistoryResponse] = await Promise.all([
-        fetch(`/api/doctor/patients/${params.patientId}`),
-        fetch(`/api/doctor/vitals?patientId=${params.patientId}`),
-        fetch(`/api/doctor/patients/${params.patientId}/diet-status`),
-        fetch(`/api/doctor/patients/${params.patientId}/meals`)
+        fetch(`/api/doctor/patients/${params.patientId}`, { headers }),
+        fetch(`/api/doctor/vitals?patientId=${params.patientId}`, { headers }),
+        fetch(`/api/doctor/patients/${params.patientId}/diet-status`, { headers }),
+        fetch(`/api/doctor/patients/${params.patientId}/meals`, { headers })
       ]);
 
       const patientData = await patientResponse.json();
@@ -120,7 +141,7 @@ export default function PatientDashboardPage() {
       // Fetch diet plan for meal history display
       if (latestVitals?.diagnosis) {
         try {
-          const dietPlanResponse = await fetch(`/api/doctor/patients/${params.patientId}/diet-plan`);
+          const dietPlanResponse = await fetch(`/api/doctor/patients/${params.patientId}/diet-plan`, { headers: getAuthHeaders() });
           const dietPlanResult = await dietPlanResponse.json();
           if (dietPlanResult.success && dietPlanResult.data?.dietPlan) {
             setDietPlanData(dietPlanResult.data.dietPlan);
@@ -152,7 +173,7 @@ export default function PatientDashboardPage() {
     }
     
     try {
-      const response = await fetch(`/api/doctor/patients/${params.patientId}/diet-plan`);
+      const response = await fetch(`/api/doctor/patients/${params.patientId}/diet-plan`, { headers: getAuthHeaders() });
       const data = await response.json();
       
       if (data.success) {
@@ -193,7 +214,7 @@ export default function PatientDashboardPage() {
   const handleViewFullMealHistory = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch(`/api/doctor/patients/${params.patientId}/meal-history`);
+      const response = await fetch(`/api/doctor/patients/${params.patientId}/meal-history`, { headers: getAuthHeaders() });
       const data = await response.json();
       
       if (data.success) {
@@ -215,7 +236,7 @@ export default function PatientDashboardPage() {
       setIsMarkingCured(true);
       const response = await fetch(`/api/doctor/patients/${params.patientId}/mark-cured`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
+        headers: getAuthHeaders()
       });
       
       const data = await response.json();
@@ -435,6 +456,13 @@ export default function PatientDashboardPage() {
                 </button>
               </div>
             </div>
+
+            {/* TDEE Trend Chart */}
+            {vitalsHistory.length > 0 && (
+              <div className="mt-8">
+                <TDEEChart vitalsHistory={vitalsHistory} />
+              </div>
+            )}
 
           {/* (Health Progress graph removed as per requirement) */}
           </div>

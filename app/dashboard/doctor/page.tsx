@@ -144,30 +144,6 @@ export default function DoctorDashboard() {
                 </button>
               </div>
             </div>
-
-            {/* Recent Activity */}
-            <div className="bg-white rounded-xl shadow-lg p-6 lg:p-8">
-              <h3 className="text-lg lg:text-xl font-semibold text-gray-900 mb-6">Recent Activity</h3>
-              <div className="space-y-4">
-                {[
-                  { time: '10:30 AM', action: 'Patient consultation completed', patient: 'John Doe', type: 'success' },
-                  { time: '09:15 AM', action: 'Diagnosis updated', patient: 'Sarah Smith', type: 'info' },
-                  { time: '08:45 AM', action: 'New patient registered', patient: 'Mike Johnson', type: 'warning' },
-                ].map((activity, index) => (
-                  <div key={index} className="flex items-center space-x-4 p-4 bg-gray-50 rounded-lg">
-                    <div className={`w-3 h-3 rounded-full ${
-                      activity.type === 'success' ? 'bg-green-500' :
-                      activity.type === 'info' ? 'bg-blue-500' : 'bg-yellow-500'
-                    }`}></div>
-                    <div className="flex-1">
-                      <p className="font-medium text-gray-900">{activity.action}</p>
-                      <p className="text-sm text-gray-600">{activity.patient}</p>
-                    </div>
-                    <div className="text-sm text-gray-500">{activity.time}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
           </div>
         )}
 

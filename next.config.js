@@ -2,7 +2,6 @@
 const nextConfig = {
   // Enable optimizations
   experimental: {
-    turbo: false,
     optimizeCss: true,
     optimizePackageImports: ['@/components', '@/lib'],
   },
@@ -55,9 +54,6 @@ const nextConfig = {
   
   // Compress responses
   compress: true,
-  
-  // Optimize fonts
-  optimizeFonts: true,
 };
 
 module.exports = nextConfig;

@@ -147,18 +147,6 @@ export default function AdminDashboard() {
                   </div>
                 </div>
               </button>
-
-              <button className="bg-white rounded-xl shadow-lg p-4 hover:shadow-xl transition-all transform hover:scale-105 text-left lg:rounded-2xl lg:p-6">
-                <div className="flex items-center space-x-3 lg:space-x-4">
-                  <div className="w-10 h-10 bg-indigo-500 rounded-lg flex items-center justify-center text-white text-lg lg:w-12 lg:h-12 lg:rounded-xl lg:text-xl">
-                    📊
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <h3 className="font-semibold text-gray-900 text-sm lg:text-base">Analytics</h3>
-                    <p className="text-xs text-gray-600 truncate lg:text-sm">View detailed reports</p>
-                  </div>
-                </div>
-              </button>
             </div>
           </div>
         )}

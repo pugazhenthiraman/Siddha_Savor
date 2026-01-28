@@ -61,7 +61,14 @@ export async function GET(
     });
 
     // Create diet entries based on diet plan and meal statuses
-    const dietEntries = [];
+    const dietEntries: Array<{
+      id: number;
+      date: string;
+      mealType: string;
+      foodItems: any[];
+      completed: boolean;
+      calories: number;
+    }> = [];
     const mealTypes = ['breakfast', 'lunch', 'dinner'];
 
     mealTypes.forEach((mealType) => {

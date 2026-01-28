@@ -2,17 +2,38 @@ import { NextRequest, NextResponse } from 'next/server';
 import { withRetry } from '@/lib/db-retry';
 import { query } from '@/lib/db';
 import { cookies } from 'next/headers';
+import { logger } from '@/lib/utils/logger';
 
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ patientId: string }> }
 ) {
   try {
-    // Get session token from cookies
-    const cookieStore = await cookies();
-    const sessionToken = cookieStore.get('next-auth.session-token')?.value;
+    // Get authentication from Authorization header or cookies
+    const authHeader = request.headers.get('authorization');
+    let isAuthenticated = false;
+    let userRole = '';
     
-    if (!sessionToken) {
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      try {
+        const tokenData = JSON.parse(atob(authHeader.substring(7)));
+        isAuthenticated = !!tokenData.id;
+        userRole = tokenData.role;
+      } catch (e) {
+        logger.warn('Failed to parse Authorization header', e);
+      }
+    }
+    
+    // Fallback to cookie-based auth if header auth fails
+    if (!isAuthenticated) {
+      const cookieStore = await cookies();
+      const sessionToken = cookieStore.get('next-auth.session-token')?.value;
+      if (sessionToken) {
+        isAuthenticated = true;
+      }
+    }
+    
+    if (!isAuthenticated) {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
 

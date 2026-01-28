@@ -52,9 +52,25 @@ export class ApiClient {
     
     logger.apiRequest(method, endpoint, { options });
     
+    // Get user data from localStorage to include in headers
+    let authHeader = '';
+    try {
+      if (typeof window !== 'undefined') {
+        const userDataStr = localStorage.getItem('siddha_user');
+        if (userDataStr) {
+          const userData = JSON.parse(userDataStr);
+          // Send user ID and role as base64 encoded auth header
+          authHeader = `Bearer ${btoa(JSON.stringify({ id: userData.id, role: userData.role }))}`;
+        }
+      }
+    } catch (e) {
+      logger.warn('Failed to read user data from localStorage', e);
+    }
+    
     const config: RequestInit = {
       headers: {
         'Content-Type': 'application/json',
+        ...(authHeader && { 'Authorization': authHeader }),
         ...options.headers,
       },
       ...options,

@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 
 // Simple scheduler endpoint that can be called by external cron services
@@ -5,9 +6,9 @@ export async function GET() {
   const now = new Date();
   const hour = now.getHours();
   const minute = now.getMinutes();
-  
+
   let mealType = null;
-  
+
   // Check if it's meal time (with 5-minute window)
   if (hour === 8 && minute <= 5) {
     mealType = 'breakfast';
@@ -16,7 +17,7 @@ export async function GET() {
   } else if (hour === 20 && minute <= 5) { // 8 PM
     mealType = 'dinner';
   }
-  
+
   if (!mealType) {
     return NextResponse.json({
       success: false,
@@ -24,7 +25,7 @@ export async function GET() {
       currentTime: now.toISOString()
     });
   }
-  
+
   try {
     // Call the meal reminder endpoint
     const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/cron/meal-reminders`, {
@@ -34,16 +35,16 @@ export async function GET() {
       },
       body: JSON.stringify({ mealType })
     });
-    
+
     const result = await response.json();
-    
+
     return NextResponse.json({
       success: true,
       mealType,
       currentTime: now.toISOString(),
       reminderResult: result
     });
-    
+
   } catch (error) {
     return NextResponse.json({
       success: false,

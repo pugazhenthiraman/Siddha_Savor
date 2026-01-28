@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
@@ -40,7 +41,7 @@ export async function GET(request: NextRequest) {
 
     // Extract doctor name
     const doctorData = patient.doctor?.formData as any;
-    const doctorName = doctorData?.personalInfo 
+    const doctorName = doctorData?.personalInfo
       ? `Dr. ${doctorData.personalInfo.firstName} ${doctorData.personalInfo.lastName}`
       : 'Not Assigned';
 

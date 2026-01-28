@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { logger } from '@/lib/utils/logger';
@@ -49,7 +50,7 @@ export async function GET(request: NextRequest) {
       const doctorCount = await query('SELECT COUNT(*) as count FROM "Doctor"');
       const patientCount = await query('SELECT COUNT(*) as count FROM "Patient"');
       const inviteCount = await query('SELECT COUNT(*) as count FROM "InviteLink"');
-      
+
       counts.Admin = parseInt(adminCount.rows[0].count);
       counts.Doctor = parseInt(doctorCount.rows[0].count);
       counts.Patient = parseInt(patientCount.rows[0].count);
@@ -65,7 +66,7 @@ export async function GET(request: NextRequest) {
 
   } catch (error) {
     logger.error('Database view error', error);
-    
+
     return NextResponse.json({
       success: false,
       error: 'Failed to retrieve database data'
@@ -80,7 +81,7 @@ export async function POST(request: NextRequest) {
 
     if (action === 'delete' && table && id) {
       logger.info('Database delete request', { table, id });
-      
+
       // Only allow deletion of invite links for safety
       if (table === 'InviteLink') {
         await query('DELETE FROM "InviteLink" WHERE id = $1', [id]);
@@ -103,7 +104,7 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     logger.error('Database action error', error);
-    
+
     return NextResponse.json({
       success: false,
       error: 'Failed to perform database action'

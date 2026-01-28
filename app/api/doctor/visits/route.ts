@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { withErrorHandler } from '@/lib/middleware/api-error-handler';
 
@@ -35,16 +36,16 @@ export const GET = withErrorHandler(async (request: NextRequest) => {
 export const POST = withErrorHandler(async (request: NextRequest) => {
   try {
     const body = await request.json();
-    const { 
-      patientId, 
-      diagnosis, 
-      treatment, 
-      medicines, 
-      foods, 
-      activities, 
-      visitDate, 
-      nextVisit, 
-      notes 
+    const {
+      patientId,
+      diagnosis,
+      treatment,
+      medicines,
+      foods,
+      activities,
+      visitDate,
+      nextVisit,
+      notes
     } = body;
 
     if (!patientId || !diagnosis || !treatment) {
